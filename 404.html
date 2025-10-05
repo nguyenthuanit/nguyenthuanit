@@ -3,16 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang chủ | Nguyenthuanit</title>
+    <title>404 Not Found | Nguyenthuanit</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        .error-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 6rem 20px;
+            min-height: 60vh; /* Đảm bảo nội dung chiếm một khoảng không gian hợp lý */
+        }
+        .error-section h1 {
+            font-size: 6rem;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--primary-color);
+        }
+        .error-section h2 {
+            font-size: 2rem;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
+        }
+        .error-section p {
+            color: var(--text-gray);
+            max-width: 450px;
+            margin-bottom: 2.5rem;
+        }
+    </style>
 </head>
 <body data-theme="light">
 
     <header class="header">
         <div class="container">
             <nav class="navbar">
-                <a href="#" class="nav-logo" aria-label="NT Technology">
+                <a href="index.html" class="nav-logo" aria-label="NT Technology">
                   <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg"
                        viewBox="0 0 360 120"
                        style="overflow: visible; display:block;" role="img" aria-label="NT Technology logo">
@@ -42,7 +71,7 @@
                 </a>
                 
                 <ul class="nav-menu">
-                    <li class="nav-item"><a href="#" class="nav-link">Home</a></li>
+                    <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
                     <li class="nav-item"><a href="#" class="nav-link">Features</a></li>
                     <li class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle">Pages ▾</a>
@@ -77,92 +106,12 @@
     </header>
 
     <main>
-        <section class="hero">
-            <div class="container hero-container">
-                <div class="hero-text">
-                    <h1>WIn-depth UI/UX Research. A Passion for Technology.</h1>
-                    <p>"Đây là dự án nội bộ, xuất phát từ đam mê khi chưa có nhiều kinh nghiệm. Để hoàn thành, tôi đã không ngừng cập nhật kiến thức từ các nguồn, mang lại một sản phẩm tối ưu nhất." chi tiết dự án bên dưới </p>
-                    <div class="hero-buttons">
-                        <a href="#" class="btn btn-primary btn-lg">Get Started Now</a>
-                        <div class="contact-info">
-                            <span>Call us (0123) 456 - 789</span>
-                            <small>For any question or concern</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="hero-image-wrapper">
-                    <div class="hero-image">
-                        <img src="https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Team collaborating">
-                    </div>
-                </div>
-            </div>
+        <section class="error-section">
+            <h1>404</h1>
+            <h2>Page Not Found</h2>
+            <p>Sorry, the page you are looking for does not exist. It might have been moved or deleted.</p>
+            <a href="index.html" class="btn btn-primary btn-lg">Go to Homepage</a>
         </section>
-
-        <section class="services">
-            <div class="container">
-                <div class="services-grid">
-                    <div class="service-card">
-                        <svg class="service-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#4a90e2" alt="Directory Icon">
-                            <path d="M20,22H4a2,2,0,0,1-2-2V4A2,2,0,0,1,4,2h8l6,6V20A2,2,0,0,1,20,22ZM12,4V9h5Z"/>
-                        </svg>
-                        <h3>Directory</h3>
-                        <p>Pellentesque ac dui elit. Ut sollicitudin faucibus tellus ut rutrum. Nam pretium fringilla dignissim.</p>
-                        <a href="#" class="read-more">Read More</a>
-                    </div>
-                    <div class="service-card">
-                        <img src="https://img.icons8.com/dotty/80/4a90e2/database.png" alt="Real Estate Icon" class="service-icon">
-                        <h3>Real Estate</h3>
-                        <p>Pellentesque ac dui elit. Ut sollicitudin faucibus tellus ut rutrum. Nam pretium fringilla dignissim.</p>
-                        <a href="#" class="read-more">Read More</a>
-                    </div>
-                    <div class="service-card">
-                         <img src="https://img.icons8.com/ios/50/4a90e2/mouse.png" alt="Employment Icon" class="service-icon">
-                        <h3>Employment</h3>
-                        <p>Pellentesque ac dui elit. Ut sollicitudin faucibus tellus ut rutrum. Nam pretium fringilla dignissim.</p>
-                        <a href="#" class="read-more">Read More</a>
-                    </div>
-                    <div class="service-card">
-                        <img src="https://img.icons8.com/dotty/80/4a90e2/cloud.png" alt="Deals Icon" class="service-icon">
-                        <h3>Deals</h3>
-                        <p>Pellentesque ac dui elit. Ut sollicitudin faucibus tellus ut rutrum. Nam pretium fringilla dignissim.</p>
-                        <a href="#" class="read-more">Read More</a>
-                    </div>
-                </div>
-
-                <div class="tools-section">
-                    <div class="tools-header">
-                        <h2>Resources & Tools</h2>
-                    </div>
-                    <div class="tools-grid">
-                        <div class="tool-item">
-                            <img src="https://img.icons8.com/ios/50/6B7280/calculator.png" alt="Calculator Icon">
-                            <span>Colocation Calculator</span>
-                        </div>
-                        <div class="tool-item">
-                            <img src="https://img.icons8.com/ios/50/6B7280/timer.png" alt="Timer Icon">
-                            <span>Special Offers & Discounts</span>
-                        </div>
-                        <div class="tool-item">
-                           <img src="https://img.icons8.com/ios/50/6B7280/settings.png" alt="Settings Icon">
-                            <span>Network Design</span>
-                        </div>
-                        <div class="tool-item">
-                            <img src="https://img.icons8.com/ios/50/6B7280/phone.png" alt="Phone Icon">
-                            <span>Contact Us Today!</span>
-                        </div>
-                        <div class="tool-item">
-                            <img src="https://img.icons8.com/ios/50/6B7280/shopping-cart.png" alt="Cart Icon">
-                            <span>Buy Cloud Servers Online!</span>
-                        </div>
-                        <div class="tool-item">
-                           <img src="https://img.icons8.com/ios/50/6B7280/icloud.png" alt="Cloud Icon">
-                            <span>Online File Storage</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
     </main>
 
     <footer class="footer">
@@ -170,7 +119,7 @@
             <div class="footer-main">
                 <div class="footer-grid">
                     <div class="footer-col">
-                        <a href="#" class="footer-logo" aria-label="NT Technology">
+                        <a href="index.html" class="footer-logo" aria-label="NT Technology">
                            <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 360 120"
                                 style="overflow: visible; display:block;" role="img" aria-label="NT Technology logo">
@@ -251,6 +200,7 @@
             </div>
         </div>
     </footer>
+    
     <a href="#" id="scrollTopBtn" class="scroll-top-btn">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
     </a>

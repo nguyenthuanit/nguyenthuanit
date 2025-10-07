@@ -89,23 +89,38 @@ document.addEventListener('DOMContentLoaded', () => {
         output: document.getElementById('terminalOutput'),
         input: document.getElementById('terminalInput'),
         closeBtn: document.getElementById('closeTerminalBtn'),
-        isRunning: false, passwordAttempts: 0, onCompleteCallback: null,
+        isRunning: false,
+        isLoggedIn: false,
+        passwordAttempts: 0,
+        onCompleteCallback: null,
+        passwordHandler: null,
+        menuHandler: null,
         CORRECT_PASSWORD_HASH: '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92',
         preAuthLines: [
             { text: 'Booting system...', delay: 500 },
-            // THAY ĐỔI 1: CẬP NHẬT THÔNG BÁO KẾT NỐI
             { text: 'Connecting to server //103.77.201.52...', delay: 900 },
             { text: 'Connection established.', delay: 500 },
             { text: 'Authenticating user: admin', delay: 800 },
         ],
         postAuthLines: [
             { text: '[OK] ACCESS GRANTED.', delay: 500 },
-            { text: 'Loading user profile...', delay: 300 },
-            { text: 'Launching File Explorer GUI...', delay: 1200 },
+            { text: 'Loading user profile...', delay: 800 },
+        ],
+        menuText: [
+            { text: '\nWelcome, admin. Please select an option:' },
+            { text: '(1) File Explorer' },
+            { text: '(2) System Diagnostics' },
+            { text: '(3) Network Configuration' },
+            { text: '(4) Security Logs' },
+            { text: '(5) Check for Updates' },
+            { text: '(6) Help' },
         ],
         init() {
+            this.passwordHandler = this.handlePasswordSubmit.bind(this);
+            this.menuHandler = this.handleMenuInput.bind(this);
+
             this.closeBtn.addEventListener('click', () => this.hide());
-            this.window.addEventListener('click', () => { if (!this.isLocked) this.input.focus(); });
+            this.window.addEventListener('click', () => { this.input.focus(); });
             dragElement(this.window, document.getElementById('terminalTitleBar'));
             
             const savedState = WindowStateManager.loadState('terminalWindow');
@@ -129,41 +144,92 @@ document.addEventListener('DOMContentLoaded', () => {
         promptForPassword() {
             this.output.innerHTML += `<span>[sudo] password for admin: </span>`;
             this.input.focus();
-            const handlePassSubmit = (event) => {
-                if (event.key === 'Enter') {
-                    this.input.removeEventListener('keydown', handlePassSubmit);
-                    const pass = this.input.value;
-                    this.input.value = '';
-                    this.output.innerHTML += '\n';
-                    if(sha256(pass) === this.CORRECT_PASSWORD_HASH) {
-                        this.runPostAuth();
-                    } else {
-                        this.passwordAttempts++;
-                        if (this.passwordAttempts >= 3) {
-                            this.output.innerHTML += `<span class="line error">Authentication failed. Maximum attempts reached.</span>`;
-                            this.isRunning = false;
-                        } else {
-                            this.output.innerHTML += `<span class="line error">Sorry, try again.</span>`;
-                            this.promptForPassword();
-                        }
-                    }
+            this.input.removeEventListener('keydown', this.menuHandler);
+            this.input.addEventListener('keydown', this.passwordHandler);
+        },
+        handlePasswordSubmit(event) {
+            if (event.key !== 'Enter') return;
+
+            this.input.removeEventListener('keydown', this.passwordHandler);
+            const pass = this.input.value;
+            this.input.value = '';
+            this.output.innerHTML += '\n';
+
+            if(sha256(pass) === this.CORRECT_PASSWORD_HASH) {
+                this.isLoggedIn = true;
+                this.runPostAuth();
+            } else {
+                this.passwordAttempts++;
+                if (this.passwordAttempts >= 3) {
+                    this.output.innerHTML += `<span class="line error">Authentication failed. Maximum attempts reached.</span>`;
+                    this.isRunning = false;
+                } else {
+                    this.output.innerHTML += `<span class="line error">Sorry, try again.</span>`;
+                    this.promptForPassword();
                 }
-            };
-            this.input.addEventListener('keydown', handlePassSubmit);
+            }
         },
         async runPostAuth() {
             await this.printLines(this.postAuthLines);
-             if (this.isRunning) {
-                this.output.innerHTML += `<span class="cursor"></span>`;
-                setTimeout(() => {
-                    this.hide();
-                    if (this.onCompleteCallback) this.onCompleteCallback();
-                }, 800);
+            if (this.isRunning) {
+                if (this.onCompleteCallback) this.onCompleteCallback();
+                this.showMenu();
+            }
+        },
+        async showMenu() {
+            await this.printLines(this.menuText);
+            this.promptForMenuChoice();
+        },
+        promptForMenuChoice() {
+            this.output.innerHTML += `\n<span>admin@os-sim:~$ </span>`;
+            this.output.scrollTop = this.output.scrollHeight;
+            this.input.focus();
+            this.input.removeEventListener('keydown', this.passwordHandler);
+            this.input.addEventListener('keydown', this.menuHandler);
+        },
+        handleMenuInput(event) {
+            if (event.key !== 'Enter') return;
+            
+            const choice = this.input.value.trim();
+            this.input.value = '';
+            this.output.innerHTML += `${choice}\n`;
+
+            let commandProcessed = true;
+            switch (choice) {
+                case '1':
+                    this.output.innerHTML += `<span class="line">Opening File Explorer...</span>`;
+                    FileExplorer.show();
+                    break;
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                    this.output.innerHTML += `<span class="line">This feature is a placeholder and is not yet implemented.</span>`;
+                    break;
+                case '6':
+                case 'help':
+                    // Just show the menu again
+                    break;
+                default:
+                    commandProcessed = false;
+                    if (choice) { // Only show error if user typed something
+                       this.output.innerHTML += `<span class="line error">Invalid command: '${choice}'. Type '6' or 'help' for options.</span>`;
+                    }
+                    break;
+            }
+            // Loop back to the menu prompt
+            if (commandProcessed) {
+                this.promptForMenuChoice();
+            } else {
+                // If it was an invalid command, show the menu list again for clarity
+                this.showMenu();
             }
         },
         async run(onComplete) {
             if (this.isRunning) return;
-            this.isRunning = true; this.passwordAttempts = 0;
+            this.isRunning = true; 
+            this.isLoggedIn = false;
+            this.passwordAttempts = 0;
             this.onCompleteCallback = onComplete;
             this.output.innerHTML = '';
             this.show();
@@ -194,13 +260,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(item.id === 'dockFileExplorer') {
                     if (FileExplorer.isInitialized) FileExplorer.toggleVisibility();
                 } else if (item.id === 'dockTerminal') {
-                     if (dockFileExplorer.classList.contains('disabled')) {
+                    if (!Terminal.isRunning) {
                          Terminal.run(() => {
+                            // This callback runs once the login is successful
                             dockFileExplorer.classList.remove('disabled');
-                            PopupManager.alert('System Unlocked', 'You can now use the File Explorer application.', 'info');
-                            FileExplorer.show();
                          });
-                     }
+                    } else {
+                        Terminal.show();
+                    }
                 }
             };
 
@@ -303,7 +370,6 @@ document.addEventListener('DOMContentLoaded', () => {
                  PopupManager.alert('File System Error', 'Could not retrieve items from the database.', 'error');
             }
         },
-        // THAY ĐỔI 2: CẬP NHẬT LOGIC THANH ĐỊA CHỈ
         updateAddressBar() {
             const basePath = '//103.77.201.52/user/';
             this.addressInput.value = this.state.currentFolder ? `${basePath} > ${this.state.currentFolder.name}` : basePath;
@@ -321,7 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
             el.className = 'grid-item file-item';
             el.dataset.id = file.id; el.dataset.type = 'file';
             const iconClass = this.getIconForFileType(file.fileType);
-            el.innerHTML = `<div class="item-col col-name"><i class="${iconClass}"></i><span>${file.fileName}</span></div><div class="item-col col-date"><span>${this.formatDate(file.lastModified)}</span></div><div class="item-col col-size"><span>${this.formatBytes(file.fileSize)}</span></div>`;
+            el.innerHTML = `<div class="item-col col-name"><i class="${iconClass}"></i><span>${file.fileName}</span></div><div class="item-col col-date"><span>${this.formatDate(file.lastModified)}</span></div><div class.item-col col-size"><span>${this.formatBytes(file.fileSize)}</span></div>`;
             return el;
         },
         createListViewHeader() { const el = document.createElement('div'); el.className = 'list-view-header'; el.innerHTML = `<div class="col-name"><span>Name</span></div><div class="col-date"><span>Date modified</span></div><div class="col-size"><span>Size</span></div>`; return el; },

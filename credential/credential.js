@@ -4,23 +4,15 @@ document.addEventListener('DOMContentLoaded', () => {
         saveState(id, rect) {
             try {
                 localStorage.setItem(`windowState_${id}`, JSON.stringify(rect));
-            } catch (e) {
-                console.error("Could not save window state:", e);
-            }
+            } catch (e) { console.error("Could not save window state:", e); }
         },
         loadState(id) {
             try {
                 const state = localStorage.getItem(`windowState_${id}`);
                 return state ? JSON.parse(state) : null;
-            } catch (e) {
-                console.error("Could not load window state:", e);
-                return null;
-            }
+            } catch (e) { console.error("Could not load window state:", e); return null; }
         }
     };
-
-    const dockFileExplorer = document.getElementById('dockFileExplorer');
-    const dockTerminal = document.getElementById('dockTerminal');
 
     // === QUẢN LÝ ĐỒNG HỒ ===
     function startClock() {
@@ -47,9 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         okBtn: document.getElementById('winPopupOkBtn'),
         cancelBtn: document.getElementById('winPopupCancelBtn'),
         closeBtn: document.getElementById('winPopupCloseBtn'),
-        init() {
-            this.closeBtn.addEventListener('click', () => this.hide());
-        },
+        init() { this.closeBtn.addEventListener('click', () => this.hide()); },
         show(title, message, type = 'info') {
             this.title.textContent = title;
             this.message.textContent = message;
@@ -89,12 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
         output: document.getElementById('terminalOutput'),
         input: document.getElementById('terminalInput'),
         closeBtn: document.getElementById('closeTerminalBtn'),
-        isRunning: false,
-        isLoggedIn: false,
-        passwordAttempts: 0,
-        onCompleteCallback: null,
-        passwordHandler: null,
-        menuHandler: null,
+        isRunning: false, isLoggedIn: false, passwordAttempts: 0,
+        onCompleteCallback: null, passwordHandler: null, menuHandler: null,
         CORRECT_PASSWORD_HASH: '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92',
         preAuthLines: [
             { text: 'Booting system...', delay: 500 },
@@ -102,36 +88,26 @@ document.addEventListener('DOMContentLoaded', () => {
             { text: 'Connection established.', delay: 500 },
             { text: 'Authenticating user: admin', delay: 800 },
         ],
-        postAuthLines: [
-            { text: '[OK] ACCESS GRANTED.', delay: 500 },
-            { text: 'Loading user profile...', delay: 800 },
-        ],
+        postAuthLines: [ { text: '[OK] ACCESS GRANTED.', delay: 500 }, { text: 'Loading user profile...', delay: 800 }, ],
         menuText: [
             { text: '\nWelcome, admin. Please select an option:' },
-            { text: '(1) File Explorer' },
-            { text: '(2) System Diagnostics' },
-            { text: '(3) Network Configuration' },
-            { text: '(4) Security Logs' },
-            { text: '(5) Check for Updates' },
-            { text: '(6) Help' },
+            { text: '(1) File Explorer' }, { text: '(2) System Diagnostics' },
+            { text: '(3) Network Configuration' }, { text: '(4) Security Logs' },
+            { text: '(5) Music Player' }, { text: '(6) Help' },
         ],
         init() {
             this.passwordHandler = this.handlePasswordSubmit.bind(this);
             this.menuHandler = this.handleMenuInput.bind(this);
-
             this.closeBtn.addEventListener('click', () => this.hide());
             this.window.addEventListener('click', () => { this.input.focus(); });
             dragElement(this.window, document.getElementById('terminalTitleBar'));
-            
             const savedState = WindowStateManager.loadState('terminalWindow');
             if(savedState) {
-                this.window.style.top = savedState.top;
-                this.window.style.left = savedState.left;
-                this.window.style.width = savedState.width;
-                this.window.style.height = savedState.height;
+                this.window.style.top = savedState.top; this.window.style.left = savedState.left;
+                this.window.style.width = savedState.width; this.window.style.height = savedState.height;
             }
         },
-        show() { this.window.style.display = 'flex'; },
+        show() { this.window.style.display = 'flex'; this.input.focus();},
         hide() { this.window.style.display = 'none'; this.isRunning = false; },
         async printLines(lines) {
             for (const line of lines) {
@@ -149,12 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         handlePasswordSubmit(event) {
             if (event.key !== 'Enter') return;
-
             this.input.removeEventListener('keydown', this.passwordHandler);
             const pass = this.input.value;
             this.input.value = '';
             this.output.innerHTML += '\n';
-
             if(sha256(pass) === this.CORRECT_PASSWORD_HASH) {
                 this.isLoggedIn = true;
                 this.runPostAuth();
@@ -189,48 +163,26 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         handleMenuInput(event) {
             if (event.key !== 'Enter') return;
-            
             const choice = this.input.value.trim();
             this.input.value = '';
             this.output.innerHTML += `${choice}\n`;
-
             let commandProcessed = true;
             switch (choice) {
-                case '1':
-                    this.output.innerHTML += `<span class="line">Opening File Explorer...</span>`;
-                    FileExplorer.show();
-                    break;
-                case '2':
-                case '3':
-                case '4':
-                case '5':
-                    this.output.innerHTML += `<span class="line">This feature is a placeholder and is not yet implemented.</span>`;
-                    break;
-                case '6':
-                case 'help':
-                    // Just show the menu again
-                    break;
+                case '1': this.output.innerHTML += `<span class="line">Opening File Explorer...</span>`; FileExplorer.show(); break;
+                case '2': case '3': case '4': this.output.innerHTML += `<span class="line">This feature is a placeholder and is not yet implemented.</span>`; break;
+                case '5': this.output.innerHTML += `<span class="line">Opening Music Player...</span>`; MusicPlayer.show(); break;
+                case '6': case 'help': break;
                 default:
                     commandProcessed = false;
-                    if (choice) { // Only show error if user typed something
-                       this.output.innerHTML += `<span class="line error">Invalid command: '${choice}'. Type '6' or 'help' for options.</span>`;
-                    }
+                    if (choice) { this.output.innerHTML += `<span class="line error">Invalid command: '${choice}'. Type '6' or 'help' for options.</span>`; }
                     break;
             }
-            // Loop back to the menu prompt
-            if (commandProcessed) {
-                this.promptForMenuChoice();
-            } else {
-                // If it was an invalid command, show the menu list again for clarity
-                this.showMenu();
-            }
+            if (commandProcessed) { this.promptForMenuChoice(); } else { this.showMenu(); }
         },
         async run(onComplete) {
             if (this.isRunning) return;
-            this.isRunning = true; 
-            this.isLoggedIn = false;
-            this.passwordAttempts = 0;
-            this.onCompleteCallback = onComplete;
+            this.isRunning = true; this.isLoggedIn = false;
+            this.passwordAttempts = 0; this.onCompleteCallback = onComplete;
             this.output.innerHTML = '';
             this.show();
             await this.printLines(this.preAuthLines);
@@ -238,51 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     Terminal.init();
-    
-    // === DOCK LOGIC ===
-    function setupDock() {
-        document.querySelectorAll('.dock-item').forEach(item => {
-            const clickHandler = (e) => {
-                if (item.classList.contains('disabled')) {
-                    PopupManager.alert('System Locked', 'Please log in via the Terminal to unlock the system.', 'info');
-                    return;
-                }
-                
-                if (item.classList.contains('placeholder')) {
-                    PopupManager.alert(
-                        'System Error', 
-                        'This feature has been blocked by the system.', 
-                        'error'
-                    );
-                    return;
-                }
-                
-                if(item.id === 'dockFileExplorer') {
-                    if (FileExplorer.isInitialized) FileExplorer.toggleVisibility();
-                } else if (item.id === 'dockTerminal') {
-                    if (!Terminal.isRunning) {
-                         Terminal.run(() => {
-                            // This callback runs once the login is successful
-                            dockFileExplorer.classList.remove('disabled');
-                         });
-                    } else {
-                        Terminal.show();
-                    }
-                }
-            };
-
-            item.addEventListener('click', clickHandler);
-            item.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    clickHandler(e);
-                }
-            });
-        });
-
-        dockFileExplorer.classList.add('disabled');
-    }
-    setupDock();
 
     // === DBManager & FILE EXPLORER ===
     const DBManager = {
@@ -317,49 +224,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (folders.length === 0) {
                     for (const folder of this.fixedFolders) await DBManager.saveFolder(folder);
                 }
-            } catch (e) {
-                PopupManager.alert('Database Error', 'Could not initialize the file system. Please try again.', 'error');
-                return;
-            }
+            } catch (e) { PopupManager.alert('Database Error', 'Could not initialize the file system. Please try again.', 'error'); return; }
             this.setupEventListeners();
             this.render();
             dragElement(this.explorerWindow, this.explorerTitleBar);
             makeResizable(this.explorerWindow);
-            
             const savedState = WindowStateManager.loadState('explorerWindow');
             if (savedState) {
-                this.explorerWindow.style.top = savedState.top;
-                this.explorerWindow.style.left = savedState.left;
-                this.explorerWindow.style.width = savedState.width;
-                this.explorerWindow.style.height = savedState.height;
+                this.explorerWindow.style.top = savedState.top; this.explorerWindow.style.left = savedState.left;
+                this.explorerWindow.style.width = savedState.width; this.explorerWindow.style.height = savedState.height;
             }
-
             this.isInitialized = true;
         },
-        show(){
-             if (!this.isInitialized) this.init();
-            this.explorerWindow.style.display = 'flex';
-            dockFileExplorer.classList.add('active');
-        },
-        toggleVisibility() {
-            const isVisible = this.explorerWindow.style.display !== 'none';
-            isVisible ? this.handleMinimize() : this.show();
-        },
+        show(){ if (!this.isInitialized) this.init(); this.explorerWindow.style.display = 'flex'; document.getElementById('dockFileExplorer').classList.add('active'); },
+        toggleVisibility() { const isVisible = this.explorerWindow.style.display !== 'none'; isVisible ? this.handleMinimize() : this.show(); },
         async render() {
             this.explorerBody.innerHTML = '<div class="loading-spinner"></div>';
             this.updateAddressBar();
             try {
                 if (this.state.currentView === 'folders') {
                     this.explorerBody.classList.remove('list-view');
-                    this.backButton.style.display = 'none';
-                    this.addFileBtn.style.display = 'none';
+                    this.backButton.style.display = 'none'; this.addFileBtn.style.display = 'none';
                     const folders = await DBManager.getAllFolders();
                     this.explorerBody.innerHTML = '';
                     folders.forEach(folder => this.explorerBody.appendChild(this.createFolderElement(folder)));
                 } else if (this.state.currentView === 'files') {
                     this.explorerBody.classList.add('list-view');
-                    this.backButton.style.display = 'block';
-                    this.addFileBtn.style.display = 'block';
+                    this.backButton.style.display = 'block'; this.addFileBtn.style.display = 'block';
                     const files = await DBManager.getFilesByFolder(this.state.currentFolder.id);
                     this.explorerBody.innerHTML = '';
                     this.explorerBody.appendChild(this.createListViewHeader());
@@ -370,10 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  PopupManager.alert('File System Error', 'Could not retrieve items from the database.', 'error');
             }
         },
-        updateAddressBar() {
-            const basePath = '//103.77.201.52/user/';
-            this.addressInput.value = this.state.currentFolder ? `${basePath} > ${this.state.currentFolder.name}` : basePath;
-        },
+        updateAddressBar() { const basePath = '//103.77.201.52/user/'; this.addressInput.value = this.state.currentFolder ? `${basePath} > ${this.state.currentFolder.name}` : basePath; },
         createFolderElement(folder) {
             const el = document.createElement('div');
             el.className = 'grid-item folder-item';
@@ -387,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
             el.className = 'grid-item file-item';
             el.dataset.id = file.id; el.dataset.type = 'file';
             const iconClass = this.getIconForFileType(file.fileType);
-            el.innerHTML = `<div class="item-col col-name"><i class="${iconClass}"></i><span>${file.fileName}</span></div><div class="item-col col-date"><span>${this.formatDate(file.lastModified)}</span></div><div class.item-col col-size"><span>${this.formatBytes(file.fileSize)}</span></div>`;
+            el.innerHTML = `<div class="item-col col-name"><i class="${iconClass}"></i><span>${file.fileName}</span></div><div class="item-col col-date"><span>${this.formatDate(file.lastModified)}</span></div><div class="item-col col-size"><span>${this.formatBytes(file.fileSize)}</span></div>`;
             return el;
         },
         createListViewHeader() { const el = document.createElement('div'); el.className = 'list-view-header'; el.innerHTML = `<div class="col-name"><span>Name</span></div><div class="col-date"><span>Date modified</span></div><div class="col-size"><span>Size</span></div>`; return el; },
@@ -410,15 +298,11 @@ document.addEventListener('DOMContentLoaded', () => {
             this.fileUploadInput.addEventListener('change', (e) => this.handleFileUpload(e));
             this.newFolderAction.addEventListener('click', () => this.handleNewFolder());
             this.deleteAction.addEventListener('click', () => this.handleDelete());
-            window.addEventListener('click', (e) => { 
-                if (!e.target.closest('.context-menu')) {
-                    this.contextMenu.style.display = 'none';
-                }
-            });
+            window.addEventListener('click', (e) => { if (!e.target.closest('.context-menu')) { this.contextMenu.style.display = 'none'; } });
             this.modalCloseBtn.addEventListener('click', () => this.hidePreviewModal());
             this.filePreviewModal.addEventListener('click', (e) => { if (e.target === this.filePreviewModal) this.hidePreviewModal(); });
         },
-        handleMinimize() { this.explorerWindow.style.display = 'none'; dockFileExplorer.classList.remove('active'); },
+        handleMinimize() { this.explorerWindow.style.display = 'none'; document.getElementById('dockFileExplorer').classList.remove('active'); },
         handleMaximize() {
             if (this.state.isMaximized) {
                 this.explorerWindow.classList.remove('maximized');
@@ -434,19 +318,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             this.state.isMaximized = !this.state.isMaximized;
         },
-        handleClose() {
-            this.explorerWindow.style.display = 'none';
-            dockFileExplorer.classList.remove('active');
-            if (this.state.isMaximized) this.handleMaximize();
-        },
+        handleClose() { this.explorerWindow.style.display = 'none'; document.getElementById('dockFileExplorer').classList.remove('active'); if (this.state.isMaximized) this.handleMaximize(); },
         handleClick(e) {
             if (e.button !== 0) return;
             const item = e.target.closest('.grid-item');
-            if (item) {
-                this.selectItem(item);
-            } else {
-                this.deselectAllItems();
-            }
+            if (item) { this.selectItem(item); } else { this.deselectAllItems(); }
             if (!item) return;
             const { type, id, name } = item.dataset;
             if (e.detail === 2) { 
@@ -466,8 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const item = e.target.closest('.grid-item');
             this.selectItem(item);
-            this.newFolderAction.style.display = 'none';
-            this.deleteAction.style.display = 'none';
+            this.newFolderAction.style.display = 'none'; this.deleteAction.style.display = 'none';
             if (item) {
                 if (item.dataset.deletable === 'true' || item.dataset.type === 'file') {
                     this.state.currentItemForAction = { id: item.dataset.id, type: item.dataset.type };
@@ -476,20 +351,15 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (e.target.closest('.explorer-body') && this.state.currentView === 'folders') {
                 this.newFolderAction.style.display = 'flex';
             } else { return; }
-            this.contextMenu.style.top = `${e.clientY}px`;
-            this.contextMenu.style.left = `${e.clientX}px`;
+            this.contextMenu.style.top = `${e.clientY}px`; this.contextMenu.style.left = `${e.clientX}px`;
             this.contextMenu.style.display = 'block';
         },
         async handleNewFolder() {
             const folderName = prompt('Nhập tên thư mục mới:');
             if (folderName) {
                 const newFolder = { id: `user-folder-${Date.now()}`, name: folderName, icon: 'desktop', isDeletable: true };
-                try {
-                    await DBManager.saveFolder(newFolder);
-                    this.render();
-                } catch(e) {
-                    PopupManager.alert('Error', 'Could not create new folder.', 'error');
-                }
+                try { await DBManager.saveFolder(newFolder); this.render(); }
+                catch(e) { PopupManager.alert('Error', 'Could not create new folder.', 'error'); }
             }
         },
         async handleFileUpload(e) {
@@ -497,11 +367,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     await DBManager.saveFile(e.target.files[0], this.state.currentFolder.id);
                     this.render();
-                } catch (e) {
-                    PopupManager.alert('Error', 'Could not save the file.', 'error');
-                } finally {
-                    this.fileUploadInput.value = null;
-                }
+                } catch (e) { PopupManager.alert('Error', 'Could not save the file.', 'error'); }
+                finally { this.fileUploadInput.value = null; }
             }
         },
         async handleDelete() {
@@ -513,9 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (type === 'folder') await DBManager.deleteFolder(id);
                     else if (type === 'file') await DBManager.deleteFile(parseInt(id));
                     this.render();
-                } catch (e) {
-                    PopupManager.alert('Error', `Could not delete the ${type}.`, 'error');
-                }
+                } catch (e) { PopupManager.alert('Error', `Could not delete the ${type}.`, 'error'); }
             }
             this.state.currentItemForAction = null;
         },
@@ -539,11 +404,146 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             this.filePreviewModal.style.display = 'flex';
         },
-        hidePreviewModal() {
-            if (this.downloadFileLink.href) URL.revokeObjectURL(this.downloadFileLink.href);
-            this.filePreviewModal.style.display = 'none';
-        }
+        hidePreviewModal() { if (this.downloadFileLink.href) URL.revokeObjectURL(this.downloadFileLink.href); this.filePreviewModal.style.display = 'none'; }
     };
+
+    // === MUSIC PLAYER LOGIC ===
+    const MusicPlayer = {
+        isInitialized: false,
+        window: document.getElementById('musicPlayerWindow'),
+        closeBtn: document.getElementById('closeMusicPlayerBtn'),
+        playPauseBtn: document.getElementById('playPauseBtn'),
+        prevBtn: document.getElementById('prevBtn'),
+        nextBtn: document.getElementById('nextBtn'),
+        progressContainer: document.getElementById('progressContainer'),
+        progressBar: document.getElementById('progressBar'),
+        volumeSlider: document.getElementById('volumeSlider'),
+        playlistElement: document.getElementById('playlist'),
+        albumArt: document.getElementById('albumArt'),
+        trackTitle: document.getElementById('trackTitle'),
+        trackArtist: document.getElementById('trackArtist'),
+        currentTimeEl: document.getElementById('currentTime'),
+        totalDurationEl: document.getElementById('totalDuration'),
+        audio: new Audio(),
+        currentTrackIndex: 0,
+        isPlaying: false,
+        playlist: [
+    {
+        title: 'See Tình',
+        artist: 'Hoàng Thùy Linh',
+        src: 'see-tinh.mp3', // <-- Tên file nhạc thứ nhất
+        art: 'wallpaper.jpeg'
+    },
+    {
+        title: 'Bên Trên Tầng Lầu',
+        artist: 'Tăng Duy Tân',
+        src: 'ben-tren-tang-lau.mp3', // <-- Tên file nhạc thứ hai
+        art: 'wallpaper.jpeg'
+    },
+    {
+        title: 'Ngày Đầu Tiên',
+        artist: 'Đức Phúc',
+        src: 'ngay-dau-tien.mp3', // <-- Tên file nhạc thứ ba
+        art: 'wallpaper.jpeg'
+    }
+],
+        init() {
+            if (this.isInitialized) return;
+            dragElement(this.window, document.getElementById('musicPlayerTitleBar'));
+            this.renderPlaylist(); this.loadTrack(this.currentTrackIndex);
+            this.setupEventListeners(); this.isInitialized = true;
+        },
+        setupEventListeners() {
+            this.closeBtn.addEventListener('click', () => this.hide());
+            this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
+            this.nextBtn.addEventListener('click', () => this.nextTrack());
+            this.prevBtn.addEventListener('click', () => this.prevTrack());
+            this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value));
+            this.audio.addEventListener('timeupdate', () => this.updateProgress());
+            this.audio.addEventListener('ended', () => this.nextTrack());
+            this.progressContainer.addEventListener('click', (e) => this.seek(e));
+        },
+        renderPlaylist() {
+            this.playlistElement.innerHTML = '';
+            this.playlist.forEach((track, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${index + 1}. ${track.title} - ${track.artist}`;
+                li.dataset.index = index;
+                if (index === this.currentTrackIndex) { li.classList.add('active'); }
+                li.addEventListener('click', () => { this.loadTrack(index); this.play(); });
+                this.playlistElement.appendChild(li);
+            });
+        },
+        loadTrack(index) {
+            this.currentTrackIndex = index;
+            const track = this.playlist[index];
+            this.audio.src = track.src;
+            this.albumArt.src = track.art || 'wallpaper.jpeg';
+            this.trackTitle.textContent = track.title;
+            this.trackArtist.textContent = track.artist;
+            this.renderPlaylist();
+        },
+        play() { this.isPlaying = true; this.playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>'; this.audio.play(); },
+        pause() { this.isPlaying = false; this.playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>'; this.audio.pause(); },
+        togglePlayPause() { this.isPlaying ? this.pause() : this.play(); },
+        nextTrack() { this.currentTrackIndex = (this.currentTrackIndex + 1) % this.playlist.length; this.loadTrack(this.currentTrackIndex); this.play(); },
+        prevTrack() { this.currentTrackIndex = (this.currentTrackIndex - 1 + this.playlist.length) % this.playlist.length; this.loadTrack(this.currentTrackIndex); this.play(); },
+        updateProgress() {
+            const { duration, currentTime } = this.audio;
+            if (duration) {
+                this.progressBar.style.width = `${(currentTime / duration) * 100}%`;
+                this.totalDurationEl.textContent = this.formatTime(duration);
+                this.currentTimeEl.textContent = this.formatTime(currentTime);
+            }
+        },
+        seek(e) {
+            const width = this.progressContainer.clientWidth;
+            const clickX = e.offsetX;
+            this.audio.currentTime = (clickX / width) * this.audio.duration;
+        },
+        setVolume(value) { this.audio.volume = value; },
+        formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+        },
+        show(){ if (!this.isInitialized) this.init(); this.window.style.display = 'flex'; },
+        hide() { this.window.style.display = 'none'; },
+        toggleVisibility() { const isVisible = this.window.style.display !== 'none'; isVisible ? this.hide() : this.show(); }
+    };
+
+    // === DOCK LOGIC ===
+    function setupDock() {
+        const dockFileExplorer = document.getElementById('dockFileExplorer');
+        const dockMusicPlayer = document.getElementById('dockMusicPlayer');
+        document.querySelectorAll('.dock-item').forEach(item => {
+            const clickHandler = (e) => {
+                if (item.classList.contains('disabled')) {
+                    PopupManager.alert('System Locked', 'Please log in via the Terminal to unlock the system.', 'info'); return;
+                }
+                if (item.classList.contains('placeholder')) {
+                    PopupManager.alert('System Error', 'This feature has been blocked by the system.', 'error'); return;
+                }
+                if(item.id === 'dockFileExplorer') { if (FileExplorer.isInitialized) FileExplorer.toggleVisibility(); }
+                else if (item.id === 'dockMusicPlayer') { MusicPlayer.toggleVisibility(); }
+                else if (item.id === 'dockTerminal') {
+                    if (!Terminal.isRunning) {
+                         Terminal.run(() => {
+                            dockFileExplorer.classList.remove('disabled');
+                            dockMusicPlayer.classList.remove('disabled');
+                         });
+                    } else { Terminal.show(); }
+                }
+            };
+            item.addEventListener('click', clickHandler);
+            item.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); clickHandler(e); } });
+        });
+        dockFileExplorer.classList.add('disabled');
+        dockMusicPlayer.classList.add('disabled');
+    }
+    setupDock();
+
+    // === UTILITY FUNCTIONS ===
     function dragElement(elmnt, header) {
         let p1=0,p2=0,p3=0,p4=0;
         (header || elmnt).onmousedown=dragMouseDown;

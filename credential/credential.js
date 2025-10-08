@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(savedState) { this.window.style.top = savedState.top; this.window.style.left = savedState.left; this.window.style.width = savedState.width; this.window.style.height = savedState.height; }
         },
         show() { this.window.style.display = 'flex'; this.input.focus();},
-        hide() { this.window.style.display = 'none'; },
+        hide() { this.window.style.display = 'none'; this.isRunning = false; },
         async printLines(lines) { for (const line of lines) { if (!this.isRunning) break; this.output.innerHTML += `<span class="line">${line.text}</span>`; this.output.scrollTop = this.output.scrollHeight; await new Promise(resolve => setTimeout(resolve, line.delay || 200)); } },
         promptForPassword() { this.output.innerHTML += `<span>[sudo] password for admin: </span>`; this.input.focus(); this.input.removeEventListener('keydown', this.menuHandler); this.input.addEventListener('keydown', this.passwordHandler); },
         handlePasswordSubmit(event) {
@@ -105,22 +105,28 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         async showMenu() { await this.printLines(this.menuText); this.promptForMenuChoice(); },
         promptForMenuChoice() { this.output.innerHTML += `\n<span>admin@os-sim:~$ </span>`; this.output.scrollTop = this.output.scrollHeight; this.input.focus(); this.input.removeEventListener('keydown', this.passwordHandler); this.input.addEventListener('keydown', this.menuHandler); },
-        handleMenuInput(event) {
+        _printLine(text, className = 'line') {
+            this.output.innerHTML += `<span class="${className}">${text}</span>\n`;
+        },
+        async handleMenuInput(event) {
             if (event.key !== 'Enter') return;
             const choice = this.input.value.trim(); this.input.value = ''; this.output.innerHTML += `${choice}\n`;
-            let commandProcessed = true;
+
             switch (choice) {
-                case '1': this.output.innerHTML += `<span class="line">Opening File Explorer...</span>`; activateApp(FileExplorer); break;
-                case '2': case '3': case '4': this.output.innerHTML += `<span class="line">This feature is a placeholder.</span>`; break;
-                case '5': this.output.innerHTML += `<span class="line">Opening Music Player...</span>`; activateApp(MusicPlayer); break;
-                case '6': this.output.innerHTML += `<span class="line">Opening Mail Client...</span>`; activateApp(MailClient); break;
-                case '7': case 'help': this.printLines(this.menuText.slice(1)); break;
+                case '1': this._printLine('Opening File Explorer...'); FileExplorer.show(); break;
+                case '2': case '3': case '4': this._printLine('This feature is a placeholder.'); break;
+                case '5': this._printLine('Opening Music Player...'); MusicPlayer.show(); break;
+                case '6': this._printLine('Opening Mail Client...'); MailClient.show(); break;
+                case '7': case 'help':
+                    await this.printLines(this.menuText.slice(1));
+                    break;
                 default:
-                    commandProcessed = false;
-                    if (choice) { this.output.innerHTML += `<span class="line error">Invalid command: '${choice}'. Type '7' or 'help'.</span>`; }
+                    if (choice) {
+                        this._printLine(`Invalid command: '${choice}'. Type '7' or 'help'.`, 'line error');
+                    }
                     break;
             }
-            if (commandProcessed) { this.promptForMenuChoice(); } else { this.showMenu(); }
+            this.promptForMenuChoice();
         },
         async run(onComplete) {
             if (this.isRunning) return;
@@ -133,6 +139,16 @@ document.addEventListener('DOMContentLoaded', () => {
     Terminal.init();
 
     // === DBManager & FILE EXPLORER ===
+    const DBManager = {
+        db: null, DB_NAME: 'fixedFoldersDB', FILE_STORE: 'files', FOLDER_STORE: 'folders',
+        init() { return new Promise((resolve, reject) => { const request = indexedDB.open(this.DB_NAME, 1); request.onupgradeneeded = (event) => { const db = event.target.result; if (!db.objectStoreNames.contains(this.FILE_STORE)) db.createObjectStore(this.FILE_STORE, { keyPath: 'id' }); if (!db.objectStoreNames.contains(this.FOLDER_STORE)) db.createObjectStore(this.FOLDER_STORE, { keyPath: 'id' }); }; request.onsuccess = (event) => { this.db = event.target.result; resolve(); }; request.onerror = (event) => reject(event.target.errorCode); }); },
+        saveFile: (file, folderId) => new Promise((resolve, reject) => { const tx = DBManager.db.transaction(DBManager.FILE_STORE, 'readwrite'); const fileRecord = { id: Date.now(), folderId, fileData: file, fileName: file.name, fileSize: file.size, fileType: file.type, lastModified: new Date() }; const request = tx.objectStore(DBManager.FILE_STORE).put(fileRecord); request.onsuccess = () => resolve(fileRecord); request.onerror = (e) => reject(e.target.error); }),
+        getFilesByFolder: (folderId) => new Promise((resolve, reject) => { const store = DBManager.db.transaction(DBManager.FILE_STORE).objectStore(DBManager.FILE_STORE); const allFiles = []; const request = store.openCursor(); request.onsuccess = event => { const cursor = event.target.result; if (cursor) { if (cursor.value.folderId === folderId) allFiles.push(cursor.value); cursor.continue(); } else { resolve(allFiles); } }; request.onerror = (e) => reject(e.target.error); }),
+        deleteFile: (fileId) => new Promise((resolve, reject) => { const request = DBManager.db.transaction(DBManager.FILE_STORE, 'readwrite').objectStore(DBManager.FILE_STORE).delete(fileId); request.onsuccess = () => resolve(); request.onerror = (e) => reject(e.target.error); }),
+        saveFolder: (folder) => new Promise((resolve, reject) => { const request = DBManager.db.transaction(DBManager.FOLDER_STORE, 'readwrite').objectStore(DBManager.FOLDER_STORE).put(folder); request.onsuccess = () => resolve(folder); request.onerror = (e) => reject(e.target.error); }),
+        getAllFolders: () => new Promise((resolve, reject) => { const request = DBManager.db.transaction(DBManager.FOLDER_STORE).objectStore(DBManager.FOLDER_STORE).getAll(); request.onsuccess = e => resolve(e.target.result); request.onerror = (e) => reject(e.target.error); }),
+        deleteFolder: (folderId) => new Promise(async (resolve, reject) => { try { const files = await DBManager.getFilesByFolder(folderId); const tx = DBManager.db.transaction([DBManager.FILE_STORE, DBManager.FOLDER_STORE], 'readwrite'); const fileStore = tx.objectStore(DBManager.FILE_STORE); files.forEach(file => fileStore.delete(file.id)); const folderStore = tx.objectStore(DBManager.FOLDER_STORE); folderStore.delete(folderId); tx.oncomplete = () => resolve(); tx.onerror = (e) => reject(e.target.error); } catch (e) { reject(e); } }),
+    };
     const FileExplorer = {
         isInitialized: false, explorerWindow: document.getElementById('explorerWindow'), explorerTitleBar: document.getElementById('explorerTitleBar'), explorerBody: document.getElementById('explorerBody'),
         fileUploadInput: document.getElementById('fileUploadInput'), backButton: document.getElementById('backButton'), addFileBtn: document.getElementById('addFileBtn'),
@@ -154,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.isInitialized = true;
         },
         show(){ if (!this.isInitialized) this.init(); this.explorerWindow.style.display = 'flex'; document.getElementById('dockFileExplorer').classList.add('active'); },
-        hide() { this.explorerWindow.style.display = 'none'; document.getElementById('dockFileExplorer').classList.remove('active'); },
+        toggleVisibility() { const isVisible = this.explorerWindow.style.display !== 'none'; isVisible ? this.handleMinimize() : this.show(); },
         async render() {
             this.explorerBody.innerHTML = '<div class="loading-spinner"></div>';
             this.updateAddressBar();
@@ -178,14 +194,15 @@ document.addEventListener('DOMContentLoaded', () => {
         deselectAllItems() { document.querySelectorAll('.grid-item.selected').forEach(el => el.classList.remove('selected')); },
         selectItem(item) { this.deselectAllItems(); if(item) item.classList.add('selected'); },
         setupEventListeners() {
-            this.minimizeBtn.addEventListener('click', () => this.hide()); this.maximizeBtn.addEventListener('click', () => this.handleMaximize());
-            this.closeMainBtn.addEventListener('click', () => this.hide()); this.backButton.addEventListener('click', () => this.navigateBack());
+            this.minimizeBtn.addEventListener('click', () => this.handleMinimize()); this.maximizeBtn.addEventListener('click', () => this.handleMaximize());
+            this.closeMainBtn.addEventListener('click', () => this.handleClose()); this.backButton.addEventListener('click', () => this.navigateBack());
             this.addFileBtn.addEventListener('click', () => this.fileUploadInput.click()); this.explorerBody.addEventListener('mousedown', (e) => this.handleClick(e));
             this.explorerBody.addEventListener('contextmenu', (e) => this.handleRightClick(e)); this.fileUploadInput.addEventListener('change', (e) => this.handleFileUpload(e));
             this.newFolderAction.addEventListener('click', () => this.handleNewFolder()); this.deleteAction.addEventListener('click', () => this.handleDelete());
             window.addEventListener('click', (e) => { if (!e.target.closest('.context-menu')) { this.contextMenu.style.display = 'none'; } });
             this.modalCloseBtn.addEventListener('click', () => this.hidePreviewModal()); this.filePreviewModal.addEventListener('click', (e) => { if (e.target === this.filePreviewModal) this.hidePreviewModal(); });
         },
+        handleMinimize() { this.explorerWindow.style.display = 'none'; document.getElementById('dockFileExplorer').classList.remove('active'); },
         handleMaximize() {
             if (this.state.isMaximized) {
                 this.explorerWindow.classList.remove('maximized');
@@ -200,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             this.state.isMaximized = !this.state.isMaximized;
         },
+        handleClose() { this.explorerWindow.style.display = 'none'; document.getElementById('dockFileExplorer').classList.remove('active'); if (this.state.isMaximized) this.handleMaximize(); },
         handleClick(e) {
             if (e.button !== 0) return;
             const item = e.target.closest('.grid-item');
@@ -247,52 +265,46 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // === MUSIC PLAYER LOGIC ===
-    // === MUSIC PLAYER LOGIC ===
     const MusicPlayer = {
-    isInitialized: false, window: document.getElementById('musicPlayerWindow'), closeBtn: document.getElementById('closeMusicPlayerBtn'),
-    playPauseBtn: document.getElementById('playPauseBtn'), prevBtn: document.getElementById('prevBtn'), nextBtn: document.getElementById('nextBtn'),
-    progressContainer: document.getElementById('progressContainer'), progressBar: document.getElementById('progressBar'), volumeSlider: document.getElementById('volumeSlider'),
-    playlistElement: document.getElementById('playlist'), albumArt: document.getElementById('albumArt'), trackTitle: document.getElementById('trackTitle'),
-    trackArtist: document.getElementById('trackArtist'), currentTimeEl: document.getElementById('currentTime'), totalDurationEl: document.getElementById('totalDuration'),
-    audio: new Audio(), currentTrackIndex: 0, isPlaying: false,
-    playlist: [
-        { title: 'Ôi Tình Yêu', artist: 'Unknown Artist', src: 'music/Ôi Tình Yêu.mp3', art: 'wallpaper.jpeg' },
-        { title: 'Janji Janji Seribu Janji', artist: 'Unknown Artist', src: 'music/Janji Janji Seribu Janji.mp3', art: 'wallpaper.jpeg' },
-        { title: 'NGAMEN5', artist: 'Unknown Artist', src: 'music/NGAMEN5.mp3', art: 'wallpaper.jpeg' },
-        { title: 'RUNTAH', artist: 'Unknown Artist', src: 'music/RUNTAH.mp3', art: 'wallpaper.jpeg' },
-        { title: 'Bukan Cinta 1 Atau 2', artist: 'Unknown Artist', src: 'music/BUKAN CINTA 1 ATAU 2.mp3', art: 'wallpaper.jpeg' }
-    ],
-    init() { if (this.isInitialized) return; dragElement(this.window, document.getElementById('musicPlayerTitleBar')); makeResizable(this.window); this.renderPlaylist(); this.loadTrack(this.currentTrackIndex); this.setupEventListeners(); this.isInitialized = true; },
-    setupEventListeners() {
-        this.closeBtn.addEventListener('click', () => this.hide()); this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
-        this.nextBtn.addEventListener('click', () => this.nextTrack()); this.prevBtn.addEventListener('click', () => this.prevTrack());
-        this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value)); this.audio.addEventListener('timeupdate', () => this.updateProgress());
-        this.audio.addEventListener('ended', () => this.nextTrack()); this.progressContainer.addEventListener('click', (e) => this.seek(e));
-    },
-    renderPlaylist() {
-        this.playlistElement.innerHTML = '';
-        this.playlist.forEach((track, index) => {
-            const li = document.createElement('li'); li.textContent = `${index + 1}. ${track.title} - ${track.artist}`;
-            li.dataset.index = index; if (index === this.currentTrackIndex) { li.classList.add('active'); }
-            li.addEventListener('click', () => { this.loadTrack(index); this.play(); });
-            this.playlistElement.appendChild(li);
-        });
-    },
-    loadTrack(index) { this.currentTrackIndex = index; const track = this.playlist[index]; this.audio.src = track.src; this.albumArt.src = track.art || 'wallpaper.jpeg'; this.trackTitle.textContent = track.title; this.trackArtist.textContent = track.artist; this.renderPlaylist(); },
-    play() { this.isPlaying = true; this.playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>'; this.audio.play(); },
-    pause() { this.isPlaying = false; this.playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>'; this.audio.pause(); },
-    togglePlayPause() { this.isPlaying ? this.pause() : this.play(); },
-    nextTrack() { this.currentTrackIndex = (this.currentTrackIndex + 1) % this.playlist.length; this.loadTrack(this.currentTrackIndex); this.play(); },
-    prevTrack() { this.currentTrackIndex = (this.currentTrackIndex - 1 + this.playlist.length) % this.playlist.length; this.loadTrack(this.currentTrackIndex); this.play(); },
-    updateProgress() { const { duration, currentTime } = this.audio; if (duration) { this.progressBar.style.width = `${(currentTime / duration) * 100}%`; this.totalDurationEl.textContent = this.formatTime(duration); this.currentTimeEl.textContent = this.formatTime(currentTime); } },
-    seek(e) { const width = this.progressContainer.clientWidth; const clickX = e.offsetX; this.audio.currentTime = (clickX / width) * this.audio.duration; },
-    setVolume(value) { this.audio.volume = value; },
-    formatTime(seconds) { const minutes = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${minutes}:${secs < 10 ? '0' : ''}${secs}`; },
-    show(){ if (!this.isInitialized) this.init(); this.window.style.display = 'flex'; document.getElementById('dockMusicPlayer').classList.add('active'); },
-    hide() { this.window.style.display = 'none'; document.getElementById('dockMusicPlayer').classList.remove('active'); },
+        isInitialized: false, window: document.getElementById('musicPlayerWindow'), closeBtn: document.getElementById('closeMusicPlayerBtn'),
+        playPauseBtn: document.getElementById('playPauseBtn'), prevBtn: document.getElementById('prevBtn'), nextBtn: document.getElementById('nextBtn'),
+        progressContainer: document.getElementById('progressContainer'), progressBar: document.getElementById('progressBar'), volumeSlider: document.getElementById('volumeSlider'),
+        playlistElement: document.getElementById('playlist'), albumArt: document.getElementById('albumArt'), trackTitle: document.getElementById('trackTitle'),
+        trackArtist: document.getElementById('trackArtist'), currentTimeEl: document.getElementById('currentTime'), totalDurationEl: document.getElementById('totalDuration'),
+        audio: new Audio(), currentTrackIndex: 0, isPlaying: false,
+        playlist: [ { title: 'See Tình', artist: 'Hoàng Thùy Linh', src: 'see-tinh.mp3', art: 'wallpaper.jpeg' }, { title: 'Bên Trên Tầng Lầu', artist: 'Tăng Duy Tân', src: 'ben-tren-tang-lau.mp3', art: 'wallpaper.jpeg' }, { title: 'Ngày Đầu Tiên', artist: 'Đức Phúc', src: 'ngay-dau-tien.mp3', art: 'wallpaper.jpeg' } ],
+        init() { if (this.isInitialized) return; dragElement(this.window, document.getElementById('musicPlayerTitleBar')); makeResizable(this.window); this.renderPlaylist(); this.loadTrack(this.currentTrackIndex); this.setupEventListeners(); this.isInitialized = true; },
+        setupEventListeners() {
+            this.closeBtn.addEventListener('click', () => this.hide()); this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
+            this.nextBtn.addEventListener('click', () => this.nextTrack()); this.prevBtn.addEventListener('click', () => this.prevTrack());
+            this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value)); this.audio.addEventListener('timeupdate', () => this.updateProgress());
+            this.audio.addEventListener('ended', () => this.nextTrack()); this.progressContainer.addEventListener('click', (e) => this.seek(e));
+        },
+        renderPlaylist() {
+            this.playlistElement.innerHTML = '';
+            this.playlist.forEach((track, index) => {
+                const li = document.createElement('li'); li.textContent = `${index + 1}. ${track.title} - ${track.artist}`;
+                li.dataset.index = index; if (index === this.currentTrackIndex) { li.classList.add('active'); }
+                li.addEventListener('click', () => { this.loadTrack(index); this.play(); });
+                this.playlistElement.appendChild(li);
+            });
+        },
+        loadTrack(index) { this.currentTrackIndex = index; const track = this.playlist[index]; this.audio.src = track.src; this.albumArt.src = track.art || 'wallpaper.jpeg'; this.trackTitle.textContent = track.title; this.trackArtist.textContent = track.artist; this.renderPlaylist(); },
+        play() { this.isPlaying = true; this.playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>'; this.audio.play(); },
+        pause() { this.isPlaying = false; this.playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>'; this.audio.pause(); },
+        togglePlayPause() { this.isPlaying ? this.pause() : this.play(); },
+        nextTrack() { this.currentTrackIndex = (this.currentTrackIndex + 1) % this.playlist.length; this.loadTrack(this.currentTrackIndex); this.play(); },
+        prevTrack() { this.currentTrackIndex = (this.currentTrackIndex - 1 + this.playlist.length) % this.playlist.length; this.loadTrack(this.currentTrackIndex); this.play(); },
+        updateProgress() { const { duration, currentTime } = this.audio; if (duration) { this.progressBar.style.width = `${(currentTime / duration) * 100}%`; this.totalDurationEl.textContent = this.formatTime(duration); this.currentTimeEl.textContent = this.formatTime(currentTime); } },
+        seek(e) { const width = this.progressContainer.clientWidth; const clickX = e.offsetX; this.audio.currentTime = (clickX / width) * this.audio.duration; },
+        setVolume(value) { this.audio.volume = value; },
+        formatTime(seconds) { const minutes = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${minutes}:${secs < 10 ? '0' : ''}${secs}`; },
+        show(){ if (!this.isInitialized) this.init(); this.window.style.display = 'flex'; document.getElementById('dockMusicPlayer').classList.add('active'); },
+        hide() { this.window.style.display = 'none'; document.getElementById('dockMusicPlayer').classList.remove('active'); },
+        toggleVisibility() { const isVisible = this.window.style.display !== 'none'; isVisible ? this.hide() : this.show(); }
     };
 
-    // === MAIL CLIENT LOGIC ===
+    // === MAIL CLIENT LOGIC (NEW) ===
     const MailClient = {
         isInitialized: false,
         window: document.getElementById('mailClientWindow'), titleBar: document.getElementById('mailClientTitleBar'),
@@ -352,43 +364,33 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         show(){ if (!this.isInitialized) this.init(); this.window.style.display = 'flex'; document.getElementById('dockMailClient').classList.add('active'); },
         hide() { this.window.style.display = 'none'; document.getElementById('dockMailClient').classList.remove('active'); if (this.state.isMaximized) this.handleMaximize(); },
+        toggleVisibility() { const isVisible = this.window.style.display !== 'none'; isVisible ? this.hide() : this.show(); }
     };
 
-    // === DOCK LOGIC (UPDATED FOR MOBILE MODE) ===
+    // === DOCK LOGIC ===
     function setupDock() {
         const dockFileExplorer = document.getElementById('dockFileExplorer');
         const dockMusicPlayer = document.getElementById('dockMusicPlayer');
         const dockMailClient = document.getElementById('dockMailClient');
         document.querySelectorAll('.dock-item').forEach(item => {
-            const clickHandler = () => {
+            const clickHandler = (e) => {
                 if (item.classList.contains('disabled')) { PopupManager.alert('System Locked', 'Please log in via the Terminal.', 'info'); return; }
                 if (item.classList.contains('placeholder')) { PopupManager.alert('System Error', 'This feature has been blocked.', 'error'); return; }
-                
-                switch (item.id) {
-                    case 'dockFileExplorer':
-                        activateApp(FileExplorer);
-                        break;
-                    case 'dockMusicPlayer':
-                        activateApp(MusicPlayer);
-                        break;
-                    case 'dockMailClient':
-                        activateApp(MailClient);
-                        break;
-                    case 'dockTerminal':
-                        if (!Terminal.isRunning) {
-                             Terminal.run(() => {
-                                dockFileExplorer.classList.remove('disabled');
-                                dockMusicPlayer.classList.remove('disabled');
-                                dockMailClient.classList.remove('disabled');
-                             });
-                        } else {
-                            activateApp(Terminal);
-                        }
-                        break;
+                if(item.id === 'dockFileExplorer') { FileExplorer.toggleVisibility(); }
+                else if (item.id === 'dockMusicPlayer') { MusicPlayer.toggleVisibility(); }
+                else if (item.id === 'dockMailClient') { MailClient.toggleVisibility(); }
+                else if (item.id === 'dockTerminal') {
+                    if (!Terminal.isRunning) {
+                         Terminal.run(() => {
+                            dockFileExplorer.classList.remove('disabled');
+                            dockMusicPlayer.classList.remove('disabled');
+                            dockMailClient.classList.remove('disabled');
+                         });
+                    } else { Terminal.show(); }
                 }
             };
             item.addEventListener('click', clickHandler);
-            item.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); clickHandler(); } });
+            item.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); clickHandler(e); } });
         });
         dockFileExplorer.classList.add('disabled');
         dockMusicPlayer.classList.add('disabled');
@@ -396,17 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     setupDock();
 
-    // === UTILITY FUNCTIONS ===
-    const allAppWindows = [FileExplorer, MusicPlayer, MailClient, Terminal];
-    function activateApp(appToShow) {
-        allAppWindows.forEach(app => {
-            if (app !== appToShow) {
-                app.hide();
-            }
-        });
-        appToShow.show();
-    }
-
+    // === UTILITY FUNCTIONS (UPDATED FOR ALL WINDOWS) ===
     function dragElement(elmnt, header) {
         let p1=0,p2=0,p3=0,p4=0;
         (header || elmnt).onmousedown=dragMouseDown;
@@ -414,7 +406,6 @@ document.addEventListener('DOMContentLoaded', () => {
         function elementDrag(e){ e=e||window.event; e.preventDefault(); p1=p3-e.clientX; p2=p4-e.clientY; p3=e.clientX; p4=e.clientY; elmnt.style.top=(elmnt.offsetTop-p2)+"px"; elmnt.style.left=(elmnt.offsetLeft-p1)+"px"; }
         function closeDragElement(){ document.onmouseup=null; document.onmousemove=null; const rect = { top: elmnt.style.top, left: elmnt.style.left, width: elmnt.style.width, height: elmnt.style.height }; WindowStateManager.saveState(elmnt.id, rect); }
     }
-
     function makeResizable(element) {
         element.querySelectorAll('.resizer').forEach(resizer => {
             resizer.addEventListener('mousedown', (e) => {
@@ -427,19 +418,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const doResize = (moveEvent) => {
                     const minWidth = parseInt(getComputedStyle(element).minWidth) || 0;
                     const minHeight = parseInt(getComputedStyle(element).minHeight) || 0;
-                    if (resizer.classList.contains('resizer-br') || resizer.classList.contains('resizer-r') || resizer.classList.contains('resizer-tr') || resizer.classList.contains('resizer-bl')) {
+                    if (resizer.classList.contains('resizer-br') || resizer.classList.contains('resizer-r')) {
                         const width = original_w + (moveEvent.clientX - original_x);
                         if (width > minWidth) element.style.width = width + 'px';
                     }
-                    if (resizer.classList.contains('resizer-br') || resizer.classList.contains('resizer-b') || resizer.classList.contains('resizer-tr') || resizer.classList.contains('resizer-bl')) {
+                    if (resizer.classList.contains('resizer-br') || resizer.classList.contains('resizer-b')) {
                         const height = original_h + (moveEvent.clientY - original_y);
                         if(height > minHeight) element.style.height = height + 'px';
                     }
-                    if (resizer.classList.contains('resizer-l') || resizer.classList.contains('resizer-tl') || resizer.classList.contains('resizer-bl')) {
+                    if (resizer.classList.contains('resizer-l')) {
                         const width = original_w - (moveEvent.clientX - original_x);
                         if (width > minWidth) { element.style.width = width + 'px'; element.style.left = original_left + (moveEvent.clientX - original_x) + 'px'; }
                     }
-                    if (resizer.classList.contains('resizer-t') || resizer.classList.contains('resizer-tl') || resizer.classList.contains('resizer-tr')) {
+                    if (resizer.classList.contains('resizer-t')) {
                         const height = original_h - (moveEvent.clientY - original_y);
                         if (height > minHeight) { element.style.height = height + 'px'; element.style.top = original_top + (moveEvent.clientY - original_y) + 'px'; }
                     }

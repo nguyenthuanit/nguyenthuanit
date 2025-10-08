@@ -1,0 +1,87 @@
+/* --- Cài đặt chung --- */
+html {
+    font-size: 16px;
+}
+
+body {
+    background-color: #0d0d0d;
+    color: #00ff41;
+    font-family: 'Consolas', 'Monaco', 'Courier New', Courier, monospace;
+    font-size: 1rem;
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* --- Giao diện Terminal --- */
+#terminal {
+    padding: 15px;
+    height: 100vh;
+    box-sizing: border-box;
+    overflow-y: auto;
+    cursor: text;
+}
+
+#history p {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* --- Style cho Link --- */
+#history a {
+    color: inherit; /* Giữ màu xanh của terminal */
+    text-decoration: underline; /* Gạch chân để người dùng biết là link */
+}
+
+#history a:hover {
+    color: #8affad; /* Đổi màu khi di chuột qua */
+}
+
+#input-line {
+    display: flex;
+    align-items: center;
+}
+
+#prompt {
+    margin-right: 8px;
+}
+
+#command-input {
+    background-color: transparent;
+    border: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    outline: none;
+    flex-grow: 1;
+    padding: 0;
+}
+
+/* --- Con trỏ nhấp nháy --- */
+.cursor {
+    display: inline-block;
+    background-color: #00ff41;
+    width: 10px;
+    height: 1.2rem;
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    from, to {
+        background-color: transparent;
+    }
+    50% {
+        background-color: #00ff41;
+    }
+}
+
+/* --- Tối ưu cho di động (Responsive) --- */
+@media (max-width: 600px) {
+    html {
+        font-size: 14px;
+    }
+
+    #terminal {
+        padding: 10px;
+    }
+}

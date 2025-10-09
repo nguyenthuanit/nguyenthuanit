@@ -22,6 +22,9 @@
             margin: 0; padding: 0; font-family: 'Source Code Pro', monospace; overflow: hidden;
             background: linear-gradient(135deg, var(--background-start), var(--background-mid), var(--background-end));
             color: #e0e0e0; display: flex; justify-content: center; align-items: center; height: 100vh; cursor: pointer;
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none; /* Standard syntax */
         }
 
         .scan-lines {
@@ -40,6 +43,7 @@
         }
         #init-overlay.prompt-mode span {
             font-size: 2vw; animation: blinkCaret 1s step-end infinite;
+            text-align: center; padding: 0 10px;
         }
         #init-overlay.countdown-mode span {
             font-size: 18vw;
@@ -106,7 +110,6 @@
             let initialized = false;
             let audioCtx;
 
-            // ===== HÀM ĐÃ SỬA LỖI =====
             function playSound({ type = 'sine', frequency = 440, gain = 0.1, duration = 0.5, attack = 0.01 }) {
                 if (!audioCtx) return;
                 const oscillator = audioCtx.createOscillator();
@@ -122,7 +125,6 @@
 
                 oscillator.start(audioCtx.currentTime);
 
-                // Chỉ lên lịch dừng nếu duration > 0 để tránh lỗi
                 if (duration > 0) {
                     gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
                     oscillator.stop(audioCtx.currentTime + duration);
@@ -132,16 +134,19 @@
             const playInitialSound = () => playSound({ frequency: 440, gain: 0.2, duration: 0.5 });
             const playCountdownTick = () => playSound({ frequency: 880, gain: 0.15, duration: 0.2 });
             const playTypingSound = () => playSound({ type: 'square', frequency: 1500, gain: 0.05, duration: 0.05 });
-            const startAmbience = () => playSound({ frequency: 50, gain: 0.05, duration: 0 }); // duration 0 = không dừng
+            const startAmbience = () => playSound({ frequency: 50, gain: 0.05, duration: 0 });
 
             function initialize() {
                 if (initialized) return;
                 initialized = true;
 
-                // Trả con trỏ chuột về mặc định
                 document.body.style.cursor = 'default';
-
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+                // SỬA LỖI CHO SAFARI
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
 
                 playInitialSound();
                 startAmbience();
@@ -166,7 +171,6 @@
                         playCountdownTick();
                     } else {
                         clearInterval(countdownInterval);
-                        // Thêm thông điệp cuối để chuyển tiếp mượt mà hơn
                         initOverlay.classList.replace('countdown-mode', 'prompt-mode');
                         initText.textContent = 'ACCESS GRANTED';
                         setTimeout(() => {
@@ -188,7 +192,7 @@
 
             function typeWriter() {
                 if (lineIndex < messageLines.length) {
-                    if (charIndex < messageLines[lineIndex].length) {
+                    if (charIndex < messageLines[length].length) {
                         typedMessage.innerHTML = typedMessage.innerHTML.replace('<span class="typing-cursor"></span>', '');
                         typedMessage.innerHTML += messageLines[lineIndex].charAt(charIndex);
                         typedMessage.innerHTML += '<span class="typing-cursor"></span>';
@@ -213,7 +217,7 @@
 
                 for (let i = 0; i < maxChars; i++) {
                     const char = document.createElement('span');
-                    char.classList.add('code-char');
+                    char.classList.add('_char');
                     char.textContent = charSet[Math.floor(Math.random() * charSet.length)];
                     char.style.left = Math.random() * 100 + 'vw';
                     char.style.animationDuration = `${Math.random() * 8 + 5}s`;

@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let state = 'login'; // 'login', 'command', 'help_login'
     let currentUser = 'admin';
     let previousUser = null;
+    let isMining = false; // <<< THÊM MỚI: Trạng thái cho trình giả lập đào coin
+    let miningInterval = null; // <<< THÊM MỚI: Biến giữ interval cho việc đào coin
 
     // --- State cho File System ---
     const fileSystem = {
@@ -71,6 +73,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const command = commandInput.value.trim();
             commandInput.value = '';
 
+            // <<< CẬP NHẬT: Nếu đang đào coin, chỉ cho phép lệnh 'mine stop'
+            if (isMining && command !== 'mine stop') {
+                print("Miner is running. Type 'mine stop' to exit.");
+                return;
+            }
+
             // Phân luồng xử lý dựa trên trạng thái (state)
             if (state === 'login') {
                 handleLogin(command);
@@ -113,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 print('Access to help menu denied.');
             }
-            // Trở về trạng thái dòng lệnh bình thường
             state = 'command';
             commandInput.type = 'text';
             updatePrompt();
@@ -125,19 +132,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const [cmd, ...args] = command.split(/\s+/);
 
         switch (cmd) {
-            // Lệnh 'help' bây giờ sẽ yêu cầu mật khẩu
             case 'help':
                 state = 'help_login';
                 promptElement.textContent = 'Help Password:';
                 commandInput.type = 'password';
                 commandInput.focus();
                 break;
-
             case 'clear':
                 history.innerHTML = '';
                 break;
-            
-            // --- Các lệnh khác giữ nguyên ---
             case 'dashboard': case '1':
                 printHTML(`Redirecting to dashboard... <a href="dashboard.html" target="_blank">Click here...</a>`);
                 setTimeout(() => { window.open('dashboard.html', '_blank'); }, 1000);
@@ -191,20 +194,22 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'fortune':
                 showFortune();
                 break;
-
+            // <<< THÊM MỚI: Lệnh 'mine' để bắt đầu/dừng giả lập
+            case 'mine':
+                handleMining(args);
+                break;
             default:
                 if (command) {
                     print(`-bash: ${command}: command not found.`);
                 }
                 break;
         }
-        if (state === 'command') {
+        if (state === 'command' && !isMining) { // <<< CẬP NHẬT: Chỉ update prompt nếu không đang đào
             updatePrompt();
         }
     }
     
-    // --- Các hàm cho tính năng mới (không thay đổi) ---
-
+    // <<< CẬP NHẬT: Thêm lệnh 'mine' vào phần trợ giúp
     function showHelp() {
         print("\nAvailable Commands:");
         print("  --- Navigation ---");
@@ -224,8 +229,57 @@ document.addEventListener('DOMContentLoaded', () => {
         print("\n  --- Utility ---");
         print("  theme [cmd]   : Change terminal theme (e.g., 'theme set blue').");
         print("  fortune       : Display a random quote.");
+        print("  mine [cmd]    : Start/stop the bitcoin mining simulator (e.g., 'mine start').");
         print("  clear         : Clear the terminal history.");
     }
+    
+    // --- CÁC HÀM MỚI CHO TÍNH NĂNG ĐÀO COIN ---
+
+    function simulateMining() {
+        const hashes = (Math.random() * 500 + 100).toFixed(2);
+        const randomHex = [...Array(10)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+        const messages = [
+            `[OK] Accepted share. Hash: 0x${randomHex}...`,
+            `[INFO] New block detected. Height: ${Math.floor(Math.random() * 10000 + 700000)}`,
+            `[INFO] Speed: ${hashes} MH/s. Shares: ${Math.floor(Math.random() * 100)}/${Math.floor(Math.random() * 5)}`,
+            `[OK] Share accepted.`
+        ];
+        const randomIndex = Math.floor(Math.random() * messages.length);
+        print(messages[randomIndex]);
+    }
+
+    function handleMining(args) {
+        const action = args[0];
+        if (action === 'start') {
+            if (isMining) {
+                print("Bitcoin miner is already running.");
+                return;
+            }
+            print("Starting Bitcoin miner... (Simulated)");
+            print("To stop, type 'mine stop'");
+            isMining = true;
+            promptElement.style.display = 'none'; // Ẩn prompt
+            document.querySelector('.cursor').style.display = 'none'; // Ẩn con trỏ
+            miningInterval = setInterval(simulateMining, 1500);
+        } else if (action === 'stop') {
+            if (!isMining) {
+                print("Miner is not running.");
+                return;
+            }
+            clearInterval(miningInterval);
+            isMining = false;
+            print("Bitcoin miner stopped.");
+            promptElement.style.display = 'inline'; // Hiện lại prompt
+            document.querySelector('.cursor').style.display = 'inline-block'; // Hiện lại con trỏ
+            updatePrompt();
+            commandInput.focus();
+        } else {
+            print("Usage: mine [start|stop]");
+        }
+    }
+
+
+    // --- Các hàm cũ không thay đổi ---
 
     function showProcesses() {
         print("PID    USER    CPU%   MEM%   COMMAND");

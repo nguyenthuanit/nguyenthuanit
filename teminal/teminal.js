@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updatePrompt() {
         const pathString = currentPath.length > 0 ? `/${currentPath.join('/')}` : '';
         const promptSymbol = currentUser === 'admin' ? '#' : '$';
-        promptElement.textContent = `${currentUser}@bandung:~${pathString}${promptSymbol}`;
+        promptElement.textContent = `${currentUser}@NguyenthuanIT:~${pathString}${promptSymbol}`;
     }
 
     commandInput.addEventListener('keydown', function (event) {
@@ -359,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showNeofetch() {
         const neofetch = `
-         .--.      ${currentUser}@bandung
+         .--.      ${currentUser}@NguyenthuanIT
         |o_o |     ---------------
         |:_/ |     OS: Gemini Linux x86_64
        //   \\ \\    Host: Virtual Machine v2.1
@@ -455,11 +455,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function start() {
         commandInput.value = '';
         commandInput.type = 'password';
-        type('Connecting to 103.199.16.113 (Bandung)...', () => {
-            type('Connection established.', () => {
-                print('Username: admin');
-                promptElement.textContent = 'password:';
-                commandInput.focus();
+        type('booting system...', () => {
+            type('Connecting to 103.199.16.113 (Bandung)...', () => {
+                type('Connection established.', () => {
+                    print('Username: admin');
+                    promptElement.textContent = 'password:';
+                    commandInput.focus();
+                });
             });
         });
     }

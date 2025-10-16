@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Mật khẩu chính và mật khẩu cho lệnh HELP ---
     const mainPassHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92'; // Mật khẩu: 999997
     const helpPassHash = 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3'; // Mật khẩu: 123
-    
+
     // --- Quản lý trạng thái của terminal ---
     let state = 'login'; // 'login', 'command', 'help_login'
     let currentUser = 'admin';
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         'README.md': 'Chào mừng bạn đến với terminal giả lập. Gõ `help` để xem các lệnh.'
     };
-    let currentPath = []; 
+    let currentPath = [];
 
     function getCurrentDirectory() {
         return currentPath.reduce((dir, path) => dir[path], fileSystem);
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 30);
     }
-    
+
     function updatePrompt() {
         const pathString = currentPath.length > 0 ? `/${currentPath.join('/')}` : '';
         const promptSymbol = currentUser === 'admin' ? '#' : '$';
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (state === 'help_login') {
                 handleHelpLogin(command);
             } else { // state === 'command'
-                if(command) print(`${promptElement.textContent} ${command}`);
+                if (command) print(`${promptElement.textContent} ${command}`);
                 handleCommand(command);
             }
         }
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 300);
     }
-    
+
     function handleHelpLogin(password) {
         const enteredHash = CryptoJS.SHA256(password).toString();
         print(`Help Password: ********`);
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updatePrompt();
         }
     }
-    
+
     // <<< CẬP NHẬT: Thêm lệnh 'mine' vào phần trợ giúp
     function showHelp() {
         print("\nAvailable Commands:");
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
         print("  mine [cmd]    : Start/stop the bitcoin mining simulator (e.g., 'mine start').");
         print("  clear         : Clear the terminal history.");
     }
-    
+
     // --- CÁC HÀM MỚI CHO TÍNH NĂNG ĐÀO COIN ---
 
     function simulateMining() {
@@ -306,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         print(output);
     }
-    
+
     function changeDirectory(dirName) {
         if (!dirName || dirName === '/') {
             currentPath = [];
@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
             print(`-bash: cat: ${fileName}: No such file or is a directory`);
         }
     }
-    
+
     function generateTree(directory, prefix = '') {
         const entries = Object.keys(directory);
         entries.forEach((entry, index) => {
@@ -361,16 +361,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const neofetch = `
          .--.      ${currentUser}@NguyenthuanIT
         |o_o |     ---------------
-        |:_/ |     OS: Gemini Linux x86_64
+        |:_/ |     OS: Kali Linux Live x86_64
        //   \\ \\    Host: Virtual Machine v2.1
-      (|     | )   Kernel: 5.15.0-custom
+      (|     | )    Kernel: 5.15.0-custom
      /'\\_   _/\`\\   Uptime: 2 hours, 15 mins
-     \\___)=(___/   CPU: Virtual Core (8) @ 4.2GHz
-                   Memory: 1024MiB / 16384MiB
+     \\___)=(___/   CPU: Xeon E5-2699v4 3.6Ghz
+                   Memory: 4096MB / 131072 MB
         `;
         print(neofetch);
     }
-    
+
     function simulateProgress(callback) {
         let progress = 0;
         const p = document.createElement('p');
@@ -420,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
             print("Usage: theme [list|set] [theme_name]");
         }
     }
-    
+
     function switchUser(username) {
         if (!username) {
             print("Usage: su [username]");

@@ -8,7 +8,9 @@ body {
     font-size: 1rem;
     line-height: 1.4;
     margin: 0;
-    transition: color 0.3s, background-color 0.3s; /* Hiệu ứng chuyển theme mượt mà */
+    transition: color 0.5s, background-color 0.5s; /* Hiệu ứng chuyển theme mượt mà hơn */
+    background-color: var(--main-bg);
+    color: var(--main-color);
 }
 
 /* --- Giao diện Terminal --- */
@@ -18,6 +20,8 @@ body {
     box-sizing: border-box;
     overflow-y: auto;
     cursor: text;
+    position: relative; /* Thêm để chứa các hiệu ứng nền */
+    z-index: 1;
 }
 
 #history p {
@@ -28,7 +32,7 @@ body {
 
 #history a {
     text-decoration: underline;
-    color: inherit;
+    color: var(--link-color, var(--main-color)); /* Sử dụng màu link riêng nếu có */
 }
 
 #history a:hover {
@@ -42,6 +46,7 @@ body {
 
 #prompt {
     margin-right: 8px;
+    color: var(--prompt-color, var(--main-color)); /* Màu riêng cho prompt */
 }
 
 #command-input {
@@ -61,7 +66,7 @@ body {
     width: 10px;
     height: 1.2rem;
     animation: blink 1s step-end infinite;
-    transition: background-color 0.3s;
+    background-color: var(--main-color);
 }
 
 @keyframes blink {
@@ -73,28 +78,48 @@ body {
     }
 }
 
-/* --- Các Theme Màu Sắc --- */
+
+/* --- CÁC THEME MÀU SẮC --- */
+
+/* Theme mặc định: Matrix (Green) */
 :root {
+    --main-bg: #000000;
+    --main-color: #00ff41;
+    --prompt-color: #00ff41;
+    --link-color: #33ff66;
+}
+
+/* Theme: Hacker (Crimson) */
+body.theme-hacker {
     --main-bg: #0d0d0d;
+    --main-color: #dc143c;
+    --prompt-color: #ff3355;
+    --link-color: #ff4561;
 }
 
-body.theme-green { --main-color: #00ff41; }
-body.theme-blue { --main-color: #5294e2; }
-body.theme-amber { --main-color: #ffc107; }
-body.theme-white { --main-color: #e0e0e0; }
-body.theme-crimson { --main-color: #dc143c; }
-
-body {
-    background-color: var(--main-bg);
-    color: var(--main-color);
-}
-.cursor {
-    background-color: var(--main-color);
-}
-#history a:hover {
-    color: var(--main-color);
+/* Theme: Cyberpunk */
+body.theme-cyberpunk {
+    --main-bg: #2a0045;
+    --main-color: #00f7ff; /* Cyan */
+    --prompt-color: #ff00ff; /* Magenta */
+    --link-color: #00f7ff;
 }
 
+/* Theme: Solarized Light */
+body.theme-solarized-light {
+    --main-bg: #fdf6e3; /* Base3 */
+    --main-color: #657b83; /* Base00 */
+    --prompt-color: #268bd2; /* Blue */
+    --link-color: #2aa198; /* Cyan */
+}
+
+/* Theme: Dracula */
+body.theme-dracula {
+    --main-bg: #282a36;
+    --main-color: #f8f8f2; /* Foreground */
+    --prompt-color: #50fa7b; /* Green */
+    --link-color: #8be9fd; /* Cyan */
+}
 
 /* --- Tối ưu cho di động (Responsive) --- */
 @media (max-width: 600px) {

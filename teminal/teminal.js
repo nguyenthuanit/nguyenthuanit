@@ -12,8 +12,24 @@ document.addEventListener('DOMContentLoaded', () => {
     let state = 'login'; // 'login', 'command', 'help_login'
     let currentUser = 'admin';
     let previousUser = null;
-    let isMining = false; // <<< THÊM MỚI: Trạng thái cho trình giả lập đào coin
-    let miningInterval = null; // <<< THÊM MỚI: Biến giữ interval cho việc đào coin
+
+    // --- Trạng thái cho trình giả lập đào coin và IndexedDB ---
+    let isMining = false;
+    let miningInterval = null;
+    let db = null;
+    let currentBalance = 0.0;
+    let shareCount = 0;
+    const BLOCK_REWARD = 0.01;
+    const BLOCK_FIND_CHANCE = 0.02;
+
+    // --- CẢI TIẾN: Danh sách các theme có sẵn ---
+    const availableThemes = {
+        'matrix': 'Classic green on black. The default.',
+        'hacker': 'Aggressive crimson on a dark background.',
+        'cyberpunk': 'Neon on a deep purple background.',
+        'solarized-light': 'Easy on the eyes, for daytime coding.',
+        'dracula': 'A popular dark theme for developers.'
+    };
 
     // --- State cho File System ---
     const fileSystem = {
@@ -73,18 +89,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const command = commandInput.value.trim();
             commandInput.value = '';
 
-            // <<< CẬP NHẬT: Nếu đang đào coin, chỉ cho phép lệnh 'mine stop'
             if (isMining && command !== 'mine stop') {
                 print("Miner is running. Type 'mine stop' to exit.");
                 return;
             }
 
-            // Phân luồng xử lý dựa trên trạng thái (state)
             if (state === 'login') {
                 handleLogin(command);
             } else if (state === 'help_login') {
                 handleHelpLogin(command);
-            } else { // state === 'command'
+            } else {
                 if (command) print(`${promptElement.textContent} ${command}`);
                 handleCommand(command);
             }
@@ -194,9 +208,11 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'fortune':
                 showFortune();
                 break;
-            // <<< THÊM MỚI: Lệnh 'mine' để bắt đầu/dừng giả lập
             case 'mine':
                 handleMining(args);
+                break;
+            case 'balance':
+                 print(`Your current balance: ${currentBalance.toFixed(8)} BTC`);
                 break;
             default:
                 if (command) {
@@ -204,12 +220,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 break;
         }
-        if (state === 'command' && !isMining) { // <<< CẬP NHẬT: Chỉ update prompt nếu không đang đào
+        if (state === 'command' && !isMining) {
             updatePrompt();
         }
     }
 
-    // <<< CẬP NHẬT: Thêm lệnh 'mine' vào phần trợ giúp
     function showHelp() {
         print("\nAvailable Commands:");
         print("  --- Navigation ---");
@@ -227,25 +242,80 @@ document.addEventListener('DOMContentLoaded', () => {
         print("  cat [file]    : Display file content.");
         print("  tree          : Show directory structure as a tree.");
         print("\n  --- Utility ---");
-        print("  theme [cmd]   : Change terminal theme (e.g., 'theme set blue').");
+        print("  theme [cmd]   : Change terminal theme (e.g., 'theme list').");
         print("  fortune       : Display a random quote.");
         print("  mine [cmd]    : Start/stop the bitcoin mining simulator (e.g., 'mine start').");
+        print("  balance       : Check your simulated BTC balance.");
         print("  clear         : Clear the terminal history.");
     }
 
-    // --- CÁC HÀM MỚI CHO TÍNH NĂNG ĐÀO COIN ---
+    // --- HÀM CHO TÍNH NĂNG LƯU TRỮ COIN BẰNG INDEXEDDB ---
+
+    function initDB(callback) {
+        const request = indexedDB.open('TerminalCoinDB', 1);
+
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains('wallet')) {
+                db.createObjectStore('wallet', { keyPath: 'id' });
+            }
+        };
+
+        request.onsuccess = (event) => {
+            db = event.target.result;
+            if (callback) callback();
+        };
+
+        request.onerror = (event) => {
+            console.error('Database error:', event.target.errorCode);
+        };
+    }
+
+    function getBalanceFromDB() {
+        if (!db) return;
+        const transaction = db.transaction(['wallet'], 'readonly');
+        const store = transaction.objectStore('wallet');
+        const request = store.get('main_balance');
+
+        request.onsuccess = () => {
+            if (request.result) {
+                currentBalance = request.result.value;
+            } else {
+                currentBalance = 0.0;
+            }
+        };
+    }
+
+    function saveBalanceToDB(balance) {
+        if (!db) return;
+        const transaction = db.transaction(['wallet'], 'readwrite');
+        const store = transaction.objectStore('wallet');
+        store.put({ id: 'main_balance', value: balance });
+    }
+
+    // --- HÀM MÔ PHỎNG ĐÀO COIN ---
 
     function simulateMining() {
-        const hashes = (Math.random() * 500 + 100).toFixed(2);
-        const randomHex = [...Array(10)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-        const messages = [
-            `[OK] Accepted share. Hash: 0x${randomHex}...`,
-            `[INFO] New block detected. Height: ${Math.floor(Math.random() * 10000 + 700000)}`,
-            `[INFO] Speed: ${hashes} MH/s. Shares: ${Math.floor(Math.random() * 100)}/${Math.floor(Math.random() * 5)}`,
-            `[OK] Share accepted.`
-        ];
-        const randomIndex = Math.floor(Math.random() * messages.length);
-        print(messages[randomIndex]);
+        if (Math.random() < BLOCK_FIND_CHANCE) {
+            currentBalance += BLOCK_REWARD;
+            saveBalanceToDB(currentBalance);
+            const blockHeight = Math.floor(Math.random() * 10000 + 700000);
+            print(`-- BLOCK FOUND -- Height: ${blockHeight} | Reward: ${BLOCK_REWARD.toFixed(8)} BTC!`);
+            print(`Total Balance: ${currentBalance.toFixed(8)} BTC`);
+            shareCount = 0;
+            return;
+        }
+
+        shareCount++;
+        const minedAmount = Math.random() * 0.00005 + 0.00001;
+        currentBalance += minedAmount;
+        saveBalanceToDB(currentBalance);
+
+        const hashrate = (Math.random() * 150 + 450).toFixed(2);
+        const difficulty = (Math.random() * 50 + 100).toFixed(4);
+        const ping = Math.floor(Math.random() * 50 + 20);
+
+        print(`[OK] ${shareCount} | ACCEPTED | ${hashrate} MH/s | diff: ${difficulty} | ping: ${ping}ms`);
     }
 
     function handleMining(args) {
@@ -256,11 +326,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             print("Starting Bitcoin miner... (Simulated)");
+            print(`Connecting to mining pool: pool.btc.com:3333`);
+            print(`Current balance: ${currentBalance.toFixed(8)} BTC`);
             print("To stop, type 'mine stop'");
             isMining = true;
-            promptElement.style.display = 'none'; // Ẩn prompt
-            document.querySelector('.cursor').style.display = 'none'; // Ẩn con trỏ
-            miningInterval = setInterval(simulateMining, 1500);
+            shareCount = 0;
+            promptElement.style.display = 'none';
+            document.querySelector('.cursor').style.display = 'none';
+            miningInterval = setInterval(simulateMining, 1800);
         } else if (action === 'stop') {
             if (!isMining) {
                 print("Miner is not running.");
@@ -269,12 +342,38 @@ document.addEventListener('DOMContentLoaded', () => {
             clearInterval(miningInterval);
             isMining = false;
             print("Bitcoin miner stopped.");
-            promptElement.style.display = 'inline'; // Hiện lại prompt
-            document.querySelector('.cursor').style.display = 'inline-block'; // Hiện lại con trỏ
+            print(`Final balance: ${currentBalance.toFixed(8)} BTC`);
+            promptElement.style.display = 'inline';
+            document.querySelector('.cursor').style.display = 'inline-block';
             updatePrompt();
             commandInput.focus();
         } else {
             print("Usage: mine [start|stop]");
+        }
+    }
+    
+    // --- CẢI TIẾN: HÀM XỬ LÝ THEME ---
+
+    function handleTheme(args) {
+        const action = args[0];
+        const themeName = args[1];
+
+        if (action === 'list') {
+            print("Available themes:");
+            for (const name in availableThemes) {
+                print(`  - ${name}: ${availableThemes[name]}`);
+            }
+        } else if (action === 'set' && themeName) {
+            if (availableThemes.hasOwnProperty(themeName)) {
+                // Đặt class cho body, CSS sẽ tự động xử lý
+                document.body.className = `theme-${themeName}`;
+                print(`Theme changed to ${themeName}.`);
+            } else {
+                print(`-bash: theme: '${themeName}' is not a valid theme.`);
+                print("Type 'theme list' to see all available themes.");
+            }
+        } else {
+            print("Usage: theme [list|set] [theme_name]");
         }
     }
 
@@ -361,12 +460,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const neofetch = `
          .--.      ${currentUser}@NguyenthuanIT
         |o_o |     ---------------
-        |:_/ |     OS: Kali Linux Live x86_64
+        |:_/ |     OS: Linux Live x86_64
        //   \\ \\    Host: Virtual Machine v2.1
-      (|     | )    Kernel: 5.15.0-custom
+      (|     | )   Kernel: 5.15.0-custom
      /'\\_   _/\`\\   Uptime: 2 hours, 15 mins
      \\___)=(___/   CPU: Xeon E5-2699v4 3.6Ghz
-                   Memory: 4096MB / 131072 MB
+                   Memory: 4096MB / 131072MB
         `;
         print(neofetch);
     }
@@ -400,24 +499,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } else {
             print("Usage: apt [update|install] [package_name]");
-        }
-    }
-
-    function handleTheme(args) {
-        const action = args[0];
-        const theme = args[1];
-        const availableThemes = ['green', 'blue', 'amber', 'white', 'crimson'];
-        if (action === 'list') {
-            print(`Available themes: ${availableThemes.join(', ')}`);
-        } else if (action === 'set' && theme) {
-            if (availableThemes.includes(theme)) {
-                document.body.className = `theme-${theme}`;
-                print(`Theme changed to ${theme}.`);
-            } else {
-                print(`-bash: theme: ${theme}: theme not found.`);
-            }
-        } else {
-            print("Usage: theme [list|set] [theme_name]");
         }
     }
 
@@ -455,12 +536,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function start() {
         commandInput.value = '';
         commandInput.type = 'password';
-        type('booting system...', () => {
-            type('Connecting to 103.199.16.113 (Bandung)...', () => {
-                type('Connection established.', () => {
-                    print('Username: admin');
-                    promptElement.textContent = 'password:';
-                    commandInput.focus();
+        document.body.className = 'theme-matrix'; // Đặt theme mặc định khi khởi động
+
+        initDB(() => {
+            getBalanceFromDB();
+            type('booting system...', () => {
+                type('Connecting to 103.199.16.113 (Bandung)...', () => {
+                    type('Connection established.', () => {
+                        print('Username: admin');
+                        promptElement.textContent = 'password:';
+                        commandInput.focus();
+                    });
                 });
             });
         });

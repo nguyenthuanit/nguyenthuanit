@@ -63,13 +63,18 @@ Object.assign(commands, {
         const currentDir = getCurrentDirectory();
         if (currentDir[dirName]) return `mkdir: cannot create directory ‘${dirName}’: File exists`;
         currentDir[dirName] = { type: 'dir', content: {}, owner: currentUser, group: 'admin', permissions: '755', modified: new Date().toISOString().slice(0, 10) };
+        saveFileSystemToDB(); // Lưu thay đổi
     },
     touch: (args) => {
         if (!args[0]) return "Usage: touch <file_name>";
         const fileName = args[0];
         const currentDir = getCurrentDirectory();
-        if (currentDir[fileName]) currentDir[fileName].modified = new Date().toISOString().slice(0, 10);
-        else currentDir[fileName] = { type: 'file', content: '', owner: currentUser, group: 'admin', permissions: '644', modified: new Date().toISOString().slice(0, 10) };
+        if (currentDir[fileName]) {
+            currentDir[fileName].modified = new Date().toISOString().slice(0, 10);
+        } else {
+            currentDir[fileName] = { type: 'file', content: '', owner: currentUser, group: 'admin', permissions: '644', modified: new Date().toISOString().slice(0, 10) };
+        }
+        saveFileSystemToDB(); // Lưu thay đổi
     },
     rm: (args) => {
         const recursive = args.includes('-r');
@@ -83,6 +88,7 @@ Object.assign(commands, {
         }
         if (target.type === 'dir' && !recursive) return `rm: cannot remove '${targetName}': Is a directory`;
         delete currentDir[targetName];
+        saveFileSystemToDB(); // Lưu thay đổi
     },
     grep: (args, stdin) => {
         if (args.length < 1 || (!stdin && args.length < 2)) return "Usage: grep <pattern> [file]";
@@ -109,6 +115,7 @@ Object.assign(commands, {
         if (!node) return `chmod: cannot access '${fileName}': No such file or directory`;
         if (!/^[0-7]{3}$/.test(mode)) return `chmod: invalid mode: ‘${mode}’`;
         node.permissions = mode;
+        saveFileSystemToDB(); // Lưu thay đổi
     },
     chown: (args) => {
         if (args.length < 2) return "Usage: chown <user> <file>";
@@ -117,5 +124,6 @@ Object.assign(commands, {
         const node = findNodeByPath(fileName);
         if (!node) return `chown: cannot access '${fileName}': No such file or directory`;
         node.owner = owner;
+        saveFileSystemToDB(); // Lưu thay đổi
     },
 });

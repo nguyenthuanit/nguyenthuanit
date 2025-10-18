@@ -326,14 +326,21 @@ function handleRedirection(fileName, content, append) {
         currentDir[fileName].content = content;
     }
     currentDir[fileName].modified = new Date().toISOString().slice(0, 10);
+    saveFileSystemToDB(); // <-- LƯU THAY ĐỔI
 }
 
-// --- HÀM CHO TÍNH NĂNG LƯU TRỮ COIN ---
+// --- HÀM CHO TÍNH NĂNG LƯU TRỮ (COIN VÀ FILE SYSTEM) ---
 function initDB(callback) {
-    const request = indexedDB.open('TerminalCoinDB', 1);
+    const request = indexedDB.open('TerminalCoinDB', 2); // Tăng phiên bản lên 2
     request.onupgradeneeded = (event) => {
         const db = event.target.result;
-        if (!db.objectStoreNames.contains('wallet')) db.createObjectStore('wallet', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('wallet')) {
+            db.createObjectStore('wallet', { keyPath: 'id' });
+        }
+        // Thêm kho lưu trữ cho hệ thống tệp
+        if (!db.objectStoreNames.contains('fs')) {
+            db.createObjectStore('fs', { keyPath: 'id' });
+        }
     };
     request.onsuccess = (event) => {
         db = event.target.result;
@@ -357,6 +364,40 @@ function saveBalanceToDB(balance) {
     const transaction = db.transaction(['wallet'], 'readwrite');
     const store = transaction.objectStore('wallet');
     store.put({ id: 'main_balance', value: balance });
+}
+
+// Hàm mới: Lưu hệ thống tệp vào DB
+function saveFileSystemToDB() {
+    if (!db) return;
+    const transaction = db.transaction(['fs'], 'readwrite');
+    const store = transaction.objectStore('fs');
+    store.put({ id: 'root', data: fileSystem });
+    console.log("File system saved to IndexedDB.");
+}
+
+// Hàm mới: Tải hệ thống tệp từ DB
+function loadFileSystemFromDB(callback) {
+    if (!db) return;
+    const transaction = db.transaction(['fs'], 'readonly');
+    const store = transaction.objectStore('fs');
+    const request = store.get('root');
+
+    request.onsuccess = () => {
+        if (request.result && request.result.data) {
+            // Nếu có dữ liệu trong DB, ghi đè lên đối tượng mặc định
+            Object.assign(fileSystem, request.result.data);
+            console.log("File system loaded from IndexedDB.");
+        } else {
+            // Nếu không, lưu hệ thống tệp mặc định vào DB cho lần sau
+            console.log("No file system in DB, saving default one.");
+            saveFileSystemToDB();
+        }
+        if (callback) callback();
+    };
+    request.onerror = (event) => {
+        console.error("Failed to load file system:", event.target.errorCode);
+        if (callback) callback(); // Vẫn tiếp tục dù có lỗi
+    };
 }
 
 function simulateMining() {
@@ -388,13 +429,16 @@ function start() {
     commandInput.type = 'password';
     
     initDB(() => {
-        getBalanceFromDB();
-        type('booting system...', () => {
-            type('Connecting to 103.199.16.113 (Bandung)...', () => {
-                type('Connection established.', () => {
-                    print('Username: admin');
-                    promptElement.textContent = 'password:';
-                    commandInput.focus();
+        getBalanceFromDB(); // Tải số dư
+        loadFileSystemFromDB(() => { // Tải hệ thống tệp
+            // Tiếp tục quá trình khởi động sau khi đã tải xong mọi thứ
+            type('booting system...', () => {
+                type('Connecting to 103.199.16.113 (Bandung)...', () => {
+                    type('Connection established.', () => {
+                        print('Username: admin');
+                        promptElement.textContent = 'password:';
+                        commandInput.focus();
+                    });
                 });
             });
         });

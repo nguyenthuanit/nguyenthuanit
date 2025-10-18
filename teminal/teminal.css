@@ -20,7 +20,7 @@ body {
     box-sizing: border-box;
     overflow-y: auto;
     cursor: text;
-    position: relative; /* Thêm để chứa các hiệu ứng nền */
+    position: relative;
     z-index: 1;
 }
 
@@ -32,7 +32,7 @@ body {
 
 #history a {
     text-decoration: underline;
-    color: var(--link-color, var(--main-color)); /* Sử dụng màu link riêng nếu có */
+    color: var(--link-color, var(--main-color));
 }
 
 #history a:hover {
@@ -46,7 +46,7 @@ body {
 
 #prompt {
     margin-right: 8px;
-    color: var(--prompt-color, var(--main-color)); /* Màu riêng cho prompt */
+    color: var(--prompt-color, var(--main-color));
 }
 
 #command-input {
@@ -78,10 +78,41 @@ body {
     }
 }
 
+/* --- THÊM MỚI: Kiểu cho trình soạn thảo Nano --- */
+#editor-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--main-bg);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+#editor-textarea {
+    flex-grow: 1;
+    background-color: transparent;
+    color: var(--main-color);
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: inherit;
+    padding: 15px;
+    resize: none;
+}
+
+#editor-statusbar {
+    background-color: var(--main-color);
+    color: var(--main-bg);
+    padding: 4px 15px;
+    font-weight: bold;
+    text-align: center;
+}
+
 
 /* --- CÁC THEME MÀU SẮC --- */
-
-/* Theme mặc định: Matrix (Green) */
 :root {
     --main-bg: #000000;
     --main-color: #00ff41;
@@ -89,7 +120,6 @@ body {
     --link-color: #33ff66;
 }
 
-/* Theme: Hacker (Crimson) */
 body.theme-hacker {
     --main-bg: #0d0d0d;
     --main-color: #dc143c;
@@ -97,28 +127,25 @@ body.theme-hacker {
     --link-color: #ff4561;
 }
 
-/* Theme: Cyberpunk */
 body.theme-cyberpunk {
     --main-bg: #2a0045;
-    --main-color: #00f7ff; /* Cyan */
-    --prompt-color: #ff00ff; /* Magenta */
+    --main-color: #00f7ff;
+    --prompt-color: #ff00ff;
     --link-color: #00f7ff;
 }
 
-/* Theme: Solarized Light */
 body.theme-solarized-light {
-    --main-bg: #fdf6e3; /* Base3 */
-    --main-color: #657b83; /* Base00 */
-    --prompt-color: #268bd2; /* Blue */
-    --link-color: #2aa198; /* Cyan */
+    --main-bg: #fdf6e3;
+    --main-color: #657b83;
+    --prompt-color: #268bd2;
+    --link-color: #2aa198;
 }
 
-/* Theme: Dracula */
 body.theme-dracula {
     --main-bg: #282a36;
-    --main-color: #f8f8f2; /* Foreground */
-    --prompt-color: #50fa7b; /* Green */
-    --link-color: #8be9fd; /* Cyan */
+    --main-color: #f8f8f2;
+    --prompt-color: #50fa7b;
+    --link-color: #8be9fd;
 }
 
 /* --- Tối ưu cho di động (Responsive) --- */

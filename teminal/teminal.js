@@ -94,24 +94,18 @@ function getCurrentDirectory() {
 }
 
 function findNodeByPath(path) {
+    if (!path) return null;
     let parts = path.split('/').filter(p => p);
-    let startNode;
-    if (path.startsWith('/')) {
-        startNode = rootNode;
-    } else {
-        startNode = getCurrentDirectory();
-    }
+    let startNode = path.startsWith('/') ? rootNode : getCurrentDirectory();
     return parts.reduce((node, part) => (node && node.content && node.content[part]) ? node.content[part] : null, startNode);
 }
 
 function checkPermissions(node, user, action) {
     if (!node || !node.permissions || !node.owner) return false;
     if (user === 'root' || user === 'admin') return true;
-    
     const owner = node.owner;
     const perms = node.permissions;
     let requiredPerm;
-
     switch (action) {
         case 'read': requiredPerm = 4; break;
         case 'write': requiredPerm = 2; break;
@@ -119,7 +113,6 @@ function checkPermissions(node, user, action) {
         default: return false;
     }
     const permDigit = (user === owner) ? perms[0] : perms[2];
-    
     return (parseInt(permDigit, 10) & requiredPerm) !== 0;
 }
 
@@ -129,7 +122,6 @@ commandInput.addEventListener('keydown', function (event) {
         event.preventDefault();
         const command = commandInput.value.trim();
         commandInput.value = '';
-        
         if (state === 'login' || state === 'help_login') {
             print(`${promptElement.textContent} ********`);
             if (state === 'login') handleLogin(command);
@@ -140,8 +132,8 @@ commandInput.addEventListener('keydown', function (event) {
             print(`${promptElement.textContent} ${command}`);
             executeCommand(command);
         } else {
-             print(`${promptElement.textContent}`);
-             updatePrompt();
+            print(`${promptElement.textContent}`);
+            updatePrompt();
         }
     } else if (event.key === 'ArrowUp') {
         event.preventDefault();
@@ -168,7 +160,6 @@ function handleTabCompletion() {
     const text = commandInput.value;
     const parts = text.split(' ');
     const currentPart = parts[parts.length - 1];
-    
     const currentDirNode = getCurrentDirectory();
     const currentDirContent = currentDirNode.content || currentDirNode;
 
@@ -233,9 +224,30 @@ async function executeCommand(fullCommand) {
         return;
     }
 
+    // NÂNG CẤP: Xử lý lịch sử lệnh !! và !n
+    if (fullCommand.startsWith('!')) {
+        let historyCmd = '';
+        if (fullCommand === '!!') {
+            if (commandHistory.length > 0) historyCmd = commandHistory[0];
+        } else {
+            const index = parseInt(fullCommand.substring(1));
+            // Lịch sử được lưu ngược, nên cần tính toán lại index
+            if (!isNaN(index) && index > 0 && index <= commandHistory.length) {
+                historyCmd = commandHistory.slice(0).reverse()[index - 1];
+            }
+        }
+        if (historyCmd) {
+            print(`${promptElement.textContent} ${historyCmd}`);
+            fullCommand = historyCmd;
+        } else {
+            print(`-bash: ${fullCommand}: event not found`);
+            updatePrompt();
+            return;
+        }
+    }
+
     const pipeSegments = fullCommand.split('|').map(s => s.trim());
     let stdin = '';
-
     for (let i = 0; i < pipeSegments.length; i++) {
         let segment = pipeSegments[i];
         let stdout = '';
@@ -248,15 +260,12 @@ async function executeCommand(fullCommand) {
         } else if (segment.includes('>')) {
             [segment, redirect] = segment.split('>').map(s => s.trim());
         }
-        
-        // **NÂNG CẤP BỘ PHÂN TÍCH LỆNH**
+
         const argsRegex = /(?:[^\s"']+|"[^"]*"|'[^']*')+/g;
         let parts = segment.match(argsRegex) || [];
         parts = parts.map(arg => arg.replace(/^"|"$/g, '').replace(/^'|'$/g, ''));
         let [cmd, ...args] = parts;
-        
         args = args.map(arg => arg.startsWith('$') && env[arg.substring(1)] ? env[arg.substring(1)] : arg);
-        
         if (aliases[cmd]) {
             const aliasCmd = aliases[cmd].split(' ');
             cmd = aliasCmd[0];
@@ -271,7 +280,7 @@ async function executeCommand(fullCommand) {
             updatePrompt();
             return;
         }
-        
+
         if (i < pipeSegments.length - 1) {
             stdin = stdout;
         } else {
@@ -286,7 +295,6 @@ async function executeCommand(fullCommand) {
 }
 
 function handleRedirection(fileName, content, append) {
-    // **SỬA LỖI QUAN TRỌNG**
     const currentDirNode = getCurrentDirectory();
     const currentDirContent = currentDirNode.content || currentDirNode;
 
@@ -294,7 +302,6 @@ function handleRedirection(fileName, content, append) {
         print(`-bash: ${fileName}: Is a directory`);
         return;
     }
-    
     const node = currentDirContent[fileName];
     if (node && !checkPermissions(node, currentUser, 'write')) {
         print(`-bash: ${fileName}: Permission denied`);
@@ -305,13 +312,48 @@ function handleRedirection(fileName, content, append) {
         node.content += (node.content ? '\n' : '') + content;
     } else {
         if (!node) {
-             currentDirContent[fileName] = { type: 'file', content: '', owner: currentUser, group: 'admin', permissions: '644' };
+            currentDirContent[fileName] = { type: 'file', content: '', owner: currentUser, group: 'admin', permissions: '644' };
         }
         currentDirContent[fileName].content = content;
     }
     currentDirContent[fileName].modified = new Date().toISOString().slice(0, 10);
     saveFileSystemToDB();
 }
+
+// NÂNG CẤP: Hàm cho trình soạn thảo Nano
+function enterEditorMode(fileName, content) {
+    const editorOverlay = document.getElementById('editor-overlay');
+    const editorTextarea = document.getElementById('editor-textarea');
+    const editorStatusbar = document.getElementById('editor-statusbar');
+    const inputLine = document.getElementById('input-line');
+
+    state = 'editor';
+    inputLine.style.display = 'none';
+    editorOverlay.style.display = 'flex';
+    editorTextarea.value = content;
+    editorTextarea.focus();
+    editorStatusbar.textContent = `File: ${fileName} | Press Ctrl+S to Save, Ctrl+X to Exit`;
+
+    const handleEditorKeys = (e) => {
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            const newContent = editorTextarea.value;
+            handleRedirection(fileName, newContent, false);
+            editorStatusbar.textContent = `Saved ${fileName}!`;
+        }
+        if (e.ctrlKey && e.key === 'x') {
+            e.preventDefault();
+            editorOverlay.style.display = 'none';
+            inputLine.style.display = 'flex';
+            state = 'command';
+            commandInput.focus();
+            editorTextarea.removeEventListener('keydown', handleEditorKeys);
+            updatePrompt();
+        }
+    };
+    editorTextarea.addEventListener('keydown', handleEditorKeys);
+}
+
 
 // --- CÁC HÀM LƯU TRỮ DỮ LIỆU VỚI INDEXEDDB ---
 function initDB(callback) {
@@ -392,7 +434,6 @@ let commands = {};
 function start() {
     commandInput.value = '';
     commandInput.type = 'password';
-    
     initDB(() => {
         getBalanceFromDB(() => {
             loadFileSystemFromDB(() => {
@@ -421,6 +462,9 @@ function showHelp() {
   mkdir [dir]      : Create a new directory.
   touch [file]..   : Create new empty files.
   rm [-r] [target] : Remove a file or directory.
+  cp [src] [dest]  : Copy a file or directory.
+  mv [src] [dest]  : Move or rename a file or directory.
+  nano [file]      : Edit a text file.
   grep [pat] [file]: Search for a pattern in a file.
   chmod [mode] [f] : Change file permissions (e.g., 755).
   chown [user] [f] : Change file owner.
@@ -434,6 +478,7 @@ function showHelp() {
   export [def]     : Set an environment variable.
   printenv         : Print environment variables.
   history          : Show command history.
+  !! / !n          : Rerun previous commands.
   wget [url]       : Download a file (simulated).
   clear            : Clear the terminal history.
   logout           : Log out from the session.
@@ -442,7 +487,7 @@ function showHelp() {
 }
 
 function showNeofetch() {
-     return `<pre>
+    return `<pre>
      .--.      ${currentUser}@NguyenthuanIT
     |o_o |     ---------------
     |:_/ |     OS: Linux Live x86_64

@@ -80,10 +80,12 @@ Object.assign(commands, {
         await new Promise(res => setTimeout(res, 500)); 
         if (remoteFiles[url]) {
             const fileName = url.split('/').pop();
-            const currentDir = getCurrentDirectory();
+            const currentDirNode = getCurrentDirectory();
+            const currentDirContent = currentDirNode.content || currentDirNode;
             print(`Saving to: ‘${fileName}’`);
             await new Promise(res => setTimeout(res, 800));
-            currentDir[fileName] = { type: 'file', content: remoteFiles[url], owner: currentUser, group: 'admin', permissions: '644', modified: new Date().toISOString().slice(0, 10) };
+            currentDirContent[fileName] = { type: 'file', content: remoteFiles[url], owner: currentUser, group: 'admin', permissions: '644', modified: new Date().toISOString().slice(0, 10) };
+            saveFileSystemToDB();
             return `100% [===================>] ${remoteFiles[url].length}  --.-KB/s    in 0s`;
         } else {
             return `404 Not Found`;

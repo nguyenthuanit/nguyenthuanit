@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Siêu Hiệu Ứng</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #0f172a;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+        }
+
+        /* --- Nền Hạt --- */
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0; /* Đặt phía sau logo */
+        }
+
+        /* --- Logo Container --- */
+        .logo-container {
+            position: relative; /* Đảm bảo logo nổi lên trên nền hạt */
+            z-index: 1;
+            perspective: 800px;
+            /* Chuỗi hoạt ảnh: Sáng lên -> Thở */
+            animation: 
+                shine-and-fade 2s ease-in-out 3.4s forwards,
+                breathing-glow 5s ease-in-out 5.5s infinite;
+            transition: transform 0.1s ease-out; /* Cho hiệu ứng 3D mượt mà */
+        }
+
+        /* --- 1. Vẽ Đám Mây --- */
+        .cloud-icon-path {
+            stroke-dasharray: 500;
+            stroke-dashoffset: 500;
+            animation: draw-in 2s ease-in-out forwards;
+        }
+
+        @keyframes draw-in { to { stroke-dashoffset: 0; } }
+
+        /* --- 2. Lật "NT" --- */
+        .logo-text-nt .char {
+            display: inline-block;
+            opacity: 0;
+            transform: rotateY(-90deg);
+            animation: flip-in 0.8s cubic-bezier(0.3, 0.8, 0.2, 1) forwards;
+        }
+        .logo-text-nt .char:nth-child(1) { animation-delay: 1.8s; }
+        .logo-text-nt .char:nth-child(2) { animation-delay: 2.0s; }
+
+        @keyframes flip-in {
+            from { opacity: 0; transform: rotateY(-90deg); }
+            to { opacity: 1; transform: rotateY(0deg); }
+        }
+
+        /* --- 3. Lướt "Technology" --- */
+        .logo-subtext-tech {
+            display: block;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slide-in-up 1s ease-out forwards;
+            animation-delay: 2.4s;
+        }
+
+        @keyframes slide-in-up { to { opacity: 1; transform: translateY(0); } }
+        
+        /* --- 4. Phản Sáng --- */
+        @keyframes shine-and-fade {
+            0%, 100% { filter: drop-shadow(0 0 0px rgba(79, 70, 229, 0)); }
+            50% { filter: drop-shadow(0 0 15px rgba(79, 70, 229, 0.8)) drop-shadow(0 0 25px rgba(79, 70, 229, 0.6)); }
+        }
+
+        /* --- 5. Hơi Thở --- */
+        @keyframes breathing-glow {
+            0%, 100% { filter: drop-shadow(0 0 5px rgba(79, 70, 229, 0.3)); }
+            50% { filter: drop-shadow(0 0 15px rgba(79, 70, 229, 0.7)); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="particles-js"></div>
+
+    <div class="logo-container">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 120" style="width: 320px; overflow: visible;">
+            <g transform="translate(12,8)">
+                <path class="cloud-icon-path" d="M24 64h56c12 0 20-8 20-18 0-10-8-18-20-18-1.5 0-3.2.12-4.8.36-1.1-12.5-11.6-22.36-24.6-22.36C41 6 31.4 14.2 30 26.2 28 26 24 26 18 30c-7 5-9 14-6 22 2.2 6 7 10 12 10z" 
+                fill="none" stroke="#4F46E5" stroke-width="4" />
+            </g>
+            <g transform="translate(140,10)">
+                <text x="0" y="46" class="logo-text-nt" font-weight="800" font-size="54" fill="#4F46E5" transform="skewX(-10)">
+                    <tspan class="char">N</tspan><tspan class="char">T</tspan>
+                </text>
+                <text x="0" y="82" font-weight="600" font-size="20" fill="#4F46E5">
+                    <tspan class="logo-subtext-tech">Technology</tspan>
+                </text>
+            </g>
+        </svg>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+    <script>
+        // --- CẤU HÌNH HIỆU ỨNG HẠT ---
+        particlesJS('particles-js', {
+            "particles": {
+                "number": { "value": 60, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#4F46E5" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.5, "random": true },
+                "size": { "value": 3, "random": true },
+                "line_linked": { "enable": true, "distance": 150, "color": "#4F46E5", "opacity": 0.2, "width": 1 },
+                "move": { "enable": true, "speed": 1, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+            },
+            "interactivity": { "detect_on": "canvas", "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": false }, "resize": true } },
+            "retina_detect": true
+        });
+
+        // --- CẤU HÌNH HIỆU ỨNG 3D PARALLAX ---
+        const logoContainer = document.querySelector('.logo-container');
+        const tiltStrength = 15;
+        let canTilt = false;
+
+        // Chỉ cho phép hiệu ứng nghiêng sau khi hoạt ảnh intro kết thúc (khoảng 4 giây)
+        setTimeout(() => {
+            canTilt = true;
+        }, 4000);
+
+        document.body.addEventListener('mousemove', (e) => {
+            if (!canTilt) return;
+
+            const { clientX, clientY } = e;
+            const { innerWidth, innerHeight } = window;
+            
+            const tiltX = (clientY / innerHeight - 0.5) * tiltStrength;
+            const tiltY = (clientX / innerWidth - 0.5) * -tiltStrength;
+
+            logoContainer.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+        });
+
+        document.body.addEventListener('mouseleave', () => {
+            if (canTilt) {
+                logoContainer.style.transform = `rotateX(0deg) rotateY(0deg)`;
+            }
+        });
+    </script>
+</body>
+</html>

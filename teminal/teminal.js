@@ -1,15 +1,14 @@
-// GỠ BỎ trình bao bọc 'DOMContentLoaded'
-
+// --- CÁC BIẾN TOÀN CỤC VÀ TRẠNG THÁI ---
 const terminal = document.getElementById('terminal');
 const history = document.getElementById('history');
 const promptElement = document.getElementById('prompt');
 const commandInput = document.getElementById('command-input');
 
-// Mật khẩu
-const mainPassHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92'; // 999997
-const helpPassHash = 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3'; // 123
+// Mật khẩu (đã mã hóa)
+const mainPassHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92'; // Mật khẩu là: 999997
+const helpPassHash = 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3'; // Mật khẩu là: 123
 
-// Trạng thái
+// Trạng thái của terminal
 let state = 'login';
 let currentUser = 'admin';
 let previousUser = null;
@@ -18,7 +17,7 @@ let historyIndex = -1;
 let aliases = { 'll': 'ls -l -a' };
 let env = { 'USER': 'admin', 'HOME': '~' };
 
-// Trạng thái đào coin
+// Trạng thái đào coin và CSDL
 let isMining = false;
 let miningInterval = null;
 let db = null;
@@ -27,16 +26,16 @@ const BLOCK_REWARD = 0.01;
 const BLOCK_FIND_CHANCE = 0.02;
 let shareCount = 0;
 
-// Theme
+// Các theme có sẵn
 const availableThemes = { 'matrix': 'Classic green.', 'hacker': 'Aggressive crimson.', 'cyberpunk': 'Neon on purple.', 'solarized-light': 'For daytime.', 'dracula': 'Popular dark theme.' };
 
-// Dữ liệu giả lập cho wget
+// Dữ liệu giả lập cho lệnh wget
 const remoteFiles = {
     'https://example.com/data.json': '{"message": "Hello from the web!"}',
     'https://nguyenthuanit.com/banner.txt': 'Welcome to my portfolio!'
 };
 
-// --- Cấu trúc File System và Process chuyên nghiệp ---
+// --- HỆ THỐNG TỆP (FILE SYSTEM) MẶC ĐỊNH ---
 const fileSystem = {
     'documents': { type: 'dir', content: { 'project_alpha.txt': { type: 'file', content: 'Đây là nội dung của dự án Alpha.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-15' }, 'notes.log': { type: 'file', content: 'Ghi chú quan trọng: Cập nhật hệ thống vào cuối tuần.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-16' } }, owner: 'admin', group: 'admin', permissions: '755', modified: '2025-10-15' },
     'images': { type: 'dir', content: { 'avatar.png': { type: 'file', content: 'Đây là file ảnh giả lập.', owner: 'guest', group: 'users', permissions: '644', modified: '2025-09-20' } }, owner: 'admin', group: 'admin', permissions: '755', modified: '2025-09-20' },
@@ -45,11 +44,11 @@ const fileSystem = {
     'file1.txt': { type: 'file', content: 'Đây là nội dung mẫu cho file 1.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-18' },
     'file2.txt': { type: 'file', content: 'Đây là nội dung mẫu cho file 2.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-18' }
 };
-// Tạo một nút gốc ảo để fileSystem có cấu trúc nhất quán
-const rootNode = { type: 'dir', content: fileSystem };
+// Tạo một nút gốc ảo để hệ thống tệp có cấu trúc nhất quán
+const rootNode = { type: 'dir', content: fileSystem, owner: 'root', group: 'root', permissions: '755' };
+let currentPath = []; // Mảng lưu đường dẫn hiện tại, vd: ['documents']
 
-let currentPath = [];
-
+// Danh sách tiến trình giả lập
 let processes = [
     { pid: 101, user: 'root', cpu: '5.2', mem: '15.3', command: '/sbin/init' },
     { pid: 254, user: 'admin', cpu: '2.1', mem: '10.1', command: '/usr/bin/sshd' },
@@ -57,7 +56,7 @@ let processes = [
     { pid: 312, user: 'www', cpu: '1.5', mem: '5.0', command: '/usr/sbin/nginx' }
 ];
 
-// --- CÁC HÀM HELPER ---
+// --- CÁC HÀM HỖ TRỢ (HELPER FUNCTIONS) ---
 function print(text, isHTML = false) {
     const p = document.createElement('p');
     if (isHTML) p.innerHTML = text;
@@ -85,44 +84,24 @@ function type(text, callback) {
 function updatePrompt() {
     const pathString = currentPath.length > 0 ? `/${currentPath.join('/')}` : '';
     const homeSymbol = (pathString === '') ? '~' : `~${pathString}`;
-    const promptSymbol = currentUser === 'root' || currentUser === 'admin' ? '#' : '$';
+    const promptSymbol = (currentUser === 'root' || currentUser === 'admin') ? '#' : '$';
     promptElement.textContent = `${currentUser}@NguyenthuanIT:${homeSymbol}${promptSymbol}`;
 }
 
-function getCurrentDirectory(pathArray = currentPath) {
-    return pathArray.reduce((node, part) => node.content[part], rootNode);
-}
-
-function findNode(path) {
-    const parts = path.split('/').filter(p => p && p !== '.');
-    let currentDir = getCurrentDirectory();
-    let parent = { content: fileSystem };
-    let finalPart = null;
-
-    for (const part of parts) {
-        if (currentDir && currentDir[part]) {
-            parent = { content: currentDir };
-            finalPart = part;
-            currentDir = currentDir[part].content;
-        } else {
-            return null;
-        }
-    }
-    const nodeName = path.split('/').pop();
-    const node = findNodeByPath(path);
-    if (!node) return null;
-    
-    return { node: node, parent: parent.content, name: nodeName };
+// --- CÁC HÀM LIÊN QUAN ĐẾN FILE SYSTEM ---
+function getCurrentDirectory() {
+    return currentPath.reduce((node, part) => (node && node.content && node.content[part]) || node, rootNode);
 }
 
 function findNodeByPath(path) {
     let parts = path.split('/').filter(p => p);
-    if (path.startsWith('/')) { // Absolute path
-        return parts.reduce((node, part) => (node && node.content && node.content[part]) ? node.content[part] : null, rootNode);
-    } else { // Relative path
-        let current = getCurrentDirectory();
-        return parts.reduce((node, part) => (node && node.content && node.content[part]) ? node.content[part] : null, current);
+    let startNode;
+    if (path.startsWith('/')) {
+        startNode = rootNode;
+    } else {
+        startNode = getCurrentDirectory();
     }
+    return parts.reduce((node, part) => (node && node.content && node.content[part]) ? node.content[part] : null, startNode);
 }
 
 function checkPermissions(node, user, action) {
@@ -144,23 +123,19 @@ function checkPermissions(node, user, action) {
     return (parseInt(permDigit, 10) & requiredPerm) !== 0;
 }
 
-// --- XỬ LÝ SỰ KIỆN BÀN PHÍM VÀ LỊCH SỬ LỆNH ---
+// --- XỬ LÝ SỰ KIỆN NHẬP LỆNH ---
 commandInput.addEventListener('keydown', function (event) {
     if (event.key === 'Enter') {
         event.preventDefault();
         const command = commandInput.value.trim();
         commandInput.value = '';
         
-        if (state === 'login') {
+        if (state === 'login' || state === 'help_login') {
             print(`${promptElement.textContent} ********`);
-            handleLogin(command);
-        } else if (state === 'help_login') {
-             print(`${promptElement.textContent} ********`);
-             handleHelpLogin(command);
+            if (state === 'login') handleLogin(command);
+            else handleHelpLogin(command);
         } else if (command) {
-            if (commandHistory[0] !== command) {
-               commandHistory.unshift(command);
-            }
+            if (commandHistory[0] !== command) commandHistory.unshift(command);
             historyIndex = -1;
             print(`${promptElement.textContent} ${command}`);
             executeCommand(command);
@@ -194,7 +169,10 @@ function handleTabCompletion() {
     const parts = text.split(' ');
     const currentPart = parts[parts.length - 1];
     
-    if (parts.length === 1) {
+    const currentDirNode = getCurrentDirectory();
+    const currentDirContent = currentDirNode.content || currentDirNode;
+
+    if (parts.length === 1) { // Hoàn thành lệnh
         const matchingCommands = Object.keys(commands).filter(cmd => cmd.startsWith(currentPart));
         if (matchingCommands.length === 1) {
             commandInput.value = matchingCommands[0] + ' ';
@@ -203,12 +181,11 @@ function handleTabCompletion() {
             print(matchingCommands.join('  '));
             updatePrompt();
         }
-    } else {
-        const currentDir = getCurrentDirectory();
-        const matchingFiles = Object.keys(currentDir).filter(file => file.startsWith(currentPart));
+    } else { // Hoàn thành tên file/thư mục
+        const matchingFiles = Object.keys(currentDirContent).filter(file => file.startsWith(currentPart));
         if (matchingFiles.length === 1) {
             parts[parts.length - 1] = matchingFiles[0];
-            commandInput.value = parts.join(' ') + ' ';
+            commandInput.value = parts.join(' ') + (currentDirContent[matchingFiles[0]].type === 'dir' ? '/' : ' ');
         } else if (matchingFiles.length > 1) {
             print(`${promptElement.textContent} ${text}`);
             print(matchingFiles.join('  '));
@@ -217,7 +194,7 @@ function handleTabCompletion() {
     }
 }
 
-// --- XỬ LÝ ĐĂNG NHẬP ---
+// --- XỬ LÝ ĐĂNG NHẬP VÀ HELP ---
 function handleLogin(password) {
     const enteredHash = CryptoJS.SHA256(password).toString();
     setTimeout(() => {
@@ -271,15 +248,14 @@ async function executeCommand(fullCommand) {
         } else if (segment.includes('>')) {
             [segment, redirect] = segment.split('>').map(s => s.trim());
         }
-
-        let [cmd, ...args] = segment.split(/\s+/).filter(Boolean);
         
-        args = args.map(arg => {
-            if (arg.startsWith('$') && env[arg.substring(1)]) {
-                return env[arg.substring(1)];
-            }
-            return arg;
-        });
+        // **NÂNG CẤP BỘ PHÂN TÍCH LỆNH**
+        const argsRegex = /(?:[^\s"']+|"[^"]*"|'[^']*')+/g;
+        let parts = segment.match(argsRegex) || [];
+        parts = parts.map(arg => arg.replace(/^"|"$/g, '').replace(/^'|'$/g, ''));
+        let [cmd, ...args] = parts;
+        
+        args = args.map(arg => arg.startsWith('$') && env[arg.substring(1)] ? env[arg.substring(1)] : arg);
         
         if (aliases[cmd]) {
             const aliasCmd = aliases[cmd].split(' ');
@@ -310,13 +286,16 @@ async function executeCommand(fullCommand) {
 }
 
 function handleRedirection(fileName, content, append) {
-    const currentDir = getCurrentDirectory();
-    if (currentDir[fileName] && currentDir[fileName].type === 'dir') {
+    // **SỬA LỖI QUAN TRỌNG**
+    const currentDirNode = getCurrentDirectory();
+    const currentDirContent = currentDirNode.content || currentDirNode;
+
+    if (currentDirContent[fileName] && currentDirContent[fileName].type === 'dir') {
         print(`-bash: ${fileName}: Is a directory`);
         return;
     }
     
-    const node = currentDir[fileName];
+    const node = currentDirContent[fileName];
     if (node && !checkPermissions(node, currentUser, 'write')) {
         print(`-bash: ${fileName}: Permission denied`);
         return;
@@ -326,26 +305,21 @@ function handleRedirection(fileName, content, append) {
         node.content += (node.content ? '\n' : '') + content;
     } else {
         if (!node) {
-             currentDir[fileName] = { type: 'file', content: '', owner: currentUser, group: 'admin', permissions: '644' };
+             currentDirContent[fileName] = { type: 'file', content: '', owner: currentUser, group: 'admin', permissions: '644' };
         }
-        currentDir[fileName].content = content;
+        currentDirContent[fileName].content = content;
     }
-    currentDir[fileName].modified = new Date().toISOString().slice(0, 10);
-    saveFileSystemToDB(); // <-- LƯU THAY ĐỔI
+    currentDirContent[fileName].modified = new Date().toISOString().slice(0, 10);
+    saveFileSystemToDB();
 }
 
-// --- HÀM CHO TÍNH NĂNG LƯU TRỮ (COIN VÀ FILE SYSTEM) ---
+// --- CÁC HÀM LƯU TRỮ DỮ LIỆU VỚI INDEXEDDB ---
 function initDB(callback) {
-    const request = indexedDB.open('TerminalCoinDB', 2); // Tăng phiên bản lên 2
+    const request = indexedDB.open('TerminalDataDB', 2);
     request.onupgradeneeded = (event) => {
         const db = event.target.result;
-        if (!db.objectStoreNames.contains('wallet')) {
-            db.createObjectStore('wallet', { keyPath: 'id' });
-        }
-        // Thêm kho lưu trữ cho hệ thống tệp
-        if (!db.objectStoreNames.contains('fs')) {
-            db.createObjectStore('fs', { keyPath: 'id' });
-        }
+        if (!db.objectStoreNames.contains('wallet')) db.createObjectStore('wallet', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('fs')) db.createObjectStore('fs', { keyPath: 'id' });
     };
     request.onsuccess = (event) => {
         db = event.target.result;
@@ -354,46 +328,33 @@ function initDB(callback) {
     request.onerror = (event) => console.error('Database error:', event.target.errorCode);
 }
 
-function getBalanceFromDB() {
+function getBalanceFromDB(callback) {
     if (!db) return;
-    const transaction = db.transaction(['wallet'], 'readonly');
-    const store = transaction.objectStore('wallet');
-    const request = store.get('main_balance');
+    const request = db.transaction(['wallet'], 'readonly').objectStore('wallet').get('main_balance');
     request.onsuccess = () => {
         currentBalance = request.result ? request.result.value : 0.0;
+        if (callback) callback();
     };
 }
 
 function saveBalanceToDB(balance) {
     if (!db) return;
-    const transaction = db.transaction(['wallet'], 'readwrite');
-    const store = transaction.objectStore('wallet');
-    store.put({ id: 'main_balance', value: balance });
+    db.transaction(['wallet'], 'readwrite').objectStore('wallet').put({ id: 'main_balance', value: balance });
 }
 
-// Hàm mới: Lưu hệ thống tệp vào DB
 function saveFileSystemToDB() {
     if (!db) return;
-    const transaction = db.transaction(['fs'], 'readwrite');
-    const store = transaction.objectStore('fs');
-    store.put({ id: 'root', data: fileSystem });
-    console.log("File system saved to IndexedDB.");
+    db.transaction(['fs'], 'readwrite').objectStore('fs').put({ id: 'root', data: fileSystem });
 }
 
-// Hàm mới: Tải hệ thống tệp từ DB
 function loadFileSystemFromDB(callback) {
     if (!db) return;
-    const transaction = db.transaction(['fs'], 'readonly');
-    const store = transaction.objectStore('fs');
-    const request = store.get('root');
-
+    const request = db.transaction(['fs'], 'readonly').objectStore('fs').get('root');
     request.onsuccess = () => {
         if (request.result && request.result.data) {
-            // Nếu có dữ liệu trong DB, ghi đè lên đối tượng mặc định
             Object.assign(fileSystem, request.result.data);
             console.log("File system loaded from IndexedDB.");
         } else {
-            // Nếu không, lưu hệ thống tệp mặc định vào DB cho lần sau
             console.log("No file system in DB, saving default one.");
             saveFileSystemToDB();
         }
@@ -401,7 +362,7 @@ function loadFileSystemFromDB(callback) {
     };
     request.onerror = (event) => {
         console.error("Failed to load file system:", event.target.errorCode);
-        if (callback) callback(); // Vẫn tiếp tục dù có lỗi
+        if (callback) callback();
     };
 }
 
@@ -425,24 +386,23 @@ function simulateMining() {
     print(`[OK] ${shareCount} | ACCEPTED | ${hashrate} MH/s | diff: ${difficulty} | ping: ${ping}ms`);
 }
 
-// --- BỘ ĐIỀU KHIỂN LỆNH CHÍNH ---
+// --- BỘ ĐIỀU KHIỂN LỆNH VÀ KHỞI ĐỘNG ---
 let commands = {};
 
-// --- KHỞI ĐỘNG TERMINAL ---
 function start() {
     commandInput.value = '';
     commandInput.type = 'password';
     
     initDB(() => {
-        getBalanceFromDB(); // Tải số dư
-        loadFileSystemFromDB(() => { // Tải hệ thống tệp
-            // Tiếp tục quá trình khởi động sau khi đã tải xong mọi thứ
-            type('booting system...', () => {
-                type('Connecting to 103.199.16.113 (Bandung)...', () => {
-                    type('Connection established.', () => {
-                        print('Username: admin');
-                        promptElement.textContent = 'password:';
-                        commandInput.focus();
+        getBalanceFromDB(() => {
+            loadFileSystemFromDB(() => {
+                type('booting system...', () => {
+                    type('Connecting to 103.199.16.113 (Bandung)...', () => {
+                        type('Connection established.', () => {
+                            print('Username: admin');
+                            promptElement.textContent = 'password:';
+                            commandInput.focus();
+                        });
                     });
                 });
             });
@@ -450,7 +410,7 @@ function start() {
     });
 }
 
-function showHelp(){
+function showHelp() {
     print(`
 <pre>
 --- Navigation & File System ---
@@ -459,7 +419,7 @@ function showHelp(){
   cat [file]...    : Display content of one or more files.
   tree [dir]       : Show directory structure as a tree.
   mkdir [dir]      : Create a new directory.
-  touch [file]     : Create a new empty file.
+  touch [file]..   : Create new empty files.
   rm [-r] [target] : Remove a file or directory.
   grep [pat] [file]: Search for a pattern in a file.
   chmod [mode] [f] : Change file permissions (e.g., 755).

@@ -3,23 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logo Siêu Hiệu Ứng (Phiên bản Cuối)</title>
+    <title>Logo Siêu Hiệu Ứng (Canh phải Mobile)</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /*
-        ========================================
-        CẢI TIẾN MỚI
-        ========================================
-        */
         html, body {
             height: 100%;
             width: 100%;
             margin: 0;
-            overflow: hidden; /* Ngăn chặn thanh cuộn */
+            overflow: hidden;
         }
 
         body {
-            display: flex; /* Sử dụng Flexbox để canh giữa */
+            display: flex;
             background-color: #0f172a;
             font-family: 'Poppins', sans-serif;
         }
@@ -34,7 +29,7 @@
         }
 
         .logo-container {
-            margin: auto; /* Tự động canh giữa theo cả chiều ngang và dọc */
+            margin: auto;
             position: relative;
             z-index: 1;
             perspective: 800px;
@@ -48,7 +43,7 @@
         .logo-svg {
             width: 320px;
             max-width: 100%;
-            height: auto; /* Giữ đúng tỷ lệ */
+            height: auto;
             overflow: visible;
             transition: width 0.3s ease;
         }
@@ -93,9 +88,19 @@
             50% { filter: drop-shadow(0 0 15px rgba(79, 70, 229, 0.7)); }
         }
 
+        /*
+        ========================================
+        MEDIA QUERY CHO MOBILE
+        ========================================
+        */
         @media (max-width: 768px) {
             .logo-svg {
-                width: 250px; /* Tinh chỉnh lại kích thước cho cân đối hơn */
+                width: 250px;
+            }
+            
+            /* Dòng CSS mới để dịch chuyển logo sang phải */
+            .logo-container {
+                transform: translateX(5%);
             }
         }
     </style>

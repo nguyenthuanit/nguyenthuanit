@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logo Siêu Hiệu Ứng</title>
+    <title>Logo Siêu Hiệu Ứng (Tối ưu Mobile)</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -15,6 +15,9 @@
             background-color: #0f172a;
             font-family: 'Poppins', sans-serif;
             overflow: hidden;
+            /* Thêm padding nhỏ để logo không bị dính vào cạnh màn hình mobile */
+            padding: 1rem;
+            box-sizing: border-box;
         }
 
         /* --- Nền Hạt --- */
@@ -24,19 +27,25 @@
             height: 100%;
             top: 0;
             left: 0;
-            z-index: 0; /* Đặt phía sau logo */
+            z-index: 0;
         }
 
         /* --- Logo Container --- */
         .logo-container {
-            position: relative; /* Đảm bảo logo nổi lên trên nền hạt */
+            position: relative;
             z-index: 1;
             perspective: 800px;
-            /* Chuỗi hoạt ảnh: Sáng lên -> Thở */
             animation: 
                 shine-and-fade 2s ease-in-out 3.4s forwards,
                 breathing-glow 5s ease-in-out 5.5s infinite;
-            transition: transform 0.1s ease-out; /* Cho hiệu ứng 3D mượt mà */
+            transition: transform 0.1s ease-out;
+        }
+
+        /* --- SVG Styling --- */
+        .logo-svg {
+            width: 320px; /* Kích thước mặc định cho desktop */
+            overflow: visible;
+            transition: width 0.3s ease-in-out; /* Thêm transition để thay đổi kích thước mượt mà */
         }
 
         /* --- 1. Vẽ Đám Mây --- */
@@ -45,7 +54,6 @@
             stroke-dashoffset: 500;
             animation: draw-in 2s ease-in-out forwards;
         }
-
         @keyframes draw-in { to { stroke-dashoffset: 0; } }
 
         /* --- 2. Lật "NT" --- */
@@ -57,7 +65,6 @@
         }
         .logo-text-nt .char:nth-child(1) { animation-delay: 1.8s; }
         .logo-text-nt .char:nth-child(2) { animation-delay: 2.0s; }
-
         @keyframes flip-in {
             from { opacity: 0; transform: rotateY(-90deg); }
             to { opacity: 1; transform: rotateY(0deg); }
@@ -71,7 +78,6 @@
             animation: slide-in-up 1s ease-out forwards;
             animation-delay: 2.4s;
         }
-
         @keyframes slide-in-up { to { opacity: 1; transform: translateY(0); } }
         
         /* --- 4. Phản Sáng --- */
@@ -85,14 +91,32 @@
             0%, 100% { filter: drop-shadow(0 0 5px rgba(79, 70, 229, 0.3)); }
             50% { filter: drop-shadow(0 0 15px rgba(79, 70, 229, 0.7)); }
         }
+
+        /*
+        ========================================
+        MEDIA QUERY CHO MOBILE
+        ========================================
+        */
+        @media (max-width: 768px) {
+            .logo-svg {
+                width: 260px; /* Giảm kích thước logo */
+            }
+
+            /* Điều chỉnh lại font size để cân đối với logo nhỏ hơn */
+            .logo-svg .logo-text-nt {
+                font-size: 48px;
+            }
+            .logo-svg .logo-subtext-tech-text {
+                 font-size: 18px;
+            }
+        }
     </style>
 </head>
 <body>
-
     <div id="particles-js"></div>
 
     <div class="logo-container">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 120" style="width: 320px; overflow: visible;">
+        <svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 120">
             <g transform="translate(12,8)">
                 <path class="cloud-icon-path" d="M24 64h56c12 0 20-8 20-18 0-10-8-18-20-18-1.5 0-3.2.12-4.8.36-1.1-12.5-11.6-22.36-24.6-22.36C41 6 31.4 14.2 30 26.2 28 26 24 26 18 30c-7 5-9 14-6 22 2.2 6 7 10 12 10z" 
                 fill="none" stroke="#4F46E5" stroke-width="4" />
@@ -101,7 +125,7 @@
                 <text x="0" y="46" class="logo-text-nt" font-weight="800" font-size="54" fill="#4F46E5" transform="skewX(-10)">
                     <tspan class="char">N</tspan><tspan class="char">T</tspan>
                 </text>
-                <text x="0" y="82" font-weight="600" font-size="20" fill="#4F46E5">
+                <text x="0" y="82" class="logo-subtext-tech-text" font-weight="600" font-size="20" fill="#4F46E5">
                     <tspan class="logo-subtext-tech">Technology</tspan>
                 </text>
             </g>
@@ -109,50 +133,47 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-
     <script>
         // --- CẤU HÌNH HIỆU ỨNG HẠT ---
+        const isMobile = window.innerWidth <= 768;
+        const particleCount = isMobile ? 30 : 60; // Giảm số hạt trên mobile
+
         particlesJS('particles-js', {
             "particles": {
-                "number": { "value": 60, "density": { "enable": true, "value_area": 800 } },
+                "number": { "value": particleCount, "density": { "enable": true, "value_area": 800 } },
                 "color": { "value": "#4F46E5" },
                 "shape": { "type": "circle" },
                 "opacity": { "value": 0.5, "random": true },
                 "size": { "value": 3, "random": true },
                 "line_linked": { "enable": true, "distance": 150, "color": "#4F46E5", "opacity": 0.2, "width": 1 },
-                "move": { "enable": true, "speed": 1, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+                "move": { "enable": true, "speed": 1, "direction": "none", "out_mode": "out" }
             },
-            "interactivity": { "detect_on": "canvas", "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": false }, "resize": true } },
+            "interactivity": { "events": { "onhover": { "enable": !isMobile, "mode": "grab" } } }, // Tắt tương tác hover trên mobile
             "retina_detect": true
         });
 
-        // --- CẤU HÌNH HIỆU ỨNG 3D PARALLAX ---
+        // --- CẤU HÌNH HIỆU ỨNG 3D PARALLAX (Tắt trên mobile để tối ưu) ---
         const logoContainer = document.querySelector('.logo-container');
-        const tiltStrength = 15;
-        let canTilt = false;
+        if (!isMobile) {
+            const tiltStrength = 15;
+            let canTilt = false;
+            setTimeout(() => { canTilt = true; }, 4000);
 
-        // Chỉ cho phép hiệu ứng nghiêng sau khi hoạt ảnh intro kết thúc (khoảng 4 giây)
-        setTimeout(() => {
-            canTilt = true;
-        }, 4000);
+            document.body.addEventListener('mousemove', (e) => {
+                if (!canTilt) return;
+                const { clientX, clientY } = e;
+                const { innerWidth, innerHeight } = window;
+                const tiltX = (clientY / innerHeight - 0.5) * tiltStrength;
+                const tiltY = (clientX / innerWidth - 0.5) * -tiltStrength;
+                logoContainer.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+            });
 
-        document.body.addEventListener('mousemove', (e) => {
-            if (!canTilt) return;
-
-            const { clientX, clientY } = e;
-            const { innerWidth, innerHeight } = window;
-            
-            const tiltX = (clientY / innerHeight - 0.5) * tiltStrength;
-            const tiltY = (clientX / innerWidth - 0.5) * -tiltStrength;
-
-            logoContainer.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
-        });
-
-        document.body.addEventListener('mouseleave', () => {
-            if (canTilt) {
-                logoContainer.style.transform = `rotateX(0deg) rotateY(0deg)`;
-            }
-        });
+            document.body.addEventListener('mouseleave', () => {
+                if (canTilt) {
+                    logoContainer.style.transform = `rotateX(0deg) rotateY(0deg)`;
+                }
+            });
+        }
     </script>
 </body>
 </html>

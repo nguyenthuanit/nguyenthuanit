@@ -41,8 +41,13 @@ const fileSystem = {
     'documents': { type: 'dir', content: { 'project_alpha.txt': { type: 'file', content: 'Đây là nội dung của dự án Alpha.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-15' }, 'notes.log': { type: 'file', content: 'Ghi chú quan trọng: Cập nhật hệ thống vào cuối tuần.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-16' } }, owner: 'admin', group: 'admin', permissions: '755', modified: '2025-10-15' },
     'images': { type: 'dir', content: { 'avatar.png': { type: 'file', content: 'Đây là file ảnh giả lập.', owner: 'guest', group: 'users', permissions: '644', modified: '2025-09-20' } }, owner: 'admin', group: 'admin', permissions: '755', modified: '2025-09-20' },
     'README.md': { type: 'file', content: 'Chào mừng bạn đến với terminal giả lập.\nGõ `help` để xem các lệnh.', owner: 'root', group: 'root', permissions: '644', modified: '2025-09-01' },
-    '.profile': { type: 'file', content: 'alias ll="ls -l -a"', owner: 'root', group: 'root', permissions: '644', modified: '2025-09-01' }
+    '.profile': { type: 'file', content: 'alias ll="ls -l -a"', owner: 'root', group: 'root', permissions: '644', modified: '2025-09-01' },
+    'file1.txt': { type: 'file', content: 'Đây là nội dung mẫu cho file 1.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-18' },
+    'file2.txt': { type: 'file', content: 'Đây là nội dung mẫu cho file 2.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-18' }
 };
+// Tạo một nút gốc ảo để fileSystem có cấu trúc nhất quán
+const rootNode = { type: 'dir', content: fileSystem };
+
 let currentPath = [];
 
 let processes = [
@@ -85,7 +90,7 @@ function updatePrompt() {
 }
 
 function getCurrentDirectory(pathArray = currentPath) {
-    return pathArray.reduce((dir, part) => dir[part].content, fileSystem);
+    return pathArray.reduce((node, part) => node.content[part], rootNode);
 }
 
 function findNode(path) {
@@ -113,10 +118,10 @@ function findNode(path) {
 function findNodeByPath(path) {
     let parts = path.split('/').filter(p => p);
     if (path.startsWith('/')) { // Absolute path
-        return parts.reduce((node, part) => (node && node.content && node.content[part]) ? node.content[part] : null, { content: fileSystem });
+        return parts.reduce((node, part) => (node && node.content && node.content[part]) ? node.content[part] : null, rootNode);
     } else { // Relative path
         let current = getCurrentDirectory();
-        return parts.reduce((node, part) => (node && node[part]) ? node[part] : null, current);
+        return parts.reduce((node, part) => (node && node.content && node.content[part]) ? node.content[part] : null, current);
     }
 }
 

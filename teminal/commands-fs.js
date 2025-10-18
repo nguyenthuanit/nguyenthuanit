@@ -9,8 +9,8 @@ Object.assign(commands, {
         if (longFormat) {
             return items.map(item => {
                 const details = currentDir[item];
-                const perms = (details.type === 'dir' ? 'd' : '-') + 
-                              [...details.permissions].map(p => [(p&4)?'r':'-', (p&2)?'w':'-', (p&1)?'x':'-'].join('')).join('');
+                const perms = (details.type === 'dir' ? 'd' : '-') +
+                    [...details.permissions].map(p => [(p & 4) ? 'r' : '-', (p & 2) ? 'w' : '-', (p & 1) ? 'x' : '-'].join('')).join('');
                 return `${perms.padEnd(11)} 1 ${details.owner.padEnd(8)} ${details.group.padEnd(8)} ${'128'.padStart(6)} ${details.modified} ${item}`;
             }).join('\n');
         }
@@ -18,51 +18,78 @@ Object.assign(commands, {
     },
     cd: (args) => {
         const dirName = args[0];
-        if (!dirName || dirName === '~' || dirName === '/') { currentPath = []; return; }
-        if (dirName === '..') { if (currentPath.length > 0) currentPath.pop(); return; }
+        if (!dirName || dirName === '~' || dirName === '/') {
+            currentPath = [];
+            return;
+        }
+        if (dirName === '..') {
+            if (currentPath.length > 0) currentPath.pop();
+            return;
+        }
         const currentDir = getCurrentDirectory();
         if (currentDir[dirName] && currentDir[dirName].type === 'dir') currentPath.push(dirName);
         else return `-bash: cd: ${dirName}: No such file or directory`;
     },
     cat: (args, stdin) => {
-         if (stdin) return stdin;
-         if (args.length === 0) return "Usage: cat [file]...";
-         const currentDir = getCurrentDirectory();
-         return args.map(fileName => {
-             const node = currentDir[fileName];
-             if (node && node.type === 'file') {
-                 if (!checkPermissions(node, currentUser, 'read')) {
-                     return `-bash: cat: ${fileName}: Permission denied`;
-                 }
-                 return node.content;
-             }
-             return `-bash: cat: ${fileName}: No such file or directory`;
-         }).join('\n');
+        if (stdin) return stdin;
+        if (args.length === 0) return "Usage: cat [file]...";
+        const currentDir = getCurrentDirectory();
+        return args.map(fileName => {
+            const node = currentDir[fileName];
+            if (node && node.type === 'file') {
+                if (!checkPermissions(node, currentUser, 'read')) {
+                    return `-bash: cat: ${fileName}: Permission denied`;
+                }
+                return node.content;
+            }
+            return `-bash: cat: ${fileName}: No such file or directory`;
+        }).join('\n');
     },
     tree: (args) => {
-         const path = args[0] || '.';
-         const startNode = findNodeByPath(path);
-         if (!startNode || startNode.type !== 'dir') return `-bash: tree: '${path}': Not a directory`;
-         let output = [path];
-         function generate(directory, prefix) {
+        const pathArg = args[0] || '.'; // Mặc định là thư mục hiện tại
+        let startNode;
+
+        if (pathArg === '.') {
+            startNode = getCurrentDirectory(); // Lấy node của thư mục hiện tại
+        } else {
+            startNode = findNodeByPath(pathArg); // Tìm node theo đường dẫn
+        }
+
+        if (!startNode || startNode.type !== 'dir') {
+            return `-bash: tree: '${pathArg}': Not a directory`;
+        }
+
+        let output = [pathArg]; // Dòng đầu tiên là tên đường dẫn
+
+        function generate(directory, prefix) {
+            // Luôn truy cập vào thuộc tính 'content' của một node thư mục
             const entries = Object.keys(directory.content).sort();
             entries.forEach((entry, index) => {
                 const isLast = index === entries.length - 1;
-                output.push(`${prefix}${isLast ? '└── ' : '├── '}${entry}`);
-                if (directory.content[entry].type === 'dir') {
-                    generate(directory.content[entry], prefix + (isLast ? '    ' : '│   '));
-                }
+                const node = directory.content[entry];
+                const entryName = node.type === 'dir' ? `${entry}/` : entry;
+
+                output.push(`${prefix}${isLast ? '└── ' : '├── '}${entryName}`);
+
+                if (node.type === 'dir') generate(node, prefix + (isLast ? '    ' : '│   '));
             });
-         }
-         generate(startNode, '');
-         return output.join('\n');
+        }
+        generate(startNode, '');
+        return output.join('\n');
     },
     mkdir: (args) => {
         if (!args[0]) return "Usage: mkdir <directory_name>";
         const dirName = args[0];
         const currentDir = getCurrentDirectory();
         if (currentDir[dirName]) return `mkdir: cannot create directory ‘${dirName}’: File exists`;
-        currentDir[dirName] = { type: 'dir', content: {}, owner: currentUser, group: 'admin', permissions: '755', modified: new Date().toISOString().slice(0, 10) };
+        currentDir[dirName] = {
+            type: 'dir',
+            content: {},
+            owner: currentUser,
+            group: 'admin',
+            permissions: '755',
+            modified: new Date().toISOString().slice(0, 10)
+        };
         saveFileSystemToDB(); // Lưu thay đổi
     },
     touch: (args) => {
@@ -72,7 +99,14 @@ Object.assign(commands, {
         if (currentDir[fileName]) {
             currentDir[fileName].modified = new Date().toISOString().slice(0, 10);
         } else {
-            currentDir[fileName] = { type: 'file', content: '', owner: currentUser, group: 'admin', permissions: '644', modified: new Date().toISOString().slice(0, 10) };
+            currentDir[fileName] = {
+                type: 'file',
+                content: '',
+                owner: currentUser,
+                group: 'admin',
+                permissions: '644',
+                modified: new Date().toISOString().slice(0, 10)
+            };
         }
         saveFileSystemToDB(); // Lưu thay đổi
     },
@@ -96,9 +130,9 @@ Object.assign(commands, {
         const fileName = args[1];
         let content = stdin;
         if (!stdin) {
-             const currentDir = getCurrentDirectory();
-             if (currentDir[fileName] && currentDir[fileName].type === 'file') content = currentDir[fileName].content;
-             else return `grep: ${fileName}: No such file or directory`;
+            const currentDir = getCurrentDirectory();
+            if (currentDir[fileName] && currentDir[fileName].type === 'file') content = currentDir[fileName].content;
+            else return `grep: ${fileName}: No such file or directory`;
         }
         if (!content) return '';
         const regex = new RegExp(pattern, 'g');

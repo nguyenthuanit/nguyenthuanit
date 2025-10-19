@@ -9,7 +9,7 @@ const mainPassHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923a
 const helpPassHash = 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3'; // Mật khẩu là: 123
 
 // Trạng thái của terminal
-let state = 'login';
+let state = 'command';
 let currentUser = 'admin';
 let previousUser = null;
 let commandHistory = [];
@@ -433,15 +433,14 @@ let commands = {};
 
 function start() {
     commandInput.value = '';
-    commandInput.type = 'password';
+    commandInput.type = 'text';
     initDB(() => {
         getBalanceFromDB(() => {
             loadFileSystemFromDB(() => {
                 type('booting system...', () => {
                     type('Connecting to 103.199.16.113 (Bandung)...', () => {
                         type('Connection established.', () => {
-                            print('Username: admin');
-                            promptElement.textContent = 'password:';
+                            updatePrompt();
                             commandInput.focus();
                         });
                     });
@@ -451,6 +450,7 @@ function start() {
     });
 }
 
+// << DUY NHẤT PHẦN NÀY ĐƯỢC CẬP NHẬT >>
 function showHelp() {
     print(`
 <pre>
@@ -480,6 +480,8 @@ function showHelp() {
   history          : Show command history.
   !! / !n          : Rerun previous commands.
   wget [url]       : Download a file (simulated).
+  theme [set|list] : Change or list available themes.
+  mine [start|stop]: Start or stop the Bitcoin miner.
   clear            : Clear the terminal history.
   logout           : Log out from the session.
 </pre>

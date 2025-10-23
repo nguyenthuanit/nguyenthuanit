@@ -24,7 +24,7 @@ Object.assign(commands, {
     su: (args) => {
         const username = args[0];
         if (!username) return "Usage: su [username]";
-        if (username === 'admin' || username === 'guest') {
+        if (username === 'admin' || username === 'guest' || username === 'root') {
             previousUser = currentUser;
             currentUser = username;
             env['USER'] = username;
@@ -70,9 +70,17 @@ Object.assign(commands, {
     },
     balance: () => `Your current balance: ${currentBalance.toFixed(8)} BTC`,
     logout: () => { print('Logging out...'); setTimeout(() => location.reload(), 1000); },
-    history: () => {
+    
+    // CẢI TIẾN: history hỗ trợ cờ '-c'
+    history: (args) => {
+        if (args[0] === '-c') {
+            commandHistory = [];
+            historyIndex = -1;
+            return;
+        }
         return commandHistory.slice(0).reverse().map((cmd, i) => ` ${i + 1}  ${cmd}`).join('\n');
     },
+    
     wget: async (args) => {
         const url = args[0];
         if (!url) return 'Usage: wget <URL>';
@@ -91,6 +99,48 @@ Object.assign(commands, {
             return `404 Not Found`;
         }
     },
+    
+    // --- LỆNH MỚI ---
+    date: () => {
+        return new Date().toString();
+    },
+
+    uname: (args) => {
+        if (args[0] === '-a') return 'Linux NguyenthuanIT 5.15.0-custom #1 SMP x86_64 GNU/Linux (Simulation)';
+        return 'Linux';
+    },
+
+    ping: async (args) => {
+        const host = args[0];
+        if (!host) return "Usage: ping <host>";
+        print(`PING ${host} (127.0.0.1): 56 data bytes`);
+        for (let i = 0; i < 4; i++) {
+            await new Promise(res => setTimeout(res, 800));
+            const time = (Math.random() * 10 + 5).toFixed(2);
+            print(`64 bytes from 127.0.0.1: icmp_seq=${i} ttl=64 time=${time} ms`);
+        }
+        return `\n--- ${host} ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss`;
+    },
+    
+    curl: async (args) => {
+        const url = args[0];
+        if (!url) return 'Usage: curl <URL>';
+        await new Promise(res => setTimeout(res, 500)); 
+        if (remoteFiles[url]) {
+            return remoteFiles[url];
+        } else {
+            return `curl: (404) Not Found`;
+        }
+    },
+    
+    man: (args) => {
+        const cmd = args[0];
+        if (!cmd) return "Usage: man <command>";
+        if (manPages[cmd]) return manPages[cmd];
+        return `No manual entry for ${cmd}`;
+    },
+
 });
 // Gán lệnh top bằng ps sau khi đã định nghĩa
 commands.top = commands.ps;

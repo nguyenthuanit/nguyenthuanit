@@ -15,7 +15,12 @@ let previousUser = null;
 let commandHistory = [];
 let historyIndex = -1;
 let aliases = { 'll': 'ls -l -a' };
-let env = { 'USER': 'admin', 'HOME': '~' };
+let env = { 
+    'USER': 'admin', 
+    'HOME': '~',
+    'PS1': '\\u@\\h:\\w\\$ ', // Cải tiến: Thêm PS1
+    'PATH': '/usr/bin' // Cải tiến: Thêm PATH
+};
 
 // Trạng thái đào coin và CSDL
 let isMining = false;
@@ -29,19 +34,20 @@ let shareCount = 0;
 // Các theme có sẵn
 const availableThemes = { 'matrix': 'Classic green.', 'hacker': 'Aggressive crimson.', 'cyberpunk': 'Neon on purple.', 'solarized-light': 'For daytime.', 'dracula': 'Popular dark theme.' };
 
-// Dữ liệu giả lập cho lệnh wget
+// Dữ liệu giả lập cho lệnh wget/curl
 const remoteFiles = {
     'https://example.com/data.json': '{"message": "Hello from the web!"}',
-    'https://nguyenthuanit.com/banner.txt': 'Welcome to my portfolio!'
+    'https://nguyenthuanit.com/banner.txt': 'Welcome to my portfolio!',
+    'https://api.github.com/users/google': '{"login": "google", "id": 1342004, "type": "Organization"}'
 };
 
 // --- HỆ THỐNG TỆP (FILE SYSTEM) MẶC ĐỊNH ---
 const fileSystem = {
-    'documents': { type: 'dir', content: { 'project_alpha.txt': { type: 'file', content: 'Đây là nội dung của dự án Alpha.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-15' }, 'notes.log': { type: 'file', content: 'Ghi chú quan trọng: Cập nhật hệ thống vào cuối tuần.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-16' } }, owner: 'admin', group: 'admin', permissions: '755', modified: '2025-10-15' },
+    'documents': { type: 'dir', content: { 'project_alpha.txt': { type: 'file', content: 'Đây là nội dung của dự án Alpha.\nDòng 2.\nDòng 3.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-15' }, 'notes.log': { type: 'file', content: 'Ghi chú quan trọng: Cập nhật hệ thống vào cuối tuần.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-16' } }, owner: 'admin', group: 'admin', permissions: '755', modified: '2025-10-15' },
     'images': { type: 'dir', content: { 'avatar.png': { type: 'file', content: 'Đây là file ảnh giả lập.', owner: 'guest', group: 'users', permissions: '644', modified: '2025-09-20' } }, owner: 'admin', group: 'admin', permissions: '755', modified: '2025-09-20' },
     'README.md': { type: 'file', content: 'Chào mừng bạn đến với terminal giả lập.\nGõ `help` để xem các lệnh.', owner: 'root', group: 'root', permissions: '644', modified: '2025-09-01' },
-    '.profile': { type: 'file', content: 'alias ll="ls -l -a"', owner: 'root', group: 'root', permissions: '644', modified: '2025-09-01' },
-    'file1.txt': { type: 'file', content: 'Đây là nội dung mẫu cho file 1.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-18' },
+    '.profile': { type: 'file', content: 'alias ll="ls -l -a"\nexport PS1="\\u@\\h:\\w\\$ "', owner: 'root', group: 'root', permissions: '644', modified: '2025-09-01' },
+    'file1.txt': { type: 'file', content: 'Đây là nội dung mẫu cho file 1.\ndòng này chứa từ khóa "grep".\ndòng này thì không.\ncuối cùng là grep.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-18' },
     'file2.txt': { type: 'file', content: 'Đây là nội dung mẫu cho file 2.', owner: 'admin', group: 'admin', permissions: '644', modified: '2025-10-18' }
 };
 // Tạo một nút gốc ảo để hệ thống tệp có cấu trúc nhất quán
@@ -55,6 +61,29 @@ let processes = [
     { pid: 288, user: 'admin', cpu: '0.8', mem: '8.5', command: '-bash' },
     { pid: 312, user: 'www', cpu: '1.5', mem: '5.0', command: '/usr/sbin/nginx' }
 ];
+
+// CẢI TIẾN: Thêm dữ liệu cho lệnh 'man'
+const manPages = {
+    'ls': 'NAME\n  ls - list directory contents\n\nSYNOPSIS\n  ls [OPTION]... [FILE]...\n\nDESCRIPTION\n  List information about the FILEs (the current directory by default).\n\n  -a, --all\n      do not ignore entries starting with .\n  -l\n      use a long listing format',
+    'cd': 'NAME\n  cd - change the shell working directory\n\nSYNOPSIS\n  cd [DIRECTORY]\n\nDESCRIPTION\n  Change the current directory to DIRECTORY. The default DIRECTORY is the value of the HOME shell variable.\n  Use "cd .." to go up one directory.',
+    'cat': 'NAME\n  cat - concatenate files and print on the standard output\n\nSYNOPSIS\n  cat [FILE]...\n\nDESCRIPTION\n  Concatenate FILE(s) to standard output.',
+    'grep': 'NAME\n  grep - print lines matching a pattern\n\nSYNOPSIS\n  grep [OPTIONS] PATTERN [FILE]...\n\nDESCRIPTION\n  grep searches for PATTERN in each FILE.\n\n  -i, --ignore-case\n      ignore case distinctions\n  -n, --line-number\n      prefix each line of output with the 1-based line number\n  -r, --recursive\n      read all files under each directory, recursively',
+    'mkdir': 'NAME\n  mkdir - make directories\n\nSYNOPSIS\n  mkdir [DIRECTORY]...\n\nDESCRIPTION\n  Create the DIRECTORY(ies), if they do not already exist.',
+    'rm': 'NAME\n  rm - remove files or directories\n\nSYNOPSIS\n  rm [OPTION]... [FILE]...\n\nDESCRIPTION\n  rm removes each specified file.\n\n  -r, -R, --recursive\n      remove directories and their contents recursively',
+    'touch': 'NAME\n  touch - change file timestamps\n\nSYNOPSIS\n  touch [FILE]...\n\nDESCRIPTION\n  Update the access and modification times of each FILE to the current time. A FILE argument that does not exist is created empty.',
+    'mv': 'NAME\n  mv - move (rename) files\n\nSYNOPSIS\n  mv [SOURCE] [DEST]\n\nDESCRIPTION\n  Rename SOURCE to DEST, or move SOURCE(s) to DIRECTORY.',
+    'cp': 'NAME\n  cp - copy files and directories\n\nSYNOPSIS\n  cp [OPTION]... [SOURCE] [DEST]\n\nDESCRIPTION\n  Copy SOURCE to DEST, or multiple SOURCE(s) to DIRECTORY.\n\n  -r, -R, --recursive\n      copy directories recursively',
+    'pwd': 'NAME\n  pwd - print name of current/working directory\n\nDESCRIPTION\n  Print the full filename of the current working directory.',
+    'find': 'NAME\n  find - search for files in a directory hierarchy\n\nSYNOPSIS\n  find [PATH] [EXPRESSION]\n\nDESCRIPTION\n  (Simulated) Searches the directory tree rooted at PATH.\n\n  -name [PATTERN]\n      (Simulated) Find files matching PATTERN.',
+    'wc': 'NAME\n  wc - print newline, word, and byte counts for each file\n\nSYNOPSIS\n  wc [OPTION]... [FILE]...\n\nDESCRIPTION\n  -l, --lines\n      print the newline counts\n  -w, --words\n      print the word counts\n  -c, --bytes\n      print the byte counts',
+    'head': 'NAME\n  head - output the first part of files\n\nSYNOPSIS\n  head [OPTION]... [FILE]...\n\nDESCRIPTION\n  Print the first 10 lines of each FILE to standard output.\n\n  -n, --lines=[-]K\n      print the first K lines instead of the first 10',
+    'tail': 'NAME\n  tail - output the last part of files\n\nSYNOPSIS\n  tail [OPTION]... [FILE]...\n\nDESCRIPTION\n  Print the last 10 lines of each FILE to standard output.\n\n  -n, --lines=[-]K\n      print the last K lines instead of the last 10',
+    'man': 'NAME\n  man - an interface to the on-line reference manuals\n\nSYNOPSIS\n  man [COMMAND]\n\nDESCRIPTION\n  man is the system\'s manual pager. (This is a simulation.)',
+    'ping': 'NAME\n  ping - send ICMP ECHO_REQUEST to network hosts\n\nSYNOPSIS\n  ping [HOST]\n\nDESCRIPTION\n  (Simulated) Pings the specified host 4 times.',
+    'curl': 'NAME\n  curl - transfer a URL\n\nSYNOPSIS\n  curl [URL]\n\nDESCRIPTION\n  (Simulated) Fetches content from the URL and displays it on stdout.',
+    'wget': 'NAME\n  wget - The non-interactive network downloader.\n\nSYNOPSIS\n  wget [URL]\n\nDESCRIPTION\n  (Simulated) Downloads content from the URL and saves it to a local file.'
+};
+
 
 // --- CÁC HÀM HỖ TRỢ (HELPER FUNCTIONS) ---
 function print(text, isHTML = false) {
@@ -81,11 +110,23 @@ function type(text, callback) {
     }, 30);
 }
 
+// CẢI TIẾN: Cập nhật prompt dựa trên biến môi trường PS1
 function updatePrompt() {
-    const pathString = currentPath.length > 0 ? `/${currentPath.join('/')}` : '';
+    let pathString = '/' + currentPath.join('/');
+    if (pathString === '/') pathString = ''; // Gốc là /
     const homeSymbol = (pathString === '') ? '~' : `~${pathString}`;
+    
+    // Phân tích PS1
+    const host = 'NguyenthuanIT';
     const promptSymbol = (currentUser === 'root' || currentUser === 'admin') ? '#' : '$';
-    promptElement.textContent = `${currentUser}@NguyenthuanIT:${homeSymbol}${promptSymbol}`;
+    
+    let promptText = env['PS1'] || '\\u@\\h:\\w\\$ ';
+    promptText = promptText.replace(/\\u/g, currentUser);
+    promptText = promptText.replace(/\\h/g, host);
+    promptText = promptText.replace(/\\w/g, homeSymbol);
+    promptText = promptText.replace(/\\\$/g, promptSymbol);
+
+    promptElement.textContent = promptText;
 }
 
 // --- CÁC HÀM LIÊN QUAN ĐẾN FILE SYSTEM ---
@@ -93,27 +134,70 @@ function getCurrentDirectory() {
     return currentPath.reduce((node, part) => (node && node.content && node.content[part]) || node, rootNode);
 }
 
+// CẢI TIẾN: Hàm tìm node, hỗ trợ cả đường dẫn tuyệt đối và tương đối
 function findNodeByPath(path) {
     if (!path) return null;
-    let parts = path.split('/').filter(p => p);
-    let startNode = path.startsWith('/') ? rootNode : getCurrentDirectory();
-    return parts.reduce((node, part) => (node && node.content && node.content[part]) ? node.content[part] : null, startNode);
+    
+    let startNode;
+    let parts;
+
+    if (path.startsWith('/')) {
+        startNode = rootNode;
+        parts = path.substring(1).split('/').filter(p => p);
+    } else if (path.startsWith('~')) {
+         startNode = rootNode;
+         parts = path.substring(1).split('/').filter(p => p);
+    } else {
+        startNode = getCurrentDirectory();
+        parts = path.split('/').filter(p => p);
+    }
+
+    if (path === '.' || path === '') return startNode;
+    if (path === '..') {
+        if (currentPath.length === 0) return rootNode;
+        const parentPath = currentPath.slice(0, -1).join('/');
+        return findNodeByPath('/' + parentPath);
+    }
+    
+    return parts.reduce((node, part) => {
+        if (!node) return null;
+        if (part === '.') return node;
+        // Logic '..' phức tạp hơn, tạm thời chỉ hỗ trợ ở đầu
+        return (node.content && node.content[part]) ? node.content[part] : null;
+    }, startNode);
 }
 
+// CẢI TIẾN: Hàm kiểm tra quyền chi tiết (user, group, other)
 function checkPermissions(node, user, action) {
     if (!node || !node.permissions || !node.owner) return false;
-    if (user === 'root' || user === 'admin') return true;
-    const owner = node.owner;
-    const perms = node.permissions;
+    
+    // admin (giả lập root) có mọi quyền
+    if (user === 'root' || user === 'admin') return true; 
+
+    const perms = node.permissions; // e.g., '751'
     let requiredPerm;
+
     switch (action) {
         case 'read': requiredPerm = 4; break;
         case 'write': requiredPerm = 2; break;
         case 'execute': requiredPerm = 1; break;
         default: return false;
     }
-    const permDigit = (user === owner) ? perms[0] : perms[2];
-    return (parseInt(permDigit, 10) & requiredPerm) !== 0;
+
+    const ownerPerm = parseInt(perms[0], 10);
+    const groupPerm = parseInt(perms[1], 10);
+    const otherPerm = parseInt(perms[2], 10);
+
+    // Kiểm tra owner
+    if (user === node.owner) {
+        return (ownerPerm & requiredPerm) !== 0;
+    }
+    // Kiểm tra group (Giả lập: user name cũng là group name của họ)
+    if (user === node.group) {
+        return (groupPerm & requiredPerm) !== 0;
+    }
+    // Kiểm tra other
+    return (otherPerm & requiredPerm) !== 0;
 }
 
 // --- XỬ LÝ SỰ KIỆN NHẬP LỆNH ---
@@ -156,14 +240,13 @@ commandInput.addEventListener('keydown', function (event) {
     }
 });
 
+// CẢI TIẾN: Tab completion hỗ trợ đường dẫn (path)
 function handleTabCompletion() {
     const text = commandInput.value;
     const parts = text.split(' ');
-    const currentPart = parts[parts.length - 1];
-    const currentDirNode = getCurrentDirectory();
-    const currentDirContent = currentDirNode.content || currentDirNode;
-
+    
     if (parts.length === 1) { // Hoàn thành lệnh
+        const currentPart = parts[0];
         const matchingCommands = Object.keys(commands).filter(cmd => cmd.startsWith(currentPart));
         if (matchingCommands.length === 1) {
             commandInput.value = matchingCommands[0] + ' ';
@@ -172,14 +255,35 @@ function handleTabCompletion() {
             print(matchingCommands.join('  '));
             updatePrompt();
         }
-    } else { // Hoàn thành tên file/thư mục
-        const matchingFiles = Object.keys(currentDirContent).filter(file => file.startsWith(currentPart));
+    } else { // Hoàn thành tên file/thư mục/đường dẫn
+        const lastSpace = text.lastIndexOf(' ') + 1;
+        const currentArg = text.substring(lastSpace);
+        
+        let pathPrefix = '';
+        let namePrefix = currentArg;
+        const lastSlash = currentArg.lastIndexOf('/');
+        
+        let startNode;
+
+        if (lastSlash > -1) {
+            pathPrefix = currentArg.substring(0, lastSlash + 1); // e.g., "documents/"
+            namePrefix = currentArg.substring(lastSlash + 1); // e.g., "pro"
+            startNode = findNodeByPath(pathPrefix);
+        } else {
+            startNode = getCurrentDirectory();
+        }
+        
+        if (!startNode || startNode.type !== 'dir') return;
+        
+        const dirContent = startNode.content || startNode;
+        const matchingFiles = Object.keys(dirContent).filter(file => file.startsWith(namePrefix));
+        
         if (matchingFiles.length === 1) {
-            parts[parts.length - 1] = matchingFiles[0];
-            commandInput.value = parts.join(' ') + (currentDirContent[matchingFiles[0]].type === 'dir' ? '/' : ' ');
+            const completion = pathPrefix + matchingFiles[0];
+            commandInput.value = text.substring(0, lastSpace) + completion + (dirContent[matchingFiles[0]].type === 'dir' ? '/' : ' ');
         } else if (matchingFiles.length > 1) {
             print(`${promptElement.textContent} ${text}`);
-            print(matchingFiles.join('  '));
+            print(matchingFiles.map(f => dirContent[f].type === 'dir' ? f + '/' : f).join('  '));
             updatePrompt();
         }
     }
@@ -224,14 +328,14 @@ async function executeCommand(fullCommand) {
         return;
     }
 
-    // NÂNG CẤP: Xử lý lịch sử lệnh !! và !n
+    // Xử lý lịch sử lệnh !! và !n
     if (fullCommand.startsWith('!')) {
         let historyCmd = '';
         if (fullCommand === '!!') {
             if (commandHistory.length > 0) historyCmd = commandHistory[0];
         } else {
             const index = parseInt(fullCommand.substring(1));
-            // Lịch sử được lưu ngược, nên cần tính toán lại index
+            // Lịch sử được lưu ngược (unshift), nên cần tính toán lại
             if (!isNaN(index) && index > 0 && index <= commandHistory.length) {
                 historyCmd = commandHistory.slice(0).reverse()[index - 1];
             }
@@ -273,8 +377,14 @@ async function executeCommand(fullCommand) {
         }
 
         if (commands[cmd]) {
-            const result = await commands[cmd](args, stdin);
-            stdout = result === undefined ? '' : String(result);
+            try {
+                const result = await commands[cmd](args, stdin);
+                stdout = result === undefined ? '' : String(result);
+            } catch (error) {
+                print(`-bash: ${cmd}: ${error.message || 'An error occurred'}`);
+                updatePrompt();
+                return;
+            }
         } else {
             print(`-bash: ${cmd}: command not found.`);
             updatePrompt();
@@ -320,7 +430,7 @@ function handleRedirection(fileName, content, append) {
     saveFileSystemToDB();
 }
 
-// NÂNG CẤP: Hàm cho trình soạn thảo Nano
+// Hàm cho trình soạn thảo Nano (Giữ nguyên)
 function enterEditorMode(fileName, content) {
     const editorOverlay = document.getElementById('editor-overlay');
     const editorTextarea = document.getElementById('editor-textarea');
@@ -450,54 +560,84 @@ function start() {
     });
 }
 
-// << DUY NHẤT PHẦN NÀY ĐƯỢC CẬP NHẬT >>
+// CẢI TIẾN: Cập nhật menu help với các lệnh mới
 function showHelp() {
     print(`
 <pre>
---- Navigation & File System ---
+--- File System & Navigation ---
   ls [-l, -a]      : List files and directories.
   cd [dir]         : Change directory.
+  pwd              : Print working directory.
   cat [file]...    : Display content of one or more files.
-  tree [dir]       : Show directory structure as a tree.
-  mkdir [dir]      : Create a new directory.
-  touch [file]..   : Create new empty files.
-  rm [-r] [target] : Remove a file or directory.
-  cp [src] [dest]  : Copy a file or directory.
-  mv [src] [dest]  : Move or rename a file or directory.
   nano [file]      : Edit a text file.
-  grep [pat] [file]: Search for a pattern in a file.
+  touch [file]..   : Create or update files.
+  mkdir [dir]      : Create a new directory.
+  rm [-r] [target] : Remove a file or directory.
+  cp [-r] [src] [dst]: Copy a file or directory.
+  mv [src] [dst]   : Move or rename a file or directory.
+  tree [dir]       : Show directory structure as a tree.
+  stat [file]      : Display file status.
   chmod [mode] [f] : Change file permissions (e.g., 755).
   chown [user] [f] : Change file owner.
 
+--- Text & Search ---
+  grep [-i,-n,-r] [pat] [f]: Search for a pattern in a file.
+  find [path] -name [pat] : Find files by name.
+  wc [-l,-w,-c] [file]    : Count lines, words, and characters.
+  head [-n K] [file]      : Show first K lines of a file.
+  tail [-n K] [file]      : Show last K lines of a file.
+
 --- System & Utility ---
   neofetch         : Display system information.
+  uname [-a]       : Print system information.
   ps / top         : List running processes.
   kill [PID]       : Terminate a process.
   whoami/su/exit   : Manage simulated users.
   alias [def]      : Create a command shortcut.
   export [def]     : Set an environment variable.
   printenv         : Print environment variables.
-  history          : Show command history.
+  history [-c]     : Show command history (or clear with -c).
   !! / !n          : Rerun previous commands.
-  wget [url]       : Download a file (simulated).
-  theme [set|list] : Change or list available themes.
-  mine [start|stop]: Start or stop the Bitcoin miner.
+  man [cmd]        : Show help manual for a command.
+  date             : Show the current date and time.
+  df               : Show disk usage (simulated).
+  which [cmd]      : Show path of a command.
   clear            : Clear the terminal history.
   logout           : Log out from the session.
+
+--- Network (Simulated) ---
+  wget [url]       : Download a file.
+  curl [url]       : Fetch and display content from a URL.
+  ping [host]      : Ping a host.
+
+--- Misc ---
+  theme [set|list] : Change or list available themes.
+  mine [start|stop]: Start or stop the Bitcoin miner.
+  balance          : Check your BTC balance.
 </pre>
     `, true);
 }
 
+// CẢI TIẾN: Logo Neofetch đẹp hơn
 function showNeofetch() {
+    const uptime = "2h 15m"; // Giả lập
     return `<pre>
-     .--.      ${currentUser}@NguyenthuanIT
-    |o_o |     ---------------
-    |:_/ |     OS: Linux Live x86_64
-   //   \\ \\    Host: Virtual Machine v2.1
-  (|     | )   Kernel: 5.15.0-custom
- /'\\_   _/\`\\   Uptime: 2 hours, 15 mins
- \\___)=(___/   CPU: Xeon E5-2699v4 3.6Ghz
-               Memory: 4096MB / 131072MB</pre>`;
+<span style="color: var(--prompt-color);">            .-/+oossssoo+/-.               </span>${currentUser}@NguyenthuanIT
+<span style="color: var(--prompt-color);">        ´:+ssssssssssssssssss+:\`           </span>---------------
+<span style="color: var(--prompt-color);">      -+ssssssssssssssssssyyssss+-         </span>OS: Linux Live x86_64
+<span style="color: var(--prompt-color);">    .ossssssssssssssssss<span style="color: var(--main-bg);">dMMMNy</span>ssssso.        </span>Host: Virtual Machine v2.1
+<span style="color: var(--prompt-color);">   /ssssssssss<span style="color: var(--main-bg);">sdMMMMMMMMNNm</span>ssssss/         </span>Kernel: 5.15.0-custom
+<span style="color: var(--prompt-color);">  :ssssssss<span style="color: var(--main-bg);">hhdMMMMMMMMMMMNh</span>ssssss:        </span>Uptime: ${uptime}
+<span style="color: var(--prompt-color);"> :ssssssss<span style="color: var(--main-bg);">hhdMMMMMMMMMMMNh</span>ssssss:        </span>Shell: bash 5.1.16
+<span style="color: var(--prompt-color);"> +ssssssss<span style="color: var(--main-bg);">hhdMMMMMMMMMMMNh</span>ssssss+        </span>Terminal: Terminal.js
+<span style="color: var(--prompt-color);"> +ssssssss<span style="color: var(--main-bg);">hhdMMMMMMMMMMMNh</span>ssssss+        </span>CPU: Xeon E5-2699v4 (Sim)
+<span style="color: var(--prompt-color);"> :ssssssss<span style="color: var(--main-bg);">hhdMMMMMMMMMMMNh</span>ssssss:        </span>GPU: NVIDIA RTX 4090 (Sim)
+<span style="color: var(--prompt-color);">  :ssssssss<span style="color: var(--main-bg);">hhdMMMMMMMMMMMNh</span>ssssss:        </span>Memory: 4096MB / 131072MB
+<span style="color: var(--prompt-color);">   /ssssssssss<span style="color: var(--main-bg);">sdMMMMMMMMNNm</span>ssssss/
+<span style="color: var(--prompt-color);">    .ossssssssssssssssss<span style="color: var(--main-bg);">dMMMNy</span>ssssso.
+<span style="color: var(--prompt-color);">      -+ssssssssssssssssssyyssss+-
+<span style="color: var(--prompt-color);">        ´:+ssssssssssssssssss+:\`
+<span style="color: var(--prompt-color);">            .-/+oossssoo+/-.</span></pre>`;
 }
 
 terminal.addEventListener('click', () => commandInput.focus());

@@ -17,8 +17,15 @@ Object.assign(commands, {
             return items.map(item => {
                 const details = currentDirContent[item];
                 if (!details.permissions) return `ls: cannot access '${item}': No such file or directory`;
-                const perms = (details.type === 'dir' ? 'd' : '-') + [...details.permissions].map(p => [(p & 4) ? 'r' : '-', (p & 2) ? 'w' : '-', (p & 1) ? 'x' : '-'].join('')).join('');
-                return `${perms.padEnd(11)} 1 ${details.owner.padEnd(8)} ${details.group.padEnd(8)} ${'128'.padStart(6)} ${details.modified} ${item}`;
+                // Chuyển đổi '755' thành 'rwxr-xr-x'
+                const perms = (details.type === 'dir' ? 'd' : '-') + 
+                              [...details.permissions].map(p => {
+                                  const d = parseInt(p, 10);
+                                  return ((d & 4) ? 'r' : '-') + 
+                                         ((d & 2) ? 'w' : '-') + 
+                                         ((d & 1) ? 'x' : '-');
+                              }).join('');
+                return `${perms.padEnd(11)} 1 ${details.owner.padEnd(8)} ${details.group.padEnd(8)} ${'128'.padStart(6)} ${details.modified} ${item}${details.type === 'dir' ? '/' : ''}`;
             }).join('\n');
         }
         return items.map(item => currentDirContent[item].type === 'dir' ? `${item}/` : item).join('  ');
@@ -28,20 +35,37 @@ Object.assign(commands, {
         const dirName = args[0];
         if (!dirName || dirName === '~' || dirName === '/') { currentPath = []; return; }
         if (dirName === '..') { if (currentPath.length > 0) currentPath.pop(); return; }
-        const currentDirNode = getCurrentDirectory();
-        const currentDirContent = currentDirNode.content || currentDirNode;
-        if (currentDirContent[dirName] && currentDirContent[dirName].type === 'dir') {
-            currentPath.push(dirName);
-        } else { return `-bash: cd: ${dirName}: No such file or directory`; }
+        
+        const targetNode = findNodeByPath(dirName);
+        
+        if (!targetNode) {
+            return `-bash: cd: ${dirName}: No such file or directory`;
+        }
+        if (targetNode.type !== 'dir') {
+            return `-bash: cd: ${dirName}: Not a directory`;
+        }
+        
+        // Cập nhật currentPath dựa trên đường dẫn mới
+        if (dirName.startsWith('/')) {
+            currentPath = dirName.split('/').filter(p => p);
+        } else if (dirName.startsWith('~')) {
+             currentPath = dirName.substring(1).split('/').filter(p => p);
+        } else {
+            // Xử lý đường dẫn tương đối phức tạp hơn, tạm thời giả định cd đơn giản
+             const currentDirNode = getCurrentDirectory();
+             const currentDirContent = currentDirNode.content || currentDirNode;
+             if (currentDirContent[dirName] && currentDirContent[dirName].type === 'dir') {
+                 currentPath.push(dirName);
+             }
+        }
     },
 
     cat: (args, stdin) => {
         if (stdin) return stdin;
         if (args.length === 0) return "Usage: cat [file]...";
-        const currentDirNode = getCurrentDirectory();
-        const currentDirContent = currentDirNode.content || currentDirNode;
+        
         return args.map(fileName => {
-            const node = currentDirContent[fileName];
+            const node = findNodeByPath(fileName);
             if (node && node.type === 'file') {
                 if (!checkPermissions(node, currentUser, 'read')) return `-bash: cat: ${fileName}: Permission denied`;
                 return node.content;
@@ -104,13 +128,20 @@ Object.assign(commands, {
         const recursive = args.includes('-r');
         const targetName = args.find(arg => !arg.startsWith('-'));
         if (!targetName) return "Usage: rm [-r] <file/directory>";
-        const currentDirNode = getCurrentDirectory();
-        const currentDirContent = currentDirNode.content || currentDirNode;
-        const target = currentDirContent[targetName];
-        if (!target) return `rm: cannot remove '${targetName}': No such file or directory`;
-        if (!checkPermissions(target, currentUser, 'write')) return `rm: cannot remove '${targetName}': Permission denied`;
-        if (target.type === 'dir' && !recursive) return `rm: cannot remove '${targetName}': Is a directory`;
-        delete currentDirContent[targetName];
+        
+        const node = findNodeByPath(targetName);
+        if (!node) return `rm: cannot remove '${targetName}': No such file or directory`;
+
+        // Tìm thư mục cha
+        const parentPath = targetName.includes('/') ? targetName.substring(0, targetName.lastIndexOf('/')) : '.';
+        const parentNode = findNodeByPath(parentPath) || getCurrentDirectory();
+        const parentContent = parentNode.content || parentNode;
+        const name = targetName.split('/').pop();
+
+        if (!checkPermissions(node, currentUser, 'write')) return `rm: cannot remove '${targetName}': Permission denied`;
+        if (node.type === 'dir' && !recursive) return `rm: cannot remove '${targetName}': Is a directory`;
+        
+        delete parentContent[name];
         saveFileSystemToDB();
     },
 
@@ -132,8 +163,8 @@ Object.assign(commands, {
                 if (line.match(isCaseInsensitive ? new RegExp(pattern, 'i') : pattern)) {
                     const highlightedLine = line.replace(regex, `<span style="background-color: yellow; color: black;">$&</span>`);
                     let prefix = '';
-                    if (isRecursive || targets.length > 1) prefix += `${filePath}:`;
-                    if (showLineNumbers) prefix += `${index + 1}:`;
+                    if (isRecursive || targets.length > 1) prefix += `<span style="color:var(--prompt-color);">${filePath}</span>:`;
+                    if (showLineNumbers) prefix += `<span style="color:var(--link-color);">${index + 1}</span>:`;
                     results.push(prefix + highlightedLine);
                 }
             });
@@ -157,6 +188,7 @@ Object.assign(commands, {
             targets.forEach(fileName => {
                 const node = findNodeByPath(fileName);
                 if (node && node.type === 'file') { searchInFile(node, fileName); } 
+                else if (node && node.type === 'dir') { results.push(`grep: ${fileName}: Is a directory`); }
                 else { results.push(`grep: ${fileName}: No such file or directory`); }
             });
         }
@@ -213,7 +245,7 @@ Object.assign(commands, {
         saveFileSystemToDB();
     },
 
-    // --- CÁC LỆNH MỚI ---
+    // --- CÁC LỆNH MỚI & CẢI TIẾN ---
     nano: (args) => {
         if (!args[0]) return "Usage: nano <filename>";
         const fileName = args[0];
@@ -223,75 +255,244 @@ Object.assign(commands, {
         enterEditorMode(fileName, initialContent);
     },
 
+    // CẢI TIẾN: `cp` với logic xử lý (file->file), (file->dir), (dir->dir)
     cp: (args) => {
-        if (args.length < 2) return "Usage: cp <source> <destination>";
-        const [sourcePath, destPath] = args;
+        const recursive = args.includes('-r');
+        const paths = args.filter(a => !a.startsWith('-'));
+        if (paths.length < 2) return "Usage: cp [-r] <source> <destination>";
+        
+        const sourcePath = paths[0];
+        const destPath = paths[1];
+        
         const sourceNode = findNodeByPath(sourcePath);
         if (!sourceNode) return `cp: cannot stat '${sourcePath}': No such file or directory`;
-
-        let destParentNode;
-        let destName = destPath.split('/').pop();
-        let destParentPath = destPath.substring(0, destPath.lastIndexOf('/'));
+        if (sourceNode.type === 'dir' && !recursive) return `cp: -r not specified; omitting directory '${sourcePath}'`;
         
-        if (destParentPath === '') destParentNode = getCurrentDirectory();
-        else destParentNode = findNodeByPath(destParentPath);
+        const sourceName = sourcePath.split('/').pop();
+        const destNode = findNodeByPath(destPath);
         
-        if (!destParentNode || destParentNode.type !== 'dir') {
-             // Check if dest is a directory
-             const destNode = findNodeByPath(destPath);
-             if(destNode && destNode.type === 'dir') {
-                 destParentNode = destNode;
-                 destName = sourcePath.split('/').pop();
-             } else {
-                return `cp: destination '${destPath}' is not a directory.`;
-             }
+        // Trường hợp 1: Đích là một thư mục (e.g., cp file.txt docs/)
+        if (destNode && destNode.type === 'dir') {
+            const destDirContent = destNode.content || destNode;
+            if (destDirContent[sourceName]) return `cp: cannot copy '${sourcePath}' to '${destPath}/${sourceName}': File exists`;
+            destDirContent[sourceName] = deepCopy(sourceNode);
         }
-        
-        const destDirContent = destParentNode.content || destParentNode;
-        if (destDirContent[destName]) return `cp: '${destPath}/${destName}' already exists.`;
-        
-        destDirContent[destName] = deepCopy(sourceNode);
+        // Trường hợp 2: Đích là file hoặc không tồn tại (e.g., cp file.txt new.txt)
+        else {
+            const destName = destPath.split('/').pop();
+            const destParentPath = destPath.includes('/') ? destPath.substring(0, destPath.lastIndexOf('/')) : '.';
+            const destParentNode = findNodeByPath(destParentPath) || getCurrentDirectory();
+            
+            if (!destParentNode || destParentNode.type !== 'dir') return `cp: cannot create regular file '${destPath}': Not a directory`;
+            
+            const destDirContent = destParentNode.content || destParentNode;
+            if (destDirContent[destName]) return `cp: cannot copy to '${destPath}': File exists`;
+            
+            destDirContent[destName] = deepCopy(sourceNode);
+        }
         saveFileSystemToDB();
     },
 
+    // CẢI TIẾN: `mv` với logic xử lý (rename), (move->dir)
     mv: (args) => {
         if (args.length < 2) return "Usage: mv <source> <destination>";
         const [sourcePath, destPath] = args;
 
+        // 1. Tìm node nguồn và cha của nó
         const sourceName = sourcePath.split('/').pop();
-        const sourceParentPath = sourcePath.substring(0, sourcePath.lastIndexOf('/')) || '.';
-        const sourceParentNode = findNodeByPath(sourceParentPath);
+        const sourceParentPath = sourcePath.includes('/') ? sourcePath.substring(0, sourcePath.lastIndexOf('/')) : '.';
+        const sourceParentNode = findNodeByPath(sourceParentPath) || getCurrentDirectory();
 
-        if (!sourceParentNode) return `mv: cannot stat '${sourcePath}': No such file or directory`;
-
+        if (!sourceParentNode || !sourceParentNode.content) return `mv: cannot stat '${sourcePath}': No such file or directory`;
+        
         const sourceDirContent = sourceParentNode.content || sourceParentNode;
         const sourceNode = sourceDirContent[sourceName];
 
         if (!sourceNode) return `mv: cannot stat '${sourcePath}': No such file or directory`;
 
-        // Logic đổi tên trong cùng thư mục
+        // 2. Tìm node đích
         const destNode = findNodeByPath(destPath);
-        if(!destNode) {
-            const destParentPath = destPath.substring(0, destPath.lastIndexOf('/')) || '.';
-            if (sourceParentPath === destParentPath) {
-                const destName = destPath.split('/').pop();
-                sourceDirContent[destName] = deepCopy(sourceNode);
-                delete sourceDirContent[sourceName];
-                saveFileSystemToDB();
-                return;
+
+        // Trường hợp 1: Đích là thư mục (e.g., mv file.txt docs/)
+        if (destNode && destNode.type === 'dir') {
+            const destDirContent = destNode.content;
+            if (destDirContent[sourceName]) return `mv: cannot move '${sourcePath}' to '${destPath}/${sourceName}': File exists`;
+            
+            destDirContent[sourceName] = sourceNode; // Di chuyển node
+            delete sourceDirContent[sourceName]; // Xóa khỏi vị trí cũ
+        } 
+        // Trường hợp 2: Đích là file hoặc không tồn tại (rename hoặc move+rename)
+        else {
+            const destName = destPath.split('/').pop();
+            const destParentPath = destPath.includes('/') ? destPath.substring(0, destPath.lastIndexOf('/')) : '.';
+            const destParentNode = findNodeByPath(destParentPath) || getCurrentDirectory();
+
+            if (!destParentNode || destParentNode.type !== 'dir') return `mv: cannot move to '${destPath}': Not a directory`;
+            
+            const destDirContent = destParentNode.content || destParentNode;
+            if (destDirContent[destName]) return `mv: cannot move to '${destPath}': File exists`;
+            
+            destDirContent[destName] = sourceNode;
+            delete sourceDirContent[sourceName];
+        }
+        
+        saveFileSystemToDB();
+    },
+
+    // --- LỆNH MỚI ---
+    pwd: () => {
+        return '/' + currentPath.join('/');
+    },
+
+    stat: (args) => {
+        if (!args[0]) return "Usage: stat <file>";
+        const node = findNodeByPath(args[0]);
+        if (!node) return `stat: cannot stat '${args[0]}': No such file or directory`;
+        
+        const perms = (node.type === 'dir' ? 'd' : '-') + 
+                      [...node.permissions].map(p => {
+                          const d = parseInt(p, 10);
+                          return ((d & 4) ? 'r' : '-') + ((d & 2) ? 'w' : '-') + ((d & 1) ? 'x' : '-');
+                      }).join('');
+
+        return [
+            `  File: ${args[0]}`,
+            `  Type: ${node.type}`,
+            `Access: (${node.permissions}/${perms})  Owner: ( ${node.owner} / ${node.group} )`,
+            `Modify: ${node.modified}`
+        ].join('\n');
+    },
+
+    wc: (args, stdin) => {
+        let content = '';
+        let fileName = '';
+        if (stdin) {
+            content = stdin;
+        } else {
+            if (args.length === 0) return "Usage: wc [-l, -w, -c] <file>";
+            fileName = args.find(arg => !arg.startsWith('-'));
+            if (!fileName) return "Usage: wc [-l, -w, -c] <file>";
+            const node = findNodeByPath(fileName);
+            if (!node) return `wc: ${fileName}: No such file or directory`;
+            if (node.type === 'dir') return `wc: ${fileName}: Is a directory`;
+            content = node.content;
+        }
+        
+        const lines = content.split('\n').length;
+        const words = content.split(/\s+/).filter(Boolean).length;
+        const chars = content.length;
+
+        const showLines = args.includes('-l');
+        const showWords = args.includes('-w');
+        const showChars = args.includes('-c');
+
+        if (!showLines && !showWords && !showChars) {
+            return `  ${lines}  ${words}  ${chars} ${fileName}`;
+        }
+        
+        let output = [];
+        if (showLines) output.push(lines);
+        if (showWords) output.push(words);
+        if (showChars) output.push(chars);
+        
+        return `  ${output.join('  ')} ${fileName}`;
+    },
+
+    head: (args, stdin) => {
+        let n = 10;
+        let fileName = '';
+        
+        if (args.includes('-n')) {
+            const nIndex = args.indexOf('-n');
+            if (args[nIndex + 1]) n = parseInt(args[nIndex + 1]);
+            fileName = args.filter(a => a !== '-n' && a !== String(n))[0];
+        } else {
+            fileName = args[0];
+        }
+        
+        let content = '';
+        if (stdin) content = stdin;
+        else {
+            if (!fileName) return "Usage: head [-n K] <file>";
+            const node = findNodeByPath(fileName);
+            if (!node) return `head: ${fileName}: No such file or directory`;
+            if (node.type === 'dir') return `head: error reading '${fileName}': Is a directory`;
+            content = node.content;
+        }
+        
+        return content.split('\n').slice(0, n).join('\n');
+    },
+
+    tail: (args, stdin) => {
+        let n = 10;
+        let fileName = '';
+        
+        if (args.includes('-n')) {
+            const nIndex = args.indexOf('-n');
+            if (args[nIndex + 1]) n = parseInt(args[nIndex + 1]);
+            fileName = args.filter(a => a !== '-n' && a !== String(n))[0];
+        } else {
+            fileName = args[0];
+        }
+
+        let content = '';
+        if (stdin) content = stdin;
+        else {
+            if (!fileName) return "Usage: tail [-n K] <file>";
+            const node = findNodeByPath(fileName);
+            if (!node) return `tail: ${fileName}: No such file or directory`;
+            if (node.type === 'dir') return `tail: error reading '${fileName}': Is a directory`;
+            content = node.content;
+        }
+        
+        return content.split('\n').slice(-n).join('\n');
+    },
+
+    find: (args) => {
+        const path = args[0] || '.';
+        const namePattern = args[1] === '-name' ? args[2] : null;
+        
+        if (!namePattern) return "Usage: find <path> -name <pattern>";
+        
+        const startNode = findNodeByPath(path);
+        if (!startNode || startNode.type !== 'dir') return `find: '${path}': No such file or directory`;
+        
+        const regex = new RegExp(namePattern.replace(/\*/g, '.*'));
+        let results = [];
+        
+        function searchRecursive(directory, currentPath) {
+            const dirContent = directory.content || directory;
+            for (const entryName in dirContent) {
+                const node = dirContent[entryName];
+                const fullPath = (currentPath === '/' ? '' : currentPath) + '/' + entryName;
+                
+                if (entryName.match(regex)) {
+                    results.push(fullPath);
+                }
+                
+                if (node.type === 'dir') {
+                    searchRecursive(node, fullPath);
+                }
             }
         }
         
-        // Logic di chuyển
-        const cpError = commands.cp(args);
-        if (cpError) return cpError; // Trả về lỗi nếu cp thất bại
-        
-        const destCheckNode = findNodeByPath(destPath);
-        if (destCheckNode) { // Nếu cp thành công
-            delete sourceDirContent[sourceName];
-            saveFileSystemToDB();
-        } else {
-            return `mv: failed to move '${sourcePath}' to '${destPath}'.`;
-        }
+        searchRecursive(startNode, path);
+        return results.join('\n');
     },
+    
+    df: () => {
+        return `<pre>
+Filesystem     Size  Used Avail Use% Mounted on
+/dev/root      100G   20G   80G  20% /
+(simulation)   1.0T 250G  750G  25% /mnt/data</pre>`;
+    },
+    
+    which: (args) => {
+        const cmd = args[0];
+        if (!cmd) return "Usage: which <command>";
+        if (commands[cmd]) return (env['PATH'] || '/usr/bin') + '/' + cmd;
+        if (aliases[cmd]) return `which: '${cmd}' is an aliased command: alias ${cmd}='${aliases[cmd]}'`;
+        return `which: no ${cmd} in (${env['PATH'] || '/usr/bin'})`;
+    },
+
 });

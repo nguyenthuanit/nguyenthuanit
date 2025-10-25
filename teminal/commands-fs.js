@@ -484,7 +484,7 @@ Object.assign(commands, {
         return `<pre>
 Filesystem     Size  Used Avail Use% Mounted on
 /dev/root      100G   20G   80G  20% /
-(simulation)   1.0T 250G  750G  25% /mnt/data</pre>`;
+(SSD)   1.0T 250G  750G  25% /mnt/data</pre>`;
     },
     
     which: (args) => {

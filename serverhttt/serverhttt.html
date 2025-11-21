@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Enterprise Server Simulator — Professional Edition</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net/npm/chart.js" crossorigin>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="Serverhttt.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">NT</div>
+      <div>
+        <div class="h1">nguyenthuanit.id.vn — Enterprise Simulator</div>
+        <div class="small">Hệ Thống Tập Trung — Phiên bản: **Professional 3.0**</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn" id="wsToggle" data-running="0"><i class="fas fa-play"></i> Start Simulation</button>
+      <button class="btn ghost" id="themeToggle"><i class="fas fa-adjust"></i> Theme</button>
+      <button class="btn ghost" id="backupBtn"><i class="fas fa-download"></i> Backup DB</button>
+      <label class="btn ghost" for="restoreFile"><i class="fas fa-upload"></i> Restore</label>
+      <input id="restoreFile" type="file" accept="application/json">
+      <button class="btn ghost" id="toggleEncrypt"><i class="fas fa-lock"></i> Toggle Encryption</button>
+    </div>
+  </div>
+  
+  <div class="app-main">
+    
+    <aside class="sidebar server-list-panel">
+      <h3>Server List (<span id="serverCount">0</span>)</h3>
+      <div id="serverList" class="server-list">
+        </div>
+      <div style="margin-top: 15px; text-align: center;">
+        <button class="btn primary" id="addServerBtn"><i class="fas fa-plus"></i> Add Server</button>
+      </div>
+    </aside>
+
+    <main class="content-area">
+      
+      <section>
+        <h2>Health Overview</h2>
+        <div class="health-grid">
+          <div class="metric-card summary-card">
+            <div class="summary-item">
+                <i class="fas fa-server large-icon success"></i>
+                <div class="large-value" id="statusOkCount">0</div>
+                <div class="small">Server OK</div>
+            </div>
+          </div>
+          <div class="metric-card summary-card">
+            <div class="summary-item">
+                <i class="fas fa-exclamation-triangle large-icon warn"></i>
+                <div class="large-value" id="statusWarnCount">0</div>
+                <div class="small">Server WARN</div>
+            </div>
+          </div>
+          <div class="metric-card summary-card">
+            <div class="summary-item">
+                <i class="fas fa-times-circle large-icon danger"></i>
+                <div class="large-value" id="statusDangerCount">0</div>
+                <div class="small">Server DANGER/DOWN</div>
+            </div>
+          </div>
+          <div class="metric-card summary-card">
+            <div class="summary-item">
+                <i class="fas fa-network-wired large-icon accent"></i>
+                <div class="large-value" id="totalMetrics">0</div>
+                <div class="small">Total Metrics (DB)</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Real-time Metrics</h2>
+        <div class="chart-grid">
+          <div class="metric-card">
+            <div class="small">Average CPU Usage (%)</div>
+            <canvas id="cpuChart"></canvas>
+          </div>
+          <div class="metric-card">
+            <div class="small">Average RAM Usage (%)</div>
+            <canvas id="ramChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section style="margin-top: 20px;">
+        <h2>System Logs</h2>
+        <div class="log-controls">
+            <div class="log-filters" id="logFilters">
+                <button class="btn small filter-btn active" data-level="ALL">ALL</button>
+                <button class="btn small filter-btn" data-level="CRITICAL">CRITICAL</button>
+                <button class="btn small filter-btn" data-level="WARN">WARN</button>
+                <button class="btn small filter-btn" data-level="INFO">INFO</button>
+            </div>
+            <button class="btn ghost small" id="exportLogsBtn"><i class="fas fa-file-export"></i> Export Logs (CSV)</button>
+        </div>
+        <div class="log-area" id="logArea">
+          </div>
+      </section>
+
+    </main>
+
+    <aside class="sidebar control-panel">
+      
+      <div id="serverDetailsPanel" class="hidden">
+        <h3>Server Details: <span id="detailsServerName"></span></h3>
+        <div class="details-section">
+            <p><strong>IP:</strong> <span id="detailsServerIP"></span></p>
+            <p><strong>Status:</strong> <span id="detailsServerStatus"></span></p>
+            <p><strong>CPU:</strong> <span id="detailsServerCPU"></span>%</p>
+            <p><strong>RAM:</strong> <span id="detailsServerRAM"></span>%</p>
+            <div style="margin-top: 10px; display:flex; gap: 8px;">
+                <button class="btn primary small" id="pingServerBtn"><i class="fas fa-paper-plane"></i> Ping</button>
+                <button class="btn secondary small" id="copyIPBtn"><i class="fas fa-copy"></i> Copy IP</button>
+                <button class="btn danger small" id="toggleStatusBtn"><i class="fas fa-power-off"></i> Status Toggle</button>
+            </div>
+        </div>
+        <hr>
+      </div>
+
+      <h3>System Configuration</h3>
+      <div class="config-section">
+        <label for="autoScaleThresholdUp" class="small">Auto-Scale Threshold UP (%)</label>
+        <input type="number" id="autoScaleThresholdUp" value="85" min="50" max="100" class="input-text">
+        
+        <label for="autoScaleThresholdDown" class="small" style="margin-top: 10px;">Auto-Scale Threshold DOWN (%)</label>
+        <input type="number" id="autoScaleThresholdDown" value="25" min="0" max="50" class="input-text">
+
+        <label for="autoScaleCooldown" class="small" style="margin-top: 10px;">Cooldown Period (s)</label>
+        <input type="number" id="autoScaleCooldown" value="30" min="10" max="120" class="input-text">
+        
+        <div style="margin-top:15px;display:flex;gap:8px;flex-direction:column;">
+            <button class="btn primary" id="autoScaleToggle"><i class="fas fa-tachometer-alt"></i> Auto-Scale: OFF</button>
+            <button class="btn ghost" id="simulateSpike"><i class="fas fa-chart-line"></i> Simulate Spike</button>
+            <button class="btn danger ghost" id="rotateKeyBtn"><i class="fas fa-key"></i> Rotate Encryption Key</button>
+        </div>
+      </div>
+      
+      <hr>
+
+      <h3>Alert Center</h3>
+      <div class="alert-center" id="alertCenter">
+        <div class="small muted" style="text-align: center; padding: 10px;">No critical alerts.</div>
+      </div>
+      
+    </aside>
+  </div>
+  
+  <footer class="app-foot">Mô phỏng chuyên nghiệp — không thực hiện request ngoài. Phiên bản: **Enterprise 3.0**</footer>
+  
+  <aside class="modal hidden" id="speedTestModal">
+    <h3>Speed Test (Internal)</h3>
+    <div style="margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px;" id="stStatus">Awaiting start...</div>
+        <div style="height:8px;background:rgba(255,255,255,0.05);border-radius:4px;">
+            <div id="stBar" style="height:8px;width:0%;background:var(--accent);border-radius:4px;transition:width 0.5s ease;"></div>
+        </div>
+    </div>
+    
+    <div style="display:flex;gap:20px;margin-top:15px;">
+        <div>
+            <div class="large-value" id="dlVal">0.00</div>
+            <div class="small">Download (Mbps)</div>
+        </div>
+        <div>
+            <div class="large-value" id="ulVal">0.00</div>
+            <div class="small">Upload (Mbps)</div>
+        </div>
+        <div>
+            <div class="large-value" id="pingVal">0</div>
+            <div class="small">Latency (ms)</div>
+        </div>
+    </div>
+    
+    <div style="margin-top: 20px; text-align: center;">
+      <button class="btn primary" id="startTestBtn">Start Internal Test</button>
+      <button class="btn ghost" id="closeStModal">Close</button>
+    </di<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Enterprise Server Simulator — Professional Edition</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net/npm/chart.js" crossorigin>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <link rel="stylesheet" href="Serverhttt.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">NT</div>
+      <div>
+        <div class="h1">nguyenthuanit.id.vn — Enterprise Simulator</div>
+        <div class="small">Hệ Thống Tập Trung — Phiên bản: **Professional 3.0**</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn" id="wsToggle" data-running="0"><i class="fas fa-play"></i> Start Simulation</button>
+      <button class="btn ghost" id="themeToggle"><i class="fas fa-adjust"></i> Theme</button>
+      <button class="btn ghost" id="backupBtn"><i class="fas fa-download"></i> Backup DB</button>
+      <label class="btn ghost" for="restoreFile"><i class="fas fa-upload"></i> Restore</label>
+      <input id="restoreFile" type="file" accept="application/json">
+      <button class="btn ghost" id="toggleEncrypt"><i class="fas fa-lock"></i> Toggle Encryption</button>
+    </div>
+  </div>
+  
+  <div class="app-main">
+    
+    <aside class="sidebar server-list-panel">
+      <h3>Server List (<span id="serverCount">0</span>)</h3>
+      <div id="serverList" class="server-list">
+        </div>
+      <div style="margin-top: 15px; text-align: center;">
+        <button class="btn primary" id="addServerBtn"><i class="fas fa-plus"></i> Add Server</button>
+      </div>
+    </aside>
+
+    <main class="content-area">
+      
+      <section>
+        <h2>Health Overview</h2>
+        <div class="health-grid">
+          <div class="metric-card summary-card">
+            <div class="summary-item">
+                <i class="fas fa-server large-icon success"></i>
+                <div class="large-value" id="statusOkCount">0</div>
+                <div class="small">Server OK</div>
+            </div>
+          </div>
+          <div class="metric-card summary-card">
+            <div class="summary-item">
+                <i class="fas fa-exclamation-triangle large-icon warn"></i>
+                <div class="large-value" id="statusWarnCount">0</div>
+                <div class="small">Server WARN</div>
+            </div>
+          </div>
+          <div class="metric-card summary-card">
+            <div class="summary-item">
+                <i class="fas fa-times-circle large-icon danger"></i>
+                <div class="large-value" id="statusDangerCount">0</div>
+                <div class="small">Server DANGER/DOWN</div>
+            </div>
+          </div>
+          <div class="metric-card summary-card">
+            <div class="summary-item">
+                <i class="fas fa-network-wired large-icon accent"></i>
+                <div class="large-value" id="totalMetrics">0</div>
+                <div class="small">Total Metrics (DB)</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Real-time Metrics</h2>
+        <div class="chart-grid">
+          <div class="metric-card">
+            <div class="small">Average CPU Usage (%)</div>
+            <canvas id="cpuChart"></canvas>
+          </div>
+          <div class="metric-card">
+            <div class="small">Average RAM Usage (%)</div>
+            <canvas id="ramChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section style="margin-top: 20px;">
+        <h2>System Logs</h2>
+        <div class="log-controls">
+            <div class="log-filters" id="logFilters">
+                <button class="btn small filter-btn active" data-level="ALL">ALL</button>
+                <button class="btn small filter-btn" data-level="CRITICAL">CRITICAL</button>
+                <button class="btn small filter-btn" data-level="WARN">WARN</button>
+                <button class="btn small filter-btn" data-level="INFO">INFO</button>
+            </div>
+            <button class="btn ghost small" id="exportLogsBtn"><i class="fas fa-file-export"></i> Export Logs (CSV)</button>
+        </div>
+        <div class="log-area" id="logArea">
+          </div>
+      </section>
+
+    </main>
+
+    <aside class="sidebar control-panel">
+      
+      <div id="serverDetailsPanel" class="hidden">
+        <h3>Server Details: <span id="detailsServerName"></span></h3>
+        <div class="details-section">
+            <p><strong>IP:</strong> <span id="detailsServerIP"></span></p>
+            <p><strong>Status:</strong> <span id="detailsServerStatus"></span></p>
+            <p><strong>CPU:</strong> <span id="detailsServerCPU"></span>%</p>
+            <p><strong>RAM:</strong> <span id="detailsServerRAM"></span>%</p>
+            <div style="margin-top: 10px; display:flex; gap: 8px;">
+                <button class="btn primary small" id="pingServerBtn"><i class="fas fa-paper-plane"></i> Ping</button>
+                <button class="btn secondary small" id="copyIPBtn"><i class="fas fa-copy"></i> Copy IP</button>
+                <button class="btn danger small" id="toggleStatusBtn"><i class="fas fa-power-off"></i> Status Toggle</button>
+            </div>
+        </div>
+        <hr>
+      </div>
+
+      <h3>System Configuration</h3>
+      <div class="config-section">
+        <label for="autoScaleThresholdUp" class="small">Auto-Scale Threshold UP (%)</label>
+        <input type="number" id="autoScaleThresholdUp" value="85" min="50" max="100" class="input-text">
+        
+        <label for="autoScaleThresholdDown" class="small" style="margin-top: 10px;">Auto-Scale Threshold DOWN (%)</label>
+        <input type="number" id="autoScaleThresholdDown" value="25" min="0" max="50" class="input-text">
+
+        <label for="autoScaleCooldown" class="small" style="margin-top: 10px;">Cooldown Period (s)</label>
+        <input type="number" id="autoScaleCooldown" value="30" min="10" max="120" class="input-text">
+        
+        <div style="margin-top:15px;display:flex;gap:8px;flex-direction:column;">
+            <button class="btn primary" id="autoScaleToggle"><i class="fas fa-tachometer-alt"></i> Auto-Scale: OFF</button>
+            <button class="btn ghost" id="simulateSpike"><i class="fas fa-chart-line"></i> Simulate Spike</button>
+            <button class="btn danger ghost" id="rotateKeyBtn"><i class="fas fa-key"></i> Rotate Encryption Key</button>
+        </div>
+      </div>
+      
+      <hr>
+
+      <h3>Alert Center</h3>
+      <div class="alert-center" id="alertCenter">
+        <div class="small muted" style="text-align: center; padding: 10px;">No critical alerts.</div>
+      </div>
+      
+    </aside>
+  </div>
+  
+  <footer class="app-foot">Mô phỏng chuyên nghiệp — không thực hiện request ngoài. Phiên bản: **Enterprise 3.0**</footer>
+  
+  <aside class="modal hidden" id="speedTestModal">
+    <h3>Speed Test (Internal)</h3>
+    <div style="margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px;" id="stStatus">Awaiting start...</div>
+        <div style="height:8px;background:rgba(255,255,255,0.05);border-radius:4px;">
+            <div id="stBar" style="height:8px;width:0%;background:var(--accent);border-radius:4px;transition:width 0.5s ease;"></div>
+        </div>
+    </div>
+    
+    <div style="display:flex;gap:20px;margin-top:15px;">
+        <div>
+            <div class="large-value" id="dlVal">0.00</div>
+            <div class="small">Download (Mbps)</div>
+        </div>
+        <div>
+            <div class="large-value" id="ulVal">0.00</div>
+            <div class="small">Upload (Mbps)</div>
+        </div>
+        <div>
+            <div class="large-value" id="pingVal">0</div>
+            <div class="small">Latency (ms)</div>
+        </div>
+    </div>
+    
+    <div style="margin-top: 20px; text-align: center;">
+      <button class="btn primary" id="startTestBtn">Start Internal Test</button>
+      <button class="btn ghost" id="closeStModal">Close</button>
+    </div>
+  </aside>
+  
+  <div class="toast-area" id="toastArea"></div>
+  
+  <script src="Serverhttt.js"></script>
+</body>
+</html>

@@ -231,7 +231,13 @@ async function updateServer(id, data) {
     }
 
     const updated = { ...server, ...data };
-    store.put(updated);
+    // Sử dụng await ở đây để đảm bảo IndexedDB hoàn tất trước khi return
+    await new Promise((res, rej) => {
+        const req = store.put(updated);
+        req.onsuccess = res;
+        req.onerror = rej;
+    });
+
     renderServers();
 }
 
@@ -256,9 +262,14 @@ async function addServer() {
     await tx('servers', 'readwrite').add(newServer);
     saveLogEntry('INFO', `New Server ${newServer.name} added. Status: booting.`, id);
     
-    // Mô phỏng Provisioning Delay (5 giây để boot)
-    setTimeout(() => {
-        updateServer(id, { status: 'ok' });
+    // FIX LỖI 5S BOOTING: Đảm bảo Promise được chờ (await) và lỗi được bắt (try/catch)
+    setTimeout(async () => { 
+        try {
+            await updateServer(id, { status: 'ok' });
+        } catch (error) {
+            saveLogEntry('CRITICAL', `Failed to boot server ${newServer.name} after 5s: ${error.message}`, id);
+            await updateServer(id, { status: 'down' }); 
+        }
     }, 5000); 
 }
 
@@ -301,49 +312,67 @@ async function saveMetrics(metrics) {
     }
 }
 
-function simulateMetrics() {
-    getAllServers().then(servers => {
-        let totalCpu = 0;
-        let totalRam = 0;
-        let activeCount = 0;
+// FIX LỖI: Chuyển sang async/await và Promise.all để bắt lỗi Unhandled Rejection
+async function simulateMetrics() {
+    const servers = await getAllServers();
+    let totalCpu = 0;
+    let totalRam = 0;
+    let activeCount = 0;
 
-        servers.forEach(server => {
-            // Bao gồm 'critical' trong tính toán metrics
-            if (server.status !== 'down') { 
-                const newCpu = Math.min(100, Math.max(0, server.cpu + (Math.random() * 8 - 4)));
-                const newRam = Math.min(100, Math.max(0, server.ram + (Math.random() * 6 - 3)));
-                
-                updateServer(server.id, { cpu: newCpu, ram: newRam });
-
-                if (server.status === 'ok' || server.status === 'warn' || server.status === 'critical') {
-                    totalCpu += newCpu;
-                    totalRam += newRam;
-                    activeCount++;
-                }
-
-
-                // Cập nhật trạng thái dựa trên ngưỡng
-                if (newCpu > 95 || newRam > 98) {
-                    if (server.status !== 'critical') saveLogEntry('CRITICAL', `High load detected: CPU ${newCpu.toFixed(1)}%, RAM ${newRam.toFixed(1)}% on ${server.name}`, server.id);
-                    updateServer(server.id, { status: 'critical' });
-                } else if (newCpu > 80 || newRam > 85) {
-                    if (server.status !== 'warn' && server.status !== 'critical') saveLogEntry('WARN', `High resource usage: CPU ${newCpu.toFixed(1)}%, RAM ${newRam.toFixed(1)}% on ${server.name}`, server.id);
-                    if (server.status !== 'critical') updateServer(server.id, { status: 'warn' });
-                } else if (server.status !== 'booting') {
-                    if (server.status !== 'ok') updateServer(server.id, { status: 'ok' });
-                }
-            } 
-        });
-
-        if (activeCount > 0) {
-            saveMetrics({
-                avgCpu: totalCpu / activeCount,
-                avgRam: totalRam / activeCount,
-                ts: Date.now()
-            });
+    // Sử dụng map để tạo mảng các Promise, thay vì forEach
+    const updatePromises = servers.map(async server => {
+        // Bỏ qua server down hoặc đang boot
+        if (server.status === 'down' || server.status === 'booting') {
+            return;
         }
-        renderServers();
-    });
+        
+        // 1. Tính toán Metrics mới
+        const newCpu = Math.min(100, Math.max(0, server.cpu + (Math.random() * 8 - 4)));
+        const newRam = Math.min(100, Math.max(0, server.ram + (Math.random() * 6 - 3)));
+        
+        let updateData = { cpu: newCpu, ram: newRam };
+        let newStatus = server.status;
+
+        // 2. Quyết định Trạng thái mới và Log
+        if (newCpu > 95 || newRam > 98) {
+            if (server.status !== 'critical') saveLogEntry('CRITICAL', `High load detected: CPU ${newCpu.toFixed(1)}%, RAM ${newRam.toFixed(1)}% on ${server.name}`, server.id);
+            newStatus = 'critical';
+        } else if (newCpu > 80 || newRam > 85) {
+            if (server.status !== 'warn' && server.status !== 'critical') saveLogEntry('WARN', `High resource usage: CPU ${newCpu.toFixed(1)}%, RAM ${newRam.toFixed(1)}% on ${server.name}`, server.id);
+            if (server.status !== 'critical') newStatus = 'warn';
+        } else {
+            // Nếu không quá tải, trạng thái là OK (trừ khi đang boot, đã được lọc)
+            newStatus = 'ok';
+        }
+        
+        // 3. Tổng hợp dữ liệu cập nhật
+        updateData.status = newStatus;
+
+        // 4. Cộng dồn vào tổng (chỉ tính server hoạt động)
+        totalCpu += newCpu;
+        totalRam += newRam;
+        activeCount++;
+
+        // 5. Trả về Promise từ updateServer để chờ
+        return updateServer(server.id, updateData);
+    }).filter(p => p); // Lọc bỏ các giá trị undefined/null
+
+    // Đợi tất cả cập nhật xong và BẮT LỖI
+    try {
+        await Promise.all(updatePromises);
+    } catch (e) {
+        saveLogEntry('CRITICAL', `System update failed during metric simulation: ${e.message}`, 'SYSTEM');
+    }
+
+    // 6. Lưu Metrics Tổng thể
+    if (activeCount > 0) {
+        saveMetrics({
+            avgCpu: totalCpu / activeCount,
+            avgRam: totalRam / activeCount,
+            ts: Date.now()
+        });
+    }
+    renderServers(); // Cập nhật danh sách cuối cùng sau khi mọi thứ đã xong
 }
 
 async function startSimulation() {
@@ -824,6 +853,7 @@ async function initApp() {
     
     const initialServers = await getAllServers();
     if (initialServers.length === 0) {
+        // Khởi tạo server mặc định nếu chưa có, giải quyết vấn đề danh sách trống ban đầu
         await addServer();
         await addServer();
         await addServer();

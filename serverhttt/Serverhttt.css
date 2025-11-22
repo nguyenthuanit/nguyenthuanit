@@ -8,10 +8,39 @@
     --danger: #ef4444;
     --warn: #f59e0b;
     --info: #3b82f6; 
-    --network: #ff8c00; 
+    --network: #ff8c00; /* Màu mạng */
     --maintenance: #a855f7; /* Màu mới cho Maintenance Mode */
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
+
+/* LIGHT THEME */
+body.light-theme {
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --muted: #6b7280;
+    --accent: #4f46e5;
+    --glass: rgba(0, 0, 0, 0.05);
+    color: #1f2937;
+    background: linear-gradient(180deg, #e5e7eb 0%, #f4f6f9 100%);
+}
+body.light-theme .topbar {
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+body.light-theme .card {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+body.light-theme .btn.ghost { color: var(--muted); border: 1px solid var(--glass); }
+body.light-theme .btn.ghost:hover { background: var(--glass); }
+body.light-theme .log-area { background: #f0f0f0; color: #1f2937; border: 1px solid #ccc; }
+body.light-theme .log-entry { border-bottom: 1px dotted rgba(0, 0, 0, 0.1); }
+body.light-theme input[type="number"], body.light-theme select, body.light-theme textarea { background: #fff; color: #1f2937; border-color: #d1d5db; }
+body.light-theme input[type="text"] { background: #fff; color: #1f2937; border-color: #d1d5db; }
+body.light-theme .terminal-container { background-color: #fff; border: 1px solid #ccc; }
+body.light-theme .terminal-output { color: #1f2937; }
+body.light-theme .server-item { background: rgba(0, 0, 0, 0.02); }
+body.light-theme .server-item.selected { background: rgba(79, 70, 229, 0.1); }
+
 
 * { box-sizing: border-box }
 html, body { height: 100% }
@@ -123,6 +152,13 @@ body {
     grid-column: 3 / 4;
 }
 
+/** FIX: Thay thế inline style trong HTML bằng class này **/
+.details-grid {
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 20px;
+}
+
 /* --- Server List --- */
 .server-list {
     max-height: calc(100vh - 200px); 
@@ -164,59 +200,77 @@ body {
     height: 6px;
     border-radius: 3px;
     background: rgba(255, 255, 255, 0.1);
+    position: relative;
     overflow: hidden;
 }
 .server-item-metric-bar-fill {
     height: 100%;
-    transition: width 0.3s;
-    border-radius: 3px;
+    transition: width 0.5s;
 }
-.cpu-bar { background: var(--accent); }
-.ram-bar { background: var(--info); }
 
-
-/* --- Health Grid --- */
+/* --- Health Overview Grid --- */
 .health-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 15px;
+    margin-top: 15px;
 }
 .health-metric {
-    padding: 15px;
-    border-radius: 8px;
     text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    border-radius: 8px;
+    background: var(--glass);
 }
 .large-value {
-    font-size: 2.2rem;
+    font-size: 2rem;
     font-weight: 700;
-    margin-bottom: 5px;
+    line-height: 1;
 }
-.health-ok { background: rgba(34, 197, 94, 0.1); color: var(--success); }
-.health-warn { background: rgba(245, 158, 11, 0.1); color: var(--warn); }
-.health-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-.health-total { background: rgba(124, 92, 255, 0.1); color: var(--accent); }
+.health-ok { color: var(--success); }
+.health-warn { color: var(--warn); }
+.health-danger { color: var(--danger); }
+.health-total { color: var(--info); }
 
-/* --- Status Badges (Cải tiến) --- */
-.status-ok { background: var(--success); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
-.status-warn, .status-booting { background: var(--warn); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
-.status-critical, .status-down { background: var(--danger); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
-.status-maintenance { background: var(--maintenance); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
-
-
-/* --- Charts --- */
+/* --- Realtime Metrics / Charts --- */
 .chart-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
 }
 .chart-container {
-    height: 250px; 
+    height: 250px;
     padding: 15px;
 }
 .chart-container h4 {
-    margin-top: 0; font-size: 1rem; color: var(--muted);
+    margin-top: 0;
+    font-size: 1rem;
+    color: var(--muted);
 }
+
+/* --- Server Details Grid --- */
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 15px;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+.detail-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 5px;
+    border-bottom: 1px dotted var(--glass);
+}
+.detail-value {
+    font-weight: 600;
+}
+.status-ok { color: var(--success); }
+.status-warn { color: var(--warn); }
+.status-critical, .status-deny, .status-down { color: var(--danger); }
+.status-booting { color: var(--info); }
+.status-maintenance { color: var(--maintenance); }
+.status-allow { color: var(--success); }
 
 /* --- System Logs --- */
 .log-area {
@@ -229,7 +283,7 @@ body {
     max-height: 300px;
     overflow-y: scroll;
     white-space: pre-wrap;
-    line-height: 1.4; 
+    line-height: 1.4;
 }
 .log-area::-webkit-scrollbar {
     width: 6px;
@@ -238,23 +292,17 @@ body {
     background-color: rgba(255, 255, 255, 0.2);
     border-radius: 3px;
 }
-.log-entry { 
-    border-bottom: 1px dotted rgba(255, 255, 255, 0.05); 
+.log-entry {
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.05);
     padding: 3px 0;
     display: flex;
     gap: 8px;
 }
-.log-entry:last-child { border-bottom: none; }
-.log-timestamp {
-    color: var(--muted);
-    min-width: 130px; 
-    display: inline-block;
+.log-entry:last-child {
+    border-bottom: none;
 }
-.log-level {
-    font-weight: 700;
-    min-width: 70px;
-    display: inline-block;
-}
+.log-timestamp { color: var(--muted); min-width: 130px; display: inline-block; }
+.log-level { font-weight: 700; min-width: 70px; display: inline-block; }
 /* Log Colors */
 .log-level-CRITICAL { color: var(--danger); }
 .log-level-WARN { color: var(--warn); }
@@ -262,85 +310,76 @@ body {
 .log-level-SYSTEM { color: #808080; }
 .log-level-SUCCESS { color: var(--success); }
 
-
 /* --- Input/Select/Config Styles --- */
-input[type="number"], select, textarea { /* Thêm textarea */
-    padding: 8px; border-radius: 6px; border: 1px solid var(--glass);
-    background: var(--card); color: #fff; width: 100%;
-    margin-top: 5px;
-    font-family: inherit;
-    font-size: 0.9rem;
-}
-textarea {
-    min-height: 80px;
-    resize: vertical;
-    font-family: 'Consolas', 'Courier New', monospace;
-}
 .config-group {
-    margin-bottom: 15px; padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px dotted var(--glass);
 }
 .config-group label {
-    font-size: 0.9rem; color: var(--muted);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent);
 }
 .config-group p {
-    font-size: 0.8rem; color: var(--muted); margin: 5px 0 0 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 10px 0 5px 0;
 }
-.file-upload-wrapper {
-    position: relative; overflow: hidden; display: inline-block;
+input[type="number"], select, textarea { 
+    padding: 8px; border-radius: 6px; border: 1px solid var(--glass);
+    background: var(--card); color: #e6eef8;
+    transition: border-color 0.2s;
     width: 100%;
-}
-.file-upload-wrapper input[type="file"] {
-    font-size: 100px; position: absolute; left: 0; top: 0;
-    opacity: 0; cursor: pointer;
-}
-.file-upload-wrapper .btn {
-    width: 100%; justify-content: center;
-}
-
-
-/* --- Server Detail Card --- */
-.detail-value {
-    font-size: 1.1rem; font-weight: 600;
     margin-top: 5px;
+    resize: vertical; /* NGĂN CHẶN CHỈNH KÍCH THƯỚC NGANG */
 }
-.detail-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;
-}
-.detail-group {
-    padding: 10px 0; border-bottom: 1px dotted rgba(255, 255, 255, 0.05);
-}
-
-/* Terminal View */
-.terminal-view {
-    background: #000;
-    color: #00ff00;
-    font-family: 'Consolas', 'Courier New', monospace;
-    font-size: 0.8rem;
-    padding: 10px;
-    height: 100px; 
-    overflow-y: auto;
-    border-radius: 4px;
-    white-space: pre-wrap;
-    margin-top: 10px;
-}
-.terminal-input {
-    background: transparent;
-    border: none;
-    color: #00ff00;
-    width: calc(100% - 15px);
+input[type="number"]:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
     outline: none;
+}
+/* For Terminal Input */
+input[type="text"] {
+    padding: 4px; border: none;
+    background: transparent; color: inherit;
     font-family: inherit;
     font-size: inherit;
-    margin-top: 5px;
+    flex-grow: 1;
+    outline: none;
 }
 
-/* Policy Table (cho Network Policy) */
+/* --- Terminal Styles --- */
+.terminal-container {
+    background-color: #000;
+    border: 1px solid var(--muted);
+    border-radius: 6px;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: #0f0;
+}
+.terminal-output {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin: 0;
+    white-space: pre-wrap;
+    padding-bottom: 5px;
+}
+.terminal-input-line {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* --- Policy Table --- */
 .policy-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
     font-size: 0.9rem;
+    margin-top: 10px;
 }
 .policy-table th, .policy-table td {
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -356,7 +395,6 @@ textarea {
     vertical-align: middle;
 }
 
-
 /* --- Modal --- */
 .modal {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -368,45 +406,61 @@ textarea {
     display: none;
 }
 .modal > div, .modal > aside {
-    background: var(--card); padding: 20px; border-radius: 12px;
-    width: 400px; max-width: 90%; position: relative;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    background: var(--card);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    max-width: 500px;
+    width: 90%;
 }
-/* Tăng kích thước modal cho Policy/Script Editor */
-#policyModal > div, #scriptModal > div {
-    width: 600px;
+
+/* --- Speed Test Bar --- */
+.speed-bar-container {
+    width: 100%;
+    background: var(--glass);
+    border-radius: 6px;
+    height: 15px;
+    overflow: hidden;
+}
+.speed-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--info), var(--success));
+    width: 0%;
+    transition: width 0.1s linear;
 }
 
 /* --- Toast Notification --- */
-#toast-container {
-    position: fixed; top: 20px; right: 20px; z-index: 1001;
-    display: flex; flex-direction: column; gap: 10px;
+.toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 300px;
 }
 .toast {
-    background: var(--card); color: #fff; padding: 12px 20px;
-    border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    min-width: 250px; border-left: 5px solid;
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    color: #fff;
     font-size: 0.9rem;
+    opacity: 1;
+    transition: opacity 0.5s ease;
 }
-.toast-INFO { border-left-color: var(--info); }
-.toast-WARN { border-left-color: var(--warn); }
-.toast-CRITICAL { border-left-color: var(--danger); }
-.toast-SUCCESS { border-left-color: var(--success); }
+.toast-INFO { background: var(--info); }
+.toast-WARN { background: var(--warn); }
+.toast-CRITICAL { background: var(--danger); }
+.toast-SUCCESS { background: var(--success); }
 
 
-/* --- Responsive Adjustments (Quan trọng) --- */
+/* --- Responsive Design --- */
 
-/* Màn hình trung bình (Desktop nhỏ/Laptop) */
-@media (max-width: 1400px) {
-    .app-main {
-        grid-template-columns: 250px 1fr 280px; /* Thu hẹp một chút */
-    }
-}
-
-/* Màn hình nhỏ hơn 1200px (Laptop/Tablet ngang) */
+/* Màn hình từ 992px đến 1200px (PC nhỏ/Laptop) */
 @media (max-width: 1200px) {
     .app-main {
-        grid-template-columns: 250px 1fr; /* 2 Cột: Sidebar | Main/Control Panel */
+        grid-template-columns: 240px 1fr; /* 2 Cột: Sidebar | Main/Control Panel */
     }
     
     .main-content {
@@ -420,11 +474,10 @@ textarea {
     }
     
     .details-logs-panel {
-        /* Bật lại grid 1 cột cho chi tiết/logs */
-        display: block !important;
+        /* Bỏ dòng display: block !important; và dùng .details-grid */
     }
 
-    .details-logs-panel > div {
+    .details-logs-panel > div, .details-grid {
         grid-template-columns: 1fr;
     }
 
@@ -450,32 +503,38 @@ textarea {
     .main-content {
         grid-column: 1 / 2;
         order: 2;
-        gap: 15px;
+        gap: 10px;
     }
-
+    
     .control-panel {
         grid-column: 1 / 2;
         order: 3;
     }
 
-    .chart-grid {
-        grid-template-columns: 1fr; /* Biểu đồ 1 cột */
-    }
-    
-    .detail-grid {
-        grid-template-columns: 1fr;
-    }
-    
     .topbar {
         flex-direction: column;
+        gap: 10px;
         align-items: flex-start;
+    }
+    .topbar .controls {
+        flex-wrap: wrap;
+    }
+    
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-grid {
+        grid-template-columns: 1fr;
         gap: 10px;
     }
-    .controls {
-        width: 100%;
-        justify-content: space-between;
+
+    .health-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
     }
-    .btn {
-        font-size: 0.85rem;
+
+    .detail-grid {
+        grid-template-columns: 1fr;
     }
 }

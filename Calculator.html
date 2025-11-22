@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Máy Tính Tiền POS & Tin Nhắn Giả Lập CHUYÊN NGHIỆP</title>
+    
+    <style>
+        /* --- ROOT STYLES (DARK MODE) --- */
+        :root {
+            --background-color: #121212;
+            --container-bg: #1e1e1e;
+            --text-color: #ffffff;
+            --panel-border: #333333;
+            --display-bg: #2b2b2b;
+            --button-bg: #2d2d2d;
+            --button-hover: #444444;
+            --action-bg: #28a745; 
+            --action-hover: #218838;
+            --cancel-bg: #dc3545;
+            --cancel-hover: #c82333;
+            --operator-bg: #4a89ff; 
+            --operator-hover: #3a75e0;
+            --accent-color: #00bcd4;
+            --message-bg: #2d2d2d; 
+            --message-text-color: #ffffff;
+            --export-bg: #FFC107; 
+            --export-hover: #e0a800;
+        }
+
+        body {
+            font-family: 'Tahoma', sans-serif;
+            background-color: var(--background-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text-color);
+            transition: background-color 0.3s;
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            padding: 30px;
+            background: var(--container-bg);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 90%;
+            height: 90vh; 
+        }
+
+        /* --- PANEL MÁY TÍNH & CẤU HÌNH --- */
+        .config-panel {
+            width: 300px;
+            padding: 20px;
+            border-right: 1px solid var(--panel-border);
+            overflow-y: auto; 
+        }
+        
+        .message-panel {
+            width: 450px;
+            padding: 0 0 20px 20px;
+            flex-grow: 1; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        h2 {
+            color: var(--accent-color);
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 10px;
+            margin-top: 20px;
+        }
+        
+        /* Đảm bảo h2 đầu tiên không có margin-top lớn */
+        .config-panel h2:first-of-type {
+            margin-top: 0;
+        }
+
+        .config-group {
+            margin-bottom: 15px;
+        }
+        
+        .datetime-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .config-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        
+        #current-balance-display {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: var(--action-bg);
+            margin-bottom: 10px;
+            text-align: right;
+            padding: 5px 0;
+        }
+
+        /* --- STYLES CHO INPUTS & DISPLAY --- */
+        .config-group select,
+        .config-group input[type="text"],
+        .config-group input[type="date"],
+        .config-group input[type="time"],
+        .config-group input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1em;
+            background-color: var(--display-bg);
+            color: var(--text-color);
+        }
+
+        .display {
+            width: 100%;
+            height: 60px;
+            margin-bottom: 20px;
+            padding: 10px;
+            font-size: 2.2em;
+            text-align: right;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--display-bg);
+            box-sizing: border-box;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        /* --- STYLES CHO BÀN PHÍM --- */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 10px;
+        }
+
+        .buttons button {
+            padding: 18px;
+            font-size: 1.3em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .buttons button:active {
+            transform: scale(0.98);
+        }
+
+        .buttons button:hover {
+            background-color: var(--button-hover);
+        }
+        
+        .buttons button.operator-btn {
+            background-color: var(--operator-bg);
+            color: white;
+        }
+        
+        .buttons button.clear-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        /* --- STYLE MỚI: CẤM BẤM --- */
+        .buttons button.disabled-calc {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none; /* Vô hiệu hóa sự kiện click */
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 18px;
+            margin-top: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .add-btn {
+            background-color: var(--action-bg);
+        }
+
+        .subtract-btn {
+            background-color: var(--cancel-bg);
+        }
+        
+        .export-btn {
+            background-color: var(--export-bg);
+            color: #121212;
+            margin-top: 20px;
+        }
+        .export-btn:hover {
+            background-color: var(--export-hover);
+        }
+
+
+        /* --- PANEL TIN NHẮN GIẢ LẬP --- */
+        .telegram-chat {
+            background-color: #1e1e1e;
+            height: 100%; 
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--panel-border);
+        }
+
+        .system-message {
+            text-align: center;
+            color: #888;
+            font-size: 0.9em;
+            margin: 15px 0;
+            user-select: none;
+        }
+        
+        .transaction-delay {
+             text-align: center;
+             color: #FFC107;
+             font-size: 1.1em;
+             margin: 10px 0;
+        }
+
+
+        .bank-message-wrapper {
+            align-self: flex-end;
+            display: flex;
+            align-items: flex-start;
+            margin: 8px 0;
+            max-width: 90%;
+        }
+
+        .bank-message {
+            background-color: var(--message-bg); 
+            color: var(--message-text-color);
+            padding: 12px 18px;
+            border-radius: 18px 18px 0 18px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.2);
+            font-size: 1em;
+        }
+        
+        .bank-message strong {
+            color: #4CAF50; 
+            font-size: 1.1em;
+        }
+        
+        .bank-message.negative strong {
+            color: #FF9800; 
+        }
+        
+        /* --- LỊCH SỬ GIAO DỊCH MỚI --- */
+        #history-container {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 5px;
+            margin-bottom: 20px;
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            background-color: var(--display-bg);
+        }
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .history-item {
+            padding: 8px;
+            border-bottom: 1px solid var(--panel-border);
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        .tx-info {
+            flex-grow: 1;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            padding-right: 10px;
+        }
+        .tx-amount {
+            font-weight: bold;
+            min-width: 100px;
+            text-align: right;
+        }
+        .tx-amount.positive {
+            color: var(--action-bg);
+        }
+        .tx-amount.negative {
+            color: var(--cancel-bg);
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* --- MÀN HÌNH KHÓA (LOCK SCREEN) --- */
+        /* ------------------------------------------------------------------ */
+        #lock-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--background-color);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-color);
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        #lock-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .pin-display {
+            font-size: 2.5em;
+            margin-bottom: 40px;
+            min-height: 50px;
+            letter-spacing: 15px;
+        }
+        
+        .pin-display .dot {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: #555;
+            margin: 0 5px;
+        }
+        
+        .pin-display .dot.active {
+            background-color: var(--accent-color);
+        }
+
+        .pin-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 80px);
+            gap: 20px;
+        }
+
+        .pin-buttons button {
+            width: 80px;
+            height: 80px;
+            font-size: 2em;
+            border: 2px solid var(--panel-border);
+            border-radius: 50%;
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .pin-buttons button:hover {
+            background-color: var(--button-hover);
+        }
+        
+        .pin-buttons button.delete-btn {
+            background: none;
+            border: none;
+            color: #f44336;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* --- RESPONSIVE DESIGN (GIAO DIỆN ĐIỆN THOẠI) --- */
+        /* ------------------------------------------------------------------ */
+        @media (max-width: 850px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                flex-direction: column; 
+                gap: 20px;
+                padding: 15px;
+                height: auto;
+                max-width: 100%;
+            }
+
+            .config-panel {
+                width: 100%;
+                padding: 10px;
+                border-right: none;
+                border-bottom: 1px solid var(--panel-border);
+                max-height: 60vh; 
+            }
+
+            .message-panel {
+                width: 100%;
+                padding: 0;
+                height: 40vh; 
+            }
+            
+            .telegram-chat {
+                height: 100%;
+            }
+            
+            .buttons {
+                 grid-template-columns: repeat(4, 1fr); 
+            }
+            
+             .pin-buttons {
+                grid-template-columns: repeat(3, 1fr);
+                width: 280px;
+                gap: 15px;
+            }
+
+            .pin-buttons button {
+                width: 100%;
+                height: 70px;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div id="lock-screen">
+        <h2>🔒 Vui Lòng Nhập Mã PIN</h2>
+        <div id="pin-display" class="pin-display">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+        
+        <div class="pin-buttons">
+            <button onclick="enterPin(1)">1</button>
+            <button onclick="enterPin(2)">2</button>
+            <button onclick="enterPin(3)">3</button>
+            <button onclick="enterPin(4)">4</button>
+            <button onclick="enterPin(5)">5</button>
+            <button onclick="enterPin(6)">6</button>
+            <button onclick="enterPin(7)">7</button>
+            <button onclick="enterPin(8)">8</button>
+            <button onclick="enterPin(9)">9</button>
+            <button class="delete-btn" onclick="deletePin()">DEL</button>
+            <button onclick="enterPin(0)">0</button>
+            <button class="delete-btn" onclick="checkPassword()">ENTER</button>
+        </div>
+        <p style="margin-top: 20px; color: #888;">Mã PIN mặc định: **1239**</p>
+    </div>
+
+    <div class="container" id="main-container" style="display: none;">
+        <div class="config-panel">
+            <h2>⚙️ Cấu Hình Giao Dịch</h2>
+            
+            <div class="config-group">
+                <label for="bank-select">Chọn Ngân hàng</label>
+                <select id="bank-select">
+                    <option value="VCB">Vietcombank</option>
+                    <option value="TCB">Techcombank</option>
+                    <option value="MB">MB Bank</option>
+                </select>
+            </div>
+            
+            <div class="config-group">
+                <label for="sender-name">Tên Người gửi Giả lập</label>
+                <input type="text" id="sender-name" value="NGUYENTHUANIT" placeholder="Nhập tên người gửi (ví dụ: tên ngân hàng)">
+            </div>
+            
+            <hr>
+            
+            <div class="config-group">
+                <label for="date-input">Ngày/Giờ Giao dịch (Tùy chỉnh)</label>
+                <div class="datetime-group">
+                    <input type="date" id="date-input" title="Ngày (Để trống lấy ngày hiện tại)">
+                    <input type="time" id="time-input" step="1" title="Giờ (Để trống lấy giờ hiện tại)">
+                </div>
+            </div>
+            
+            <div class="config-group">
+                <label for="delay-input">Độ trễ Giao dịch (giây)</label>
+                <input type="number" id="delay-input" value="0" min="0" max="60" placeholder="0 giây">
+            </div>
+
+            <hr>
+            
+            <div class="config-group">
+                <label for="refund-id">Mã GD Cần Hoàn tiền (Optional)</label>
+                <input type="text" id="refund-id" placeholder="Nhập Mã GD: GDxxxxxxx">
+            </div>
+
+            <div class="config-group">
+                <label for="transfer-content">Nội dung Chuyển/Hoàn khoản</label>
+                <input type="text" id="transfer-content" value="Thanh toan don hang D123" placeholder="Nhập nội dung chuyển khoản...">
+            </div>
+            
+            <hr>
+            
+            <h2>💰 Máy Tính Tiền (Full)</h2>
+            <div id="current-balance-display">Số dư hiện tại: Đang tải...</div>
+            
+            <input type="text" id="display" class="display" value="0" readonly>
+            
+            <div class="buttons">
+                <button onclick="clearDisplay()" class="clear-btn">C</button>
+                <button onclick="appendValue('/')" class="operator-btn">/</button>
+                <button onclick="appendValue('*')" class="operator-btn">*</button>
+                <button onclick="appendValue('-')" class="operator-btn">-</button>
+
+                <button onclick="appendValue('7')">7</button>
+                <button onclick="appendValue('8')">8</button>
+                <button onclick="appendValue('9')">9</button>
+                <button onclick="appendValue('+')" class="operator-btn">+</button>
+                
+                <button onclick="appendValue('4')">4</button>
+                <button onclick="appendValue('5')">5</button>
+                <button onclick="appendValue('6')">6</button>
+                <button onclick="calculateResult()" class="operator-btn">=</button>
+                
+                <button onclick="appendValue('1')">1</button>
+                <button onclick="appendValue('2')">2</button>
+                <button onclick="appendValue('3')">3</button>
+                <button onclick="appendValue('00')">00</button>
+                
+                <button onclick="appendValue('0')">0</button>
+                <button onclick="appendValue('.')">.</button>
+                <button onclick="calculateResult()" class="operator-btn">=</button>
+                <button onclick="appendValue('0')">0</button>
+            </div>
+            
+            <button class="action-btn add-btn" onclick="processTransaction('add')">
+                NHẬN TIỀN (CỘNG)
+            </button>
+            
+            <button class="action-btn subtract-btn" onclick="processTransaction('subtract')">
+                HOÀN TIỀN / TRỪ
+            </button>
+            
+            <button class="action-btn export-btn" onclick="exportTransactions()">
+                ⬇️ XUẤT DỮ LIỆU GD (Excel/CSV)
+            </button>
+            
+            <hr>
+            
+            <h2>📜 Lịch Sử GD Gần Nhất (10 GD)</h2>
+            <div id="history-container">
+                <p style="color: #aaa; text-align: center; padding: 10px;">Đang tải...</p>
+            </div>
+        </div>
+
+        <div class="message-panel">
+            <h2>💬 Giao Diện Tin Nhắn</h2>
+            <div id="message-container" class="telegram-chat">
+                <p class="system-message">Thực hiện phép tính và chọn "Nhận Tiền" hoặc "Hoàn Tiền".</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        const messageContainer = document.getElementById('message-container');
+        const bankSelect = document.getElementById('bank-select');
+        const contentInput = document.getElementById('transfer-content');
+        const senderNameInput = document.getElementById('sender-name');
+        const refundIdInput = document.getElementById('refund-id');
+        const dateInput = document.getElementById('date-input');
+        const timeInput = document.getElementById('time-input');
+        const delayInput = document.getElementById('delay-input');
+        const balanceDisplay = document.getElementById('current-balance-display');
+        const lockScreen = document.getElementById('lock-screen');
+        const pinDisplay = document.getElementById('pin-display');
+        const mainContainer = document.getElementById('main-container');
+        // Các biến mới cho tính năng mới
+        const historyContainer = document.getElementById('history-container');
+
+
+        // Khai báo biến
+        // MÃ HASH SHA-256 CỦA CHUỖI "1239"
+        const CORRECT_PIN_HASH = '310ced37200b1a0dae25edb263fe52c491f6e467268acab0ffec06666e2ed959'; 
+        let currentPin = '';
+        let currentInput = '0';
+        let currentBalance = 0.00; 
+        
+        // Cấu hình IndexedDB
+        const DB_NAME = 'FakeBankDB';
+        const DB_VERSION = 1;
+        const STORE_BALANCE = 'BalanceStore';
+        const STORE_TRANSACTIONS = 'TransactionStore';
+        const BALANCE_KEY = 'currentBalance';
+
+        // --- HÀM MÃ HÓA SHA-256 (Dùng cho PIN) ---
+        async function sha256(message) {
+            if (!crypto.subtle) {
+                console.error("Trình duyệt không hỗ trợ mã hóa SublteCrypto.");
+                return message; 
+            }
+            const msgBuffer = new TextEncoder().encode(message); 
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer); 
+            const hashArray = Array.from(new Uint8Array(hashBuffer)); 
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); 
+            return hashHex;
+        }
+
+        // --- HÀM MÀN HÌNH KHÓA (LOCK SCREEN) ---
+        function updatePinDisplay() {
+            let html = '';
+            for (let i = 0; i < 4; i++) {
+                html += `<span class="dot ${i < currentPin.length ? 'active' : ''}"></span>`;
+            }
+            pinDisplay.innerHTML = html;
+            if (currentPin.length === 4) {
+                setTimeout(() => { checkPassword(); }, 300);
+            }
+        }
+
+        function enterPin(num) {
+            if (currentPin.length < 4) {
+                currentPin += num.toString();
+                updatePinDisplay();
+            }
+        }
+
+        function deletePin() {
+            currentPin = currentPin.slice(0, -1);
+            updatePinDisplay();
+        }
+
+        async function checkPassword() {
+            if (currentPin.length === 0) return;
+            
+            const enteredPinHash = await sha256(currentPin); 
+            
+            if (enteredPinHash === CORRECT_PIN_HASH) {
+                lockScreen.classList.add('hidden');
+                setTimeout(() => {
+                    lockScreen.style.display = 'none';
+                    mainContainer.style.display = 'flex'; 
+                }, 500); 
+
+                currentPin = ''; 
+            } else {
+                lockScreen.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    lockScreen.style.animation = '';
+                    currentPin = '';
+                    updatePinDisplay();
+                }, 500);
+            }
+        }
+        
+        // Thêm CSS keyframes cho hiệu ứng rung (shake)
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        style.innerHTML = `
+        @keyframes shake {
+            0%, 100% {transform: translateX(0);}
+            20%, 60% {transform: translateX(-10px);}
+            40%, 80% {transform: translateX(10px);}
+        }`;
+        document.getElementsByTagName('head')[0].appendChild(style);
+
+
+        // --- HÀM INDEXEDDB (Giữ nguyên) ---
+        function openDatabase() {
+             return new Promise((resolve, reject) => {
+                if (!window.indexedDB) {
+                    reject("IndexedDB not supported");
+                    return;
+                }
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    db.createObjectStore(STORE_BALANCE);
+                    db.createObjectStore(STORE_TRANSACTIONS, { keyPath: 'transactionId' }); 
+                };
+                request.onsuccess = (event) => {
+                    resolve(event.target.result);
+                };
+                request.onerror = (event) => {
+                    console.error("Lỗi IndexedDB:", event.target.errorCode);
+                    reject(event.target.error);
+                };
+            });
+        }
+        async function loadBalance() {
+             try {
+                const db = await openDatabase();
+                const transaction = db.transaction(STORE_BALANCE, 'readonly');
+                const store = transaction.objectStore(STORE_BALANCE);
+                const request = store.get(BALANCE_KEY);
+
+                request.onsuccess = (event) => {
+                    const storedValue = event.target.result;
+                    currentBalance = storedValue !== undefined ? storedValue : 0.00;
+                    updateBalanceDisplay();
+                };
+
+                request.onerror = (event) => {
+                    console.error("Lỗi tải số dư:", event.target.error);
+                    updateBalanceDisplay();
+                };
+            } catch (e) {
+                console.error("Lỗi khi mở IndexedDB để tải:", e);
+                updateBalanceDisplay();
+            }
+        }
+        async function saveBalance(balance) {
+             try {
+                const db = await openDatabase();
+                const transaction = db.transaction(STORE_BALANCE, 'readwrite');
+                const store = transaction.objectStore(STORE_BALANCE);
+                
+                const request = store.put(balance, BALANCE_KEY);
+
+                request.onerror = (event) => {
+                    console.error("Lỗi khi lưu số dư:", event.target.error);
+                };
+            } catch (e) {
+                console.error("Lỗi khi mở IndexedDB để lưu:", e);
+            }
+        }
+
+        async function saveTransaction(transactionData) {
+             try {
+                const db = await openDatabase();
+                const transaction = db.transaction(STORE_TRANSACTIONS, 'readwrite');
+                const store = transaction.objectStore(STORE_TRANSACTIONS);
+                
+                const request = store.add(transactionData);
+
+                request.onerror = (event) => {
+                    console.error("Lỗi khi lưu giao dịch:", event.target.error);
+                };
+            } catch (e) {
+                console.error("Lỗi khi mở IndexedDB để lưu GD:", e);
+            }
+        }
+
+        async function findTransaction(transactionId) {
+             try {
+                const db = await openDatabase();
+                const transaction = db.transaction(STORE_TRANSACTIONS, 'readonly');
+                const store = transaction.objectStore(STORE_TRANSACTIONS);
+                
+                return new Promise((resolve, reject) => {
+                    const request = store.get(transactionId);
+                    request.onsuccess = (event) => {
+                        resolve(event.target.result);
+                    };
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            } catch (e) {
+                console.error("Lỗi khi tìm GD:", e);
+                return null;
+            }
+        }
+        
+        function updateBalanceDisplay() {
+            balanceDisplay.textContent = `Số dư hiện tại: ${formatNumber(currentBalance.toString())} VND`;
+        }
+        
+        // --- HÀM MỚI: TẢI VÀ HIỂN THỊ LỊCH SỬ GIAO DỊCH ---
+        async function loadTransactionHistory() {
+            try {
+                const db = await openDatabase();
+                const transaction = db.transaction(STORE_TRANSACTIONS, 'readonly');
+                const store = transaction.objectStore(STORE_TRANSACTIONS);
+                
+                const transactions = [];
+                // Sử dụng cursor để lấy 10 giao dịch gần nhất
+                const request = store.openCursor(null, 'prev'); 
+                let count = 0;
+
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor && count < 10) {
+                        transactions.push(cursor.value);
+                        count++;
+                        cursor.continue();
+                    } else {
+                        renderTransactionHistory(transactions.reverse()); // Reverse để hiển thị từ cũ nhất -> mới nhất
+                    }
+                };
+                request.onerror = (event) => {
+                    console.error("Lỗi khi tải lịch sử GD:", event.target.error);
+                    historyContainer.innerHTML = `<p style="color: red; text-align: center;">Lỗi tải lịch sử.</p>`;
+                };
+
+            } catch (e) {
+                console.error("Lỗi khi mở IndexedDB để tải lịch sử:", e);
+                historyContainer.innerHTML = `<p style="color: red; text-align: center;">Lỗi IndexedDB.</p>`;
+            }
+        }
+        
+        function renderTransactionHistory(transactions) {
+            if (transactions.length === 0) {
+                historyContainer.innerHTML = `<p style="color: #aaa; text-align: center; padding: 10px;">Chưa có giao dịch nào.</p>`;
+                return;
+            }
+
+            let html = '<ul class="history-list">';
+            transactions.forEach(tx => {
+                const date = new Date(tx.timestamp);
+                const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+                const amount = formatNumber(Math.abs(tx.amount).toFixed(2));
+                const sign = tx.amount > 0 ? '+' : '-';
+                const amountClass = tx.amount > 0 ? 'positive' : 'negative';
+                const contentShort = tx.content.length > 30 ? tx.content.substring(0, 30) + '...' : tx.content;
+
+                html += `
+                    <li class="history-item" title="${tx.content} | Mã GD: ${tx.transactionId}">
+                        <div class="tx-info">
+                            **${tx.transactionId.slice(-6)}** (${timeStr}): ${contentShort}
+                        </div>
+                        <div class="tx-amount ${amountClass}">
+                            ${sign}${amount} VND
+                        </div>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            historyContainer.innerHTML = html;
+        }
+
+        // --- DATA TEMPLATE (Giữ nguyên) ---
+        const BANK_TEMPLATES = {
+            'VCB': {
+                account: '0987-6543-2101',
+                template: (amount, balance, content, time, date, ma_gd, isNegative, sender) => {
+                    const sign = isNegative ? '-' : '+';
+                    return `
+[VCB] Tai khoan: ${BANK_TEMPLATES.VCB.account}
+Bien dong: ${sign}${amount} VND
+So du: ${balance} VND
+Noi dung: ${content}. Ma GD: ${ma_gd}
+Thoi gian: ${time} ${date}`;
+                }
+            },
+            'TCB': {
+                account: '1903-8888-2222',
+                template: (amount, balance, content, time, date, ma_gd, isNegative, sender) => {
+                    const verb = isNegative ? 'Tru tien cho' : 'nhan duoc';
+                    return `
+Quy khach ${verb} ${amount} VND ${isNegative ? '' : `tu ${sender}`}.
+ND: ${content}.
+So du: ${balance} VND.
+Ref: ${ma_gd}. ${date} ${time}`;
+                }
+            },
+            'MB': {
+                account: '0000-9999-7777',
+                template: (amount, balance, content, time, date, ma_gd, isNegative, sender) => {
+                    const sign = isNegative ? '-' : '+';
+                    return `
+MB gui QK: GD ${sign}${amount} VND.
+So du: ${balance} VND.
+Noi dung: ${content}.
+Thoi gian: ${time} ${date}. Chi tiet: mb.com.vn/${ma_gd}`;
+                }
+            }
+        };
+
+        // --- CÁC HÀM XỬ LÝ CHUNG (Đã tối ưu Live Formatting) ---
+        
+        function formatNumber(numberString) {
+            let rawNumString = numberString.replace(/,/g, '');
+            
+            if (rawNumString === '' || rawNumString === '.' || rawNumString === '-') return numberString;
+
+            let parts = rawNumString.split('.');
+            let integerPart = parts[0];
+            let decimalPart = parts.length > 1 ? '.' + parts[1] : '';
+            
+            const isNegative = integerPart.startsWith('-');
+            if(isNegative) integerPart = integerPart.substring(1);
+            
+            integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            
+            return (isNegative ? '-' : '') + integerPart + decimalPart;
+        }
+
+        function unformatNumber(formattedString) {
+            return formattedString.replace(/,/g, '');
+        }
+
+        function updateDisplay(value) {
+            // Tách chuỗi thô thành các phần số và phép toán
+            const parts = value.split(/([+\-*/])/); 
+            
+            let formattedParts = parts.map(part => {
+                if (part === '' || ['+', '-', '*', '/'].includes(part)) {
+                    return part; // Giữ nguyên phép toán
+                }
+                return formatNumber(part); // Format phần số
+            });
+            
+            display.value = formattedParts.join('');
+        }
+
+        // --- HÀM MỚI: CẬP NHẬT TRẠNG THÁI CẤM BẤM CỦA BÀN PHÍM ---
+        function updateCalculatorState() {
+            // Lấy các nút phép toán +, *, / (Nút trừ '-' được xử lý riêng)
+            const primaryOperatorButtons = document.querySelectorAll('.buttons button.operator-btn:not([onclick*="appendValue(\'-\')"]):not([onclick*="calculateResult"])');
+            // Lấy nút thập phân
+            const decimalButton = document.querySelector('.buttons button[onclick*="appendValue(\'.\')]');
+            // Lấy nút '00'
+            const zeroZeroButton = document.querySelector('.buttons button[onclick*="appendValue(\'00\')]');
+            
+            // Trạng thái cấm bấm: input là '0' hoặc 'Error'
+            const isZero = currentInput === '0';
+            const isError = display.value === 'Error';
+            const lastChar = currentInput.slice(-1);
+            const isOperatorLast = ['+', '-', '*', '/'].includes(lastChar);
+            
+            // 1. Cấm bấm nếu đang ở trạng thái '0' hoặc 'Error'
+            if (isZero || isError) {
+                primaryOperatorButtons.forEach(btn => btn.classList.add('disabled-calc'));
+                if (decimalButton) decimalButton.classList.add('disabled-calc');
+                if (zeroZeroButton) zeroZeroButton.classList.add('disabled-calc');
+            } else {
+                primaryOperatorButtons.forEach(btn => btn.classList.remove('disabled-calc'));
+                if (decimalButton) decimalButton.classList.remove('disabled-calc');
+                if (zeroZeroButton) zeroZeroButton.classList.remove('disabled-calc');
+            }
+            
+            // 2. Cấm bấm nếu ký tự cuối là phép toán hoặc đã có dấu thập phân
+            if (isOperatorLast) {
+                // Cấm các phép toán chính
+                primaryOperatorButtons.forEach(btn => btn.classList.add('disabled-calc'));
+                // Cấm dấu thập phân
+                if (decimalButton) decimalButton.classList.add('disabled-calc'); 
+            } else {
+                // Kiểm tra dấu thập phân trong phần số cuối cùng
+                const parts = currentInput.split(/([+\-*/])/);
+                const lastPart = parts[parts.length - 1];
+                 if (decimalButton) {
+                    if (lastPart.includes('.')) {
+                        decimalButton.classList.add('disabled-calc');
+                    } else if (!isZero && !isError) {
+                        decimalButton.classList.remove('disabled-calc');
+                    }
+                }
+            }
+        }
+
+
+        function appendValue(value) {
+            let unformattedInput = currentInput;
+            
+            if (value === '00' && unformattedInput === '0') return;
+
+            if (['+', '-', '*', '/'].includes(value)) {
+                if (!isNaN(parseFloat(unformattedInput.slice(-1))) && unformattedInput.length > 0) {
+                    currentInput += value;
+                } else if (['+', '-', '*', '/'].includes(unformattedInput.slice(-1))) {
+                    currentInput = currentInput.slice(0, -1) + value;
+                }
+            } 
+            else if (value === '.') {
+                 const parts = currentInput.split(/([+\-*/])/);
+                 const lastPart = parts[parts.length - 1];
+                 if (!lastPart.includes('.')) {
+                    currentInput += value;
+                 }
+            }
+            else {
+                if (unformattedInput === '0' && value !== '.') {
+                    currentInput = value;
+                } else {
+                    currentInput += value;
+                }
+            }
+            
+            updateDisplay(currentInput); // Cập nhật màn hình đã format (Live Formatting)
+            updateCalculatorState(); // Cập nhật trạng thái nút
+        }
+
+
+        function clearDisplay() {
+            currentInput = '0';
+            display.value = currentInput;
+            updateCalculatorState(); // Cập nhật trạng thái nút
+        }
+
+        function calculateResult() {
+            try {
+                let expression = currentInput.replace(/x/g, '*');
+                let result = Function('return ' + expression)(); 
+                
+                currentInput = parseFloat(result.toFixed(2)).toString(); 
+                updateDisplay(currentInput); 
+            } catch (e) {
+                currentInput = '0'; 
+                display.value = 'Error';
+            }
+            updateCalculatorState(); // Cập nhật trạng thái nút
+        }
+
+        function generateTransactionID() {
+            const timestampPart = Date.now().toString().slice(-10); 
+            const randomPart = Math.floor(Math.random() * 900 + 100); 
+            return `GD${timestampPart}${randomPart}`;
+        }
+        
+        function getCustomDate() {
+            const dateStr = dateInput.value;
+            const timeStr = timeInput.value;
+            
+            if (dateStr && timeStr) {
+                return new Date(`${dateStr}T${timeStr}`);
+            } else if (dateStr) {
+                 const now = new Date();
+                 return new Date(`${dateStr}T${now.toTimeString().split(' ')[0]}`);
+            } else {
+                return new Date();
+            }
+        }
+
+        // --- HÀM XUẤT EXCEL (CSV) ---
+        async function exportTransactions() {
+            try {
+                const db = await openDatabase();
+                const transaction = db.transaction(STORE_TRANSACTIONS, 'readonly');
+                const store = transaction.objectStore(STORE_TRANSACTIONS);
+                
+                const request = store.getAll();
+
+                request.onsuccess = (event) => {
+                    const transactions = event.target.result;
+                    if (transactions.length === 0) {
+                        alert("Không có giao dịch nào để xuất!");
+                        return;
+                    }
+
+                    let csv = 'Ma GD,So Tien,Noi Dung,Thoi Gian,Ngay\n'; 
+
+                    transactions.forEach(tx => {
+                        const date = new Date(tx.timestamp);
+                        const dateStr = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+                        const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+                        
+                        const contentSafe = tx.content.replace(/,/g, ';').replace(/"/g, '""'); 
+
+                        csv += `${tx.transactionId},${tx.amount},"${contentSafe}",${timeStr},${dateStr}\n`;
+                    });
+
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement("a");
+                    const url = URL.createObjectURL(blob);
+                    
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `GiaoDich_GiaLap_${new Date().toISOString().slice(0, 10)}.csv`);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    messageContainer.innerHTML += `<div class="system-message">💾 Xuất dữ liệu **${transactions.length}** giao dịch thành công!</div>`;
+                    messageContainer.scrollTop = messageContainer.scrollHeight;
+                };
+
+                request.onerror = (event) => {
+                    console.error("Lỗi khi đọc dữ liệu GD:", event.target.error);
+                };
+            } catch (e) {
+                console.error("Lỗi khi xuất dữ liệu:", e);
+            }
+        }
+
+
+        // --- HÀM XỬ LÝ GIAO DỊCH ---
+
+        async function processTransaction(type) {
+            calculateResult();
+            
+            let amountToProcess = parseFloat(currentInput); 
+            
+            const delaySeconds = parseInt(delayInput.value) || 0;
+            let refundId = refundIdInput.value.trim();
+            let isNegative = type === 'subtract';
+            let transactionId = generateTransactionID();
+            let originalTransaction = null;
+            let transactionAmount = 0;
+            let transactionContent = contentInput.value || (isNegative ? 'Hoan tien don hang' : 'Thanh toan don hang');
+
+            if (isNegative && refundId) {
+                originalTransaction = await findTransaction(refundId);
+                if (originalTransaction) {
+                    amountToProcess = Math.abs(originalTransaction.amount); 
+                    transactionAmount = -amountToProcess;
+                    transactionContent = `HOAN TIEN GD GOC: ${originalTransaction.content} - Ma GD: ${refundId}`;
+                } else {
+                    messageContainer.innerHTML += `<div class="system-message">❌ Hoàn tiền thất bại: Không tìm thấy Mã Giao dịch gốc **${refundId}** trong hệ thống.</div>`;
+                    messageContainer.scrollTop = messageContainer.scrollHeight;
+                    clearDisplay();
+                    updateCalculatorState(); // Cập nhật trạng thái nút
+                    return;
+                }
+            } 
+            else {
+                if (currentInput === 'Error' || isNaN(amountToProcess) || amountToProcess <= 0) {
+                    messageContainer.innerHTML += `<div class="system-message">❌ Số tiền giao dịch không hợp lệ!</div>`;
+                    messageContainer.scrollTop = messageContainer.scrollHeight;
+                    clearDisplay();
+                    updateCalculatorState(); // Cập nhật trạng thái nút
+                    return;
+                }
+                transactionAmount = isNegative ? -amountToProcess : amountToProcess;
+            }
+
+            if (delaySeconds > 0) {
+                messageContainer.innerHTML += `<div class="transaction-delay">⏱️ Đang chờ xử lý giao dịch... (${delaySeconds}s)</div>`;
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+            }
+            
+            setTimeout(async () => {
+                const newBalance = currentBalance + transactionAmount;
+                
+                if (newBalance < 0) {
+                    const delayMessage = messageContainer.querySelector('.transaction-delay');
+                    if (delayMessage) delayMessage.remove(); 
+                    
+                     messageContainer.innerHTML += `<div class="system-message">⚠️ Giao dịch trừ tiền không thể thực hiện vì số dư không đủ.</div>`;
+                     messageContainer.scrollTop = messageContainer.scrollHeight;
+                     updateCalculatorState(); // Cập nhật trạng thái nút
+                     return;
+                }
+                
+                currentBalance = parseFloat(newBalance.toFixed(2)); 
+                
+                saveBalance(currentBalance);
+                updateBalanceDisplay();
+
+                await saveTransaction({
+                    transactionId: transactionId,
+                    amount: transactionAmount, 
+                    content: transactionContent,
+                    timestamp: new Date().getTime(),
+                    type: isNegative ? 'Subtract' : 'Add'
+                });
+
+                const formattedNewBalance = formatNumber(currentBalance.toString());
+                const formattedAmount = formatNumber(amountToProcess.toString());
+                
+                const customDate = getCustomDate(); 
+                const timeStr = `${String(customDate.getHours()).padStart(2, '0')}:${String(customDate.getMinutes()).padStart(2, '0')}:${String(customDate.getSeconds()).padStart(2, '0')}`;
+                const dateStr = `${String(customDate.getDate()).padStart(2, '0')}/${String(customDate.getMonth() + 1).padStart(2, '0')}/${customDate.getFullYear()}`;
+                
+                const selectedBank = bankSelect.value;
+                const bankData = BANK_TEMPLATES[selectedBank];
+                const senderName = senderNameInput.value || 'NGAN HANG';
+                
+                const rawMessage = bankData.template(
+                    formattedAmount,
+                    formattedNewBalance,
+                    transactionContent,
+                    timeStr,
+                    dateStr,
+                    transactionId,
+                    isNegative,
+                    senderName
+                );
+
+                const messageClass = isNegative ? 'negative' : '';
+                const sign = isNegative ? '-' : '+';
+                
+                const delayMessage = messageContainer.querySelector('.transaction-delay');
+                if (delayMessage) delayMessage.remove(); 
+
+                const messageContent = rawMessage.trim().replace(
+                    new RegExp(`\\${sign}${formattedAmount} VND`, 'g'), 
+                    `<strong class="${messageClass}">${sign}${formattedAmount} VND</strong>`
+                );
+
+                const messageHtml = `
+                    <div class="bank-message-wrapper ${selectedBank.toLowerCase()}">
+                        <div class="bank-message ${messageClass}">
+                            ${messageContent}
+                            ${!isNegative ? `<br>--- Ma GD: **${transactionId}** ---` : ''} 
+                            ${isNegative && refundId ? `<br>--- Hoàn tiền cho GD Gốc: **${refundId}** ---` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                 messageContainer.innerHTML += messageHtml;
+                 messageContainer.scrollTop = messageContainer.scrollHeight;
+            
+                const status = isNegative ? 'Hoàn tiền thành công.' : 'Nhận tiền thành công.';
+                messageContainer.innerHTML += `<div class="system-message">✅ ${status} Ma GD: **${transactionId}** đã được xử lý.</div>`;
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+                
+                // Cải tiến: Tải lại lịch sử giao dịch
+                loadTransactionHistory();
+                updateCalculatorState(); // Cập nhật trạng thái nút
+                
+            }, delaySeconds * 1000); 
+            
+            clearDisplay();
+            refundIdInput.value = ''; 
+        }
+
+        // Khởi tạo ban đầu
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBalance(); 
+            loadTransactionHistory(); // Tải lịch sử ngay khi khởi động
+            
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+            dateInput.value = dateStr;
+            timeInput.value = timeStr;
+            
+            updatePinDisplay();
+            updateCalculatorState(); // Cập nhật trạng thái nút khi khởi động
+            
+            // Gán các hàm vào Window để dùng trong onclick
+            window.appendValue = appendValue;
+            window.clearDisplay = clearDisplay;
+            window.calculateResult = calculateResult;
+            window.processTransaction = processTransaction;
+            window.exportTransactions = exportTransactions;
+            window.enterPin = enterPin;
+            window.deletePin = deletePin;
+            window.checkPassword = checkPassword;
+        });
+    </script>
+</body>
+</html>

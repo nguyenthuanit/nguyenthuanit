@@ -17,6 +17,11 @@ let LOG_FILTER_LEVEL = 'ALL';
 let SIMULATION_INTERVAL = null; 
 let TERMINAL_HISTORY = [];
 
+// *** CẢI TIẾN: Thêm hằng số cấu hình hệ thống ***
+const MAX_SCALABLE_SERVERS = 10;
+const BASE_IP_OCTET = 100;
+// ************************************************
+
 // Lấy giá trị cấu hình động từ UI
 const CPU_THRESHOLD_UP = () => parseInt(document.getElementById('autoScaleThresholdUp').value, 10) || 85;
 const CPU_THRESHOLD_DOWN = () => parseInt(document.getElementById('autoScaleThresholdDown').value, 10) || 25;
@@ -238,13 +243,13 @@ async function checkAutoScale(servers) {
 
     // Scale UP
     if (avgCpu >= thresholdUp && liveServers.length === servers.length) {
-        if (servers.length < 10) { 
+        if (servers.length < MAX_SCALABLE_SERVERS) { 
             await addServer(`Scale-UP-${servers.length + 1}`, true);
             LAST_SCALE_TS = currentTime;
             saveLogEntry('SYSTEM', `Auto-Scale UP triggered. New server added due to average CPU ${avgCpu.toFixed(1)}% > ${thresholdUp}%.`);
             showToast("Auto-Scale UP: New server added.", 'INFO');
         } else {
-            saveLogEntry('WARN', `Auto-Scale UP blocked. Maximum server limit reached (10 servers).`, 'SYSTEM');
+            saveLogEntry('WARN', `Auto-Scale UP blocked. Maximum server limit reached (${MAX_SCALABLE_SERVERS} servers).`, 'SYSTEM');
         }
     }
     // Scale DOWN
@@ -297,7 +302,7 @@ async function updateServer(server) {
 async function addServer(name = 'New Server', isAutoScale = false) {
     const servers = await getAllServers();
     const newId = `s${Date.now()}`;
-    const newIp = `192.168.1.${100 + servers.length}`;
+    const newIp = `192.168.1.${BASE_IP_OCTET + servers.length}`;
     const newServer = generateServerData(newId, name, newIp, isAutoScale ? 'booting' : 'ok');
 
     await tx('servers', 'readwrite').add(newServer);
@@ -454,39 +459,40 @@ async function handleTerminalCommand(serverName, command) {
     const outputEl = document.getElementById('terminalOutput');
     const inputEl = document.getElementById('terminalInput');
     TERMINAL_HISTORY.push(command);
-    
-    outputEl.textContent += command + '\n';
-    
-    let result = '';
-    const parts = command.trim().toLowerCase().split(' ');
-    const cmd = parts[0];
+
+    if (command === 'clear') {
+        outputEl.textContent = '';
+        outputEl.textContent += '$ ';
+        return;
+    }
 
     const server = await getSelectedServer();
+    let result = '';
 
-    switch(cmd) {
+    switch (command.toLowerCase().trim()) {
         case 'help':
             result = `
 Available Commands:
-  status   - Show current server status and load.
-  ping     - Run a quick latency check.
-  reboot   - Restart the server service (same as GUI button).
-  policy   - View current network policy.
-  exit     - Close the terminal.
-  clear    - Clear the terminal output.
+status - Show current server status and load.
+ping - Run a quick latency check.
+reboot - Restart the server service (same as GUI button).
+policy - View current network policy.
+exit - Close the terminal.
+clear - Clear the terminal output.
 `;
             break;
         case 'status':
             if (server) {
                 result = `
-[${serverName}]
-Status: ${server.status.toUpperCase()} ${server.maintenanceMode ? '(MAINTENANCE)' : ''}
-CPU: ${server.cpu.toFixed(1)}%
-RAM: ${server.ram.toFixed(1)}%
-Latency: ${server.latency.toFixed(2)}ms
-Uptime: ~${Math.floor(server.uptime / 3600)} hours
-`;
+ [${serverName}]
+ Status: ${server.status.toUpperCase()} ${server.maintenanceMode ? '(MAINTENANCE)' : ''}
+ CPU: ${server.cpu.toFixed(1)}%
+ RAM: ${server.ram.toFixed(1)}%
+ Latency: ${server.latency.toFixed(2)}ms
+ Uptime: ~${Math.floor(server.uptime / 3600)} hours
+ `;
             } else {
-                 result = 'Error: No server selected.';
+                result = 'Error: No server selected.';
             }
             break;
         case 'ping':
@@ -504,10 +510,10 @@ Uptime: ~${Math.floor(server.uptime / 3600)} hours
             if (server && server.networkPolicy) {
                 result = "Active Firewall Policies:\n";
                 server.networkPolicy.forEach(p => {
-                    result += `  - ${p.action.padEnd(5)} | Port: ${p.port.toString().padEnd(5)} | Source: ${p.source}\n`;
+                    result += ` - ${p.action.padEnd(5)} | Port: ${p.port.toString().padEnd(5)} | Source: ${p.source}\n`;
                 });
             } else {
-                 result = 'Error: No policy found.';
+                result = 'Error: No policy found.';
             }
             break;
         case 'clear':
@@ -520,7 +526,9 @@ Uptime: ~${Math.floor(server.uptime / 3600)} hours
         default:
             result = `Error: command not found: ${command}`;
     }
-
+    
+    // In command và kết quả
+    outputEl.textContent += command + '\n';
     outputEl.textContent += result.trim() + '\n';
     outputEl.textContent += '$ ';
     outputEl.scrollTop = outputEl.scrollHeight;
@@ -529,29 +537,185 @@ Uptime: ~${Math.floor(server.uptime / 3600)} hours
 
 // =================== 5. UI Rendering & Updates ===================
 
-function updateHealthOverview(servers = []) {
-    const ok = servers.filter(s => s.status === 'ok').length;
-    // THÊM: Maintenance được tính vào warn/booting cho mục đích overview
-    const warn = servers.filter(s => s.status === 'warn' || s.status === 'booting' || s.status === 'maintenance').length;
-    const danger = servers.filter(s => s.status === 'critical' || s.status === 'down').length;
+let cpuChart = null;
+let ramChart = null;
+let latencyChart = null;
 
-    document.getElementById('okCount').textContent = ok;
-    document.getElementById('warnCount').textContent = warn;
-    document.getElementById('dangerCount').textContent = danger;
-    document.getElementById('totalCount').textContent = servers.length;
+function initChart(canvasId, label, color, min = 0, max = 100) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    const thresholdValue = CPU_THRESHOLD_UP(); // Chỉ dùng cho CPU Chart
+    const thresholdLabel = `Auto-Scale UP Threshold (${thresholdValue}%)`;
+    const thresholdColor = 'var(--danger)';
+
+    return new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: label,
+                data: [],
+                borderColor: color,
+                backgroundColor: 'transparent',
+                tension: 0.4,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            scales: {
+                y: {
+                    min: min,
+                    max: max,
+                    title: { display: false },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                annotation: (canvasId === 'cpuChart') ? {
+                    annotations: [{
+                        type: 'line',
+                        scaleID: 'y',
+                        value: thresholdValue,
+                        borderColor: thresholdColor,
+                        borderWidth: 1,
+                        borderDash: [5, 5],
+                        label: {
+                            content: thresholdLabel,
+                            enabled: true,
+                            position: 'end',
+                            backgroundColor: thresholdColor
+                        }
+                    }]
+                } : undefined
+            }
+        }
+    });
 }
 
-function updateServerDetails(serverId, server = null) {
-    const detailEl = document.getElementById('serverDetailGrid');
+function updateCharts(metrics) {
+    if (!cpuChart) cpuChart = initChart('cpuChart', 'CPU', 'var(--accent)');
+    if (!ramChart) ramChart = initChart('ramChart', 'RAM', 'var(--success)');
+    if (!latencyChart) latencyChart = initChart('latencyChart', 'Latency', 'var(--network)', 0, 500);
+
+    const chartDataLength = 20;
+    const timeLabel = new Date().toLocaleTimeString('vi-VN', { hour12: false });
+
+    // Cập nhật CPU
+    cpuChart.data.labels.push(timeLabel);
+    cpuChart.data.datasets[0].data.push(metrics.cpu);
+    if (cpuChart.data.labels.length > chartDataLength) {
+        cpuChart.data.labels.shift();
+        cpuChart.data.datasets[0].data.shift();
+    }
+    // Cập nhật ngưỡng động (chỉ cho CPU chart)
+    if(cpuChart.options.plugins.annotation && cpuChart.options.plugins.annotation.annotations[0]) {
+        cpuChart.options.plugins.annotation.annotations[0].value = CPU_THRESHOLD_UP();
+        cpuChart.options.plugins.annotation.annotations[0].label.content = `Auto-Scale UP Threshold (${CPU_THRESHOLD_UP()}%)`;
+    }
+
+    // Cập nhật RAM
+    ramChart.data.labels.push(timeLabel);
+    ramChart.data.datasets[0].data.push(metrics.ram);
+    if (ramChart.data.labels.length > chartDataLength) {
+        ramChart.data.labels.shift();
+        ramChart.data.datasets[0].data.shift();
+    }
+
+    // Cập nhật LATENCY
+    latencyChart.data.labels.push(timeLabel);
+    latencyChart.data.datasets[0].data.push(metrics.latency);
+    if (latencyChart.data.labels.length > chartDataLength) {
+        latencyChart.data.labels.shift();
+        latencyChart.data.datasets[0].data.shift();
+    }
+
+    cpuChart.update();
+    ramChart.update();
+    latencyChart.update();
+}
+
+function renderServers(servers = []) {
+    const serverListEl = document.getElementById('serverList');
+    let html = '';
+
+    // Sắp xếp: Critical/Down > Warn/Booting/Maintenance > OK
+    servers.sort((a, b) => {
+        const order = { 'critical': 0, 'down': 1, 'warn': 2, 'booting': 3, 'maintenance': 4, 'ok': 5 };
+        return order[a.status] - order[b.status];
+    });
+
+    servers.forEach(server => {
+        const statusClass = `status-${server.status}`;
+        const isSelected = server.id === SELECTED_SERVER_ID ? 'selected' : '';
+        const cpuFillStyle = `width: ${server.cpu.toFixed(1)}%; background: ${server.cpu > 80 ? 'var(--danger)' : server.cpu > 50 ? 'var(--warn)' : 'var(--success)'};`;
+        const ramFillStyle = `width: ${server.ram.toFixed(1)}%; background: ${server.ram > 85 ? 'var(--danger)' : server.ram > 60 ? 'var(--warn)' : 'var(--success)'};`;
+        const latencyColor = server.latency > 100 ? 'var(--danger)' : server.latency > 30 ? 'var(--warn)' : 'var(--success)';
+
+        html += `
+            <div class="server-item ${isSelected}" data-server-id="${server.id}">
+                <div class="server-item-info">
+                    <strong class="${statusClass}">${server.name}</strong>
+                    <div class="small">${server.ip}</div>
+                    <div class="server-item-metrics">
+                        <span style="color: ${latencyColor};">${server.latency.toFixed(0)}ms</span>
+                        <span>|</span>
+                        <span>CPU: ${server.cpu.toFixed(0)}%</span>
+                        <div class="server-item-metric-bar">
+                            <div class="server-item-metric-bar-fill" style="${cpuFillStyle}"></div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <i class="fas ${server.status === 'down' ? 'fa-circle-xmark' : server.status === 'critical' ? 'fa-triangle-exclamation' : server.status === 'warn' ? 'fa-bell' : server.status === 'maintenance' ? 'fa-wrench' : 'fa-circle-check'}" style="color: ${server.status === 'ok' ? 'var(--success)' : server.status === 'warn' || server.status === 'booting' ? 'var(--warn)' : server.status === 'maintenance' ? 'var(--maintenance)' : 'var(--danger)'};"></i>
+                </div>
+            </div>
+        `;
+    });
+
+    serverListEl.innerHTML = html;
+    document.getElementById('serverCount').textContent = servers.length;
+
+    // Gắn sự kiện click
+    serverListEl.querySelectorAll('.server-item').forEach(item => {
+        item.onclick = () => {
+            SELECTED_SERVER_ID = item.getAttribute('data-server-id');
+            renderApp(servers); // Re-render để cập nhật trạng thái selected
+        };
+    });
+}
+
+function renderHealthOverview(servers = []) {
+    const counts = servers.reduce((acc, s) => {
+        acc.total++;
+        if (s.status === 'ok') acc.ok++;
+        else if (s.status === 'critical' || s.status === 'down') acc.danger++;
+        else if (s.status === 'warn' || s.status === 'booting' || s.status === 'maintenance') acc.warn++;
+        return acc;
+    }, { ok: 0, warn: 0, danger: 0, total: 0 });
+
+    document.getElementById('okCount').textContent = counts.ok;
+    document.getElementById('warnCount').textContent = counts.warn;
+    document.getElementById('dangerCount').textContent = counts.danger;
+    document.getElementById('totalCount').textContent = counts.total;
+}
+
+async function renderServerDetails(server) {
+    const detailGrid = document.getElementById('serverDetailGrid');
     const deleteBtn = document.getElementById('deleteServerBtn');
     const restartBtn = document.getElementById('restartServiceBtn');
     const terminalBtn = document.getElementById('liveTerminalBtn');
-    const toggleMaintenanceBtn = document.getElementById('toggleMaintenanceBtn'); // MỚI
-    const editPolicyBtn = document.getElementById('editPolicyBtn'); // MỚI
-    const editScriptBtn = document.getElementById('editScriptBtn'); // MỚI
-    
+    const toggleMaintenanceBtn = document.getElementById('toggleMaintenanceBtn');
+    const editPolicyBtn = document.getElementById('editPolicyBtn');
+    const editScriptBtn = document.getElementById('editScriptBtn');
+
     if (!server) {
-        detailEl.innerHTML = `<p class="muted small">Select a server to view details.</p>`;
+        detailGrid.innerHTML = '<p class="muted" style="text-align: center;">Select a server to view details.</p>';
         deleteBtn.disabled = true;
         restartBtn.disabled = true;
         terminalBtn.disabled = true;
@@ -561,14 +725,10 @@ function updateServerDetails(serverId, server = null) {
         return;
     }
 
-    // Cập nhật trạng thái nút và bind sự kiện
+    // Kích hoạt các nút điều khiển
     deleteBtn.disabled = false;
-    deleteBtn.onclick = () => {
-        if (confirm(`Are you sure you want to delete ${server.name}?`)) {
-            deleteServer(server.id);
-        }
-    };
-    
+    deleteBtn.onclick = () => { if (confirm(`Are you sure you want to delete ${server.name}?`)) { deleteServer(server.id); } };
+
     restartBtn.disabled = false;
     restartBtn.onclick = () => restartServerService(server.id);
 
@@ -578,18 +738,19 @@ function updateServerDetails(serverId, server = null) {
         initTerminal(server.name);
     };
 
+    // Nút Maintenance Mode
     toggleMaintenanceBtn.disabled = false;
     toggleMaintenanceBtn.textContent = server.maintenanceMode ? 'Maintenance: ON' : 'Maintenance: OFF';
     toggleMaintenanceBtn.classList.toggle('danger', server.maintenanceMode);
     toggleMaintenanceBtn.classList.toggle('network', !server.maintenanceMode);
     toggleMaintenanceBtn.onclick = () => toggleMaintenanceMode(server.id);
 
+    // Nút Advanced
     editPolicyBtn.disabled = false;
     editPolicyBtn.onclick = () => showPolicyModal(server);
     
     editScriptBtn.disabled = false;
     editScriptBtn.onclick = () => showScriptModal(server);
-
 
     const uptimeDays = Math.floor(server.uptime / 86400);
     const uptimeHours = Math.floor((server.uptime % 86400) / 3600);
@@ -621,212 +782,85 @@ function updateServerDetails(serverId, server = null) {
             <div class="detail-value">${server.securityScore}%</div>
         </div>
         <div class="detail-group">
-            <div class="small">Last Latency</div>
-            <div class="detail-value">${server.latency.toFixed(2)} ms</div>
+            <div class="small">Maintenance Mode</div>
+            <div class="detail-value status-${server.maintenanceMode ? 'maintenance' : 'ok'}">${server.maintenanceMode ? 'ON' : 'OFF'}</div>
         </div>
         <div class="detail-group">
-            <div class="small">Network Policy Rules</div>
-            <div class="detail-value">${server.networkPolicy.length} active rules</div>
+            <div class="small">Encrypted Traffic</div>
+            <div class="detail-value status-${ENCRYPT ? 'success' : 'critical'}">${ENCRYPT ? 'YES' : 'NO'}</div>
         </div>
     `;
-    detailEl.innerHTML = html;
-}
+    detailGrid.innerHTML = html;
 
-let cpuChart = null;
-let ramChart = null;
-let latencyChart = null; 
-
-function initChart(canvasId, label, color, min = 0, max = 100) {
-    const isCpuChart = canvasId === 'cpuChart';
-    const isLatencyChart = canvasId === 'latencyChart';
-    const ctx = document.getElementById(canvasId).getContext('2d');
-    
-    let thresholdValue = 0;
-    let thresholdColor = '';
-    let thresholdLabel = '';
-
-    if (isCpuChart) {
-        thresholdValue = CPU_THRESHOLD_UP();
-        thresholdColor = 'var(--danger)';
-        thresholdLabel = `Auto-Scale UP Threshold (${CPU_THRESHOLD_UP()}%)`;
-    } else if (canvasId === 'ramChart') {
-        thresholdValue = 90;
-        thresholdColor = 'var(--warn)';
-        thresholdLabel = 'High Usage Limit (90%)';
-    } else if (isLatencyChart) {
-        thresholdValue = 100; 
-        thresholdColor = 'var(--danger)';
-        thresholdLabel = 'High Latency Limit (100ms)';
-        max = 500; 
+    // Cập nhật biểu đồ nếu server thay đổi
+    if (cpuChart && cpuChart.data.datasets[0].label !== server.name) {
+        cpuChart.data.datasets[0].label = server.name;
+        cpuChart.data.labels = [];
+        cpuChart.data.datasets[0].data = [];
+        cpuChart.update();
+        ramChart.data.labels = [];
+        ramChart.data.datasets[0].data = [];
+        ramChart.update();
+        latencyChart.data.labels = [];
+        latencyChart.data.datasets[0].data = [];
+        latencyChart.update();
     }
-
-    return new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: label,
-                data: [],
-                borderColor: color,
-                backgroundColor: 'rgba(0, 0, 0, 0)',
-                borderWidth: 2,
-                pointRadius: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    min: min,
-                    max: max,
-                    ticks: { color: IS_DARK_THEME ? '#e6eef8' : '#333' }
-                },
-                x: {
-                    ticks: { color: IS_DARK_THEME ? '#e6eef8' : '#333', maxRotation: 0, minRotation: 0 }
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                annotation: {
-                    annotations: [
-                        {
-                            type: 'line',
-                            mode: 'horizontal',
-                            scaleID: 'y',
-                            value: thresholdValue,
-                            borderColor: thresholdColor, 
-                            borderWidth: 1,
-                            borderDash: [5, 5],
-                            label: { content: thresholdLabel, enabled: true, position: 'end', backgroundColor: thresholdColor }
-                        }
-                    ]
-                }
-            }
-        }
-    });
-}
-
-function updateCharts(metrics) {
-    if (!cpuChart) cpuChart = initChart('cpuChart', 'CPU', 'var(--accent)');
-    if (!ramChart) ramChart = initChart('ramChart', 'RAM', 'var(--success)');
-    if (!latencyChart) latencyChart = initChart('latencyChart', 'Latency', 'var(--network)', 0, 500); 
-    
-    const chartDataLength = 20;
-    const timeLabel = new Date().toLocaleTimeString('vi-VN', { hour12: false });
-
-    // Cập nhật CPU
-    cpuChart.data.labels.push(timeLabel);
-    cpuChart.data.datasets[0].data.push(metrics.cpu);
-    if (cpuChart.data.labels.length > chartDataLength) {
-        cpuChart.data.labels.shift();
-        cpuChart.data.datasets[0].data.shift();
-    }
-    if(cpuChart.options.plugins.annotation && cpuChart.options.plugins.annotation.annotations[0]) {
-        cpuChart.options.plugins.annotation.annotations[0].value = CPU_THRESHOLD_UP();
-        cpuChart.options.plugins.annotation.annotations[0].label.content = `Auto-Scale UP Threshold (${CPU_THRESHOLD_UP()}%)`;
-    }
-
-    // Cập nhật RAM
-    ramChart.data.labels.push(timeLabel);
-    ramChart.data.datasets[0].data.push(metrics.ram);
-    if (ramChart.data.labels.length > chartDataLength) {
-        ramChart.data.labels.shift();
-        ramChart.data.datasets[0].data.shift();
-    }
-    
-    // Cập nhật LATENCY
-    latencyChart.data.labels.push(timeLabel);
-    latencyChart.data.datasets[0].data.push(metrics.latency);
-    if (latencyChart.data.labels.length > chartDataLength) {
-        latencyChart.data.labels.shift();
-        latencyChart.data.datasets[0].data.shift();
-    }
-    
-    cpuChart.update();
-    ramChart.update();
-    latencyChart.update();
-}
-
-function renderServers(servers = []) {
-    const serverListEl = document.getElementById('serverList');
-    let html = '';
-    
-    servers.sort((a, b) => {
-        const order = { 'critical': 0, 'down': 1, 'warn': 2, 'booting': 3, 'maintenance': 4, 'ok': 5 };
-        return order[a.status] - order[b.status];
-    });
-
-    servers.forEach(server => {
-        // Ưu tiên hiển thị badge Maintenance nếu đang trong mode này
-        const statusKey = server.maintenanceMode ? 'maintenance' : server.status;
-        const statusClass = `status-${statusKey}`;
-        const statusText = server.maintenanceMode ? 'MAINT.' : server.status.toUpperCase();
-        
-        const cpuVal = (server.status === 'down' || server.status === 'booting' || server.maintenanceMode) ? 0 : server.cpu;
-        const ramVal = (server.status === 'down' || server.status === 'booting' || server.maintenanceMode) ? 0 : server.ram;
-
-        html += `
-            <div class="server-item ${server.id === SELECTED_SERVER_ID ? 'selected' : ''}" data-id="${server.id}">
-                <div class="server-item-info">
-                    <strong>${server.name}</strong> 
-                    <span class="${statusClass}" style="margin-left: 8px;">${statusText}</span>
-                    <div class="small muted" style="margin-top:2px;">${server.ip}</div>
-                    
-                    <div class="server-item-metrics">
-                        <span>CPU: ${cpuVal.toFixed(1)}%</span>
-                        <div class="server-item-metric-bar"><div class="server-item-metric-bar-fill cpu-bar" style="width: ${cpuVal}%;"></div></div>
-                        <span>RAM: ${ramVal.toFixed(1)}%</span>
-                        <div class="server-item-metric-bar"><div class="server-item-metric-bar-fill ram-bar" style="width: ${ramVal}%;"></div></div>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    serverListEl.innerHTML = html;
-    document.getElementById('serverCount').textContent = servers.length;
 }
 
 
 async function renderApp(servers = null) {
-    if (!servers) servers = await getAllServers();
-    
-    updateHealthOverview(servers);
+    if (!db) return; 
+
+    // Nếu không có servers, tự load
+    if (!servers) {
+        servers = await getAllServers();
+    }
+
     renderServers(servers);
+    renderHealthOverview(servers);
     
     const selectedServer = await getSelectedServer();
+    renderServerDetails(selectedServer);
+    
     if (selectedServer) {
-        updateServerDetails(SELECTED_SERVER_ID, selectedServer);
         updateCharts(selectedServer);
     } else {
-        updateServerDetails(null);
-        if(cpuChart) cpuChart.data.labels = []; cpuChart.data.datasets[0].data = []; cpuChart.update();
-        if(ramChart) ramChart.data.labels = []; ramChart.data.datasets[0].data = []; ramChart.update();
-        if(latencyChart) latencyChart.data.labels = []; latencyChart.data.datasets[0].data = []; latencyChart.update();
+        // Reset/Empty Charts nếu không có server được chọn
+        if (cpuChart) {
+            cpuChart.data.labels = [];
+            cpuChart.data.datasets[0].data = [];
+            cpuChart.update();
+            ramChart.data.labels = [];
+            ramChart.data.datasets[0].data = [];
+            ramChart.update();
+            latencyChart.data.labels = [];
+            latencyChart.data.datasets[0].data = [];
+            latencyChart.update();
+        }
     }
 }
 
-
-// =================== 6. Advanced Server Configuration Modals ===================
+// =================== 6. Modal / Policy / Script Logic ===================
 
 function showPolicyModal(server) {
     showModal('policyModal');
-    document.getElementById('policyTitle').textContent = `Network Policy (Firewall): ${server.name}`;
+    document.getElementById('policyTitle').textContent = `Firewall Policy: ${server.name}`;
     renderPolicyTable(server.networkPolicy);
-    
+
     const addPolicyBtn = document.getElementById('addPolicyBtn');
     addPolicyBtn.onclick = () => {
         const ip = document.getElementById('newPolicyIP').value.trim();
         const port = document.getElementById('newPolicyPort').value.trim();
         const action = document.getElementById('newPolicyAction').value;
-        
+
         if (!ip || !port) {
             showToast('Please enter both IP/CIDR and Port.', 'WARN');
             return;
         }
-
+        
         const newPolicy = { source: ip, port: parseInt(port, 10), action: action };
         server.networkPolicy.push(newPolicy);
+        
         updateServer(server).then(() => {
             renderPolicyTable(server.networkPolicy);
             saveLogEntry('INFO', `Added Network Policy Rule on ${server.name}: ${action} ${ip}:${port}`, server.id);
@@ -840,7 +874,6 @@ function showPolicyModal(server) {
 function renderPolicyTable(policies) {
     const tbody = document.getElementById('policyTableBody');
     tbody.innerHTML = '';
-    
     policies.forEach((policy, index) => {
         const row = tbody.insertRow();
         row.innerHTML = `
@@ -858,10 +891,11 @@ function renderPolicyTable(policies) {
 async function deletePolicyRule(index) {
     const server = await getSelectedServer();
     if (!server) return;
-    
+
     const deletedPolicy = server.networkPolicy.splice(index, 1);
     await updateServer(server);
     renderPolicyTable(server.networkPolicy);
+
     saveLogEntry('WARN', `Removed Network Policy Rule on ${server.name}: ${deletedPolicy[0].action} ${deletedPolicy[0].source}:${deletedPolicy[0].port}`, server.id);
     showToast('Policy rule removed.', 'WARN');
 }
@@ -871,62 +905,133 @@ function showScriptModal(server) {
     document.getElementById('scriptTitle').textContent = `Health Check Script: ${server.name}`;
     const scriptArea = document.getElementById('healthScriptArea');
     scriptArea.value = server.healthScript;
-    
+
     document.getElementById('saveScriptBtn').onclick = () => {
         server.healthScript = scriptArea.value;
         updateServer(server).then(() => {
+            hideModal('scriptModal');
             saveLogEntry('SYSTEM', `Health Check Script updated on ${server.name}.`, server.id);
             showToast('Health Check Script saved.', 'SUCCESS');
-            hideModal('scriptModal');
         });
     };
-    
+
     document.getElementById('resetScriptBtn').onclick = () => {
-        if (confirm('Are you sure you want to reset the script to default?')) {
-            server.healthScript = DEFAULT_HEALTH_SCRIPT;
+        if (confirm("Are you sure you want to reset the script to default?")) {
             scriptArea.value = DEFAULT_HEALTH_SCRIPT;
-            updateServer(server).then(() => {
-                saveLogEntry('SYSTEM', `Health Check Script reset to default on ${server.name}.`, server.id);
-                showToast('Health Check Script reset.', 'INFO');
-            });
         }
     };
 }
 
 
-// =================== 7. Controls & Functions ===================
-
-function startSimulation() {
-    if (SIMULATION_INTERVAL) return;
-    SIMULATION_INTERVAL = setInterval(updateAllServers, 1000);
-    document.getElementById('wsToggle').innerHTML = `<i class="fas fa-stop"></i> Stop Simulation`;
-    document.getElementById('wsToggle').classList.replace('primary', 'danger');
-    document.getElementById('wsToggle').dataset.running = '1';
-    saveLogEntry('SYSTEM', 'Simulation Started.');
-}
-
-function stopSimulation() {
-    if (SIMULATION_INTERVAL) clearInterval(SIMULATION_INTERVAL);
-    SIMULATION_INTERVAL = null;
-    document.getElementById('wsToggle').innerHTML = `<i class="fas fa-play"></i> Start Simulation`;
-    document.getElementById('wsToggle').classList.replace('danger', 'primary');
-    document.getElementById('wsToggle').dataset.running = '0';
-    saveLogEntry('SYSTEM', 'Simulation Stopped.');
-}
+// =================== 7. Control Panel Actions ===================
 
 async function simulateSpike() {
     const servers = await getAllServers();
     const txServers = tx('servers', 'readwrite');
+    let needsUpdate = false;
+    
     servers.forEach(server => {
-        if (server.status === 'ok' && !server.maintenanceMode) { // Bỏ qua Maintenance
-            server.cpu = 90 + Math.random() * 10;
-            server.status = 'warn';
+        if (server.status !== 'down' && server.status !== 'maintenance') {
+            server.cpu = Math.min(100, server.cpu + 30 + Math.random() * 20); // Tăng đột ngột CPU
+            server.ram = Math.min(100, server.ram + 10 + Math.random() * 10);
+            server.latency = Math.max(server.latency, 200 + Math.random() * 100);
             txServers.put(server);
+            needsUpdate = true;
         }
     });
-    saveLogEntry('CRITICAL', 'Simulation: Massive CPU spike initiated across all OK servers.');
-    showToast('Massive CPU Spike Simulated!', 'CRITICAL');
-    renderApp();
+
+    if (needsUpdate) {
+        await new Promise(resolve => txServers.transaction.oncomplete = resolve);
+        saveLogEntry('CRITICAL', 'Simulated CPU and Latency spike across all active servers!', 'SYSTEM');
+        showToast('Simulating Performance Spike!', 'CRITICAL');
+        renderApp(servers);
+    }
+}
+
+async function runSpeedTest() {
+    showModal('speedTestModal');
+    const statusEl = document.getElementById('speedTestStatus');
+    const barEl = document.getElementById('speedBar');
+    
+    statusEl.textContent = 'Running latency check...';
+    barEl.style.width = '10%';
+    await new Promise(r => setTimeout(r, 500)); 
+
+    const basePing = 10 + Math.floor(Math.random() * 30) + GLOBAL_LAG_MS();
+    statusEl.textContent = `Latency: ${basePing}ms. Running download test...`;
+    
+    let currentDL = 100 + Math.random() * 500;
+    for (let i = 0; i < 5; i++) {
+        currentDL = currentDL * 0.95 + Math.random() * 5;
+        statusEl.textContent = `Latency: ${basePing}ms. DL: ${currentDL.toFixed(2)} Mbps.`;
+        barEl.style.width = `${10 + (i * 20)}%`;
+        await new Promise(r => setTimeout(r, 100));
+    }
+
+    statusEl.textContent = `Latency: ${basePing}ms. Running upload test...`;
+    let currentUL = 50 + Math.random() * 200;
+    for (let i = 0; i < 5; i++) {
+        currentUL = currentUL * 0.95 + Math.random() * 3;
+        statusEl.textContent = `Latency: ${basePing}ms. UL: ${currentUL.toFixed(2)} Mbps.`;
+        barEl.style.width = `${60 + (i * 10)}%`;
+        await new Promise(r => setTimeout(r, 100));
+    }
+
+    const finalDL = currentDL * 0.9;
+    const finalUL = currentUL * 0.9;
+    statusEl.textContent = `TEST COMPLETE! DL: ${Math.max(0, finalDL).toFixed(2)} Mbps / UL: ${Math.max(0, finalUL).toFixed(2)} Mbps / Ping: ${basePing}ms.`;
+    barEl.style.width = '100%';
+    
+    saveLogEntry('INFO', `Internal Speed Test complete: DL ${Math.max(0, finalDL).toFixed(2)} Mbps / UL ${Math.max(0, finalUL).toFixed(2)} Mbps / Ping ${basePing}ms.`, 'NETWORK');
+    setTimeout(() => hideModal('speedTestModal'), 5000);
+}
+
+// Backup DB: Export servers and logs to a JSON file
+async function backupDB() {
+    const servers = await getAllServers();
+    const logs = await getLogs('ALL', 9999);
+    
+    const data = {
+        servers: servers,
+        logs: logs
+    };
+
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `server_sim_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    saveLogEntry('SYSTEM', 'Database backup downloaded successfully.', 'SYSTEM');
+    showToast('Database Backup Complete!', 'SUCCESS');
+}
+
+// Export Logs to CSV
+async function exportLogsToCSV() {
+    const logs = await getLogs('ALL', 9999);
+    let csv = 'Time,Level,Scope,Message\n';
+    logs.forEach(log => {
+        const time = new Date(log.ts).toISOString();
+        const escapedMessage = log.message.replace(/"/g, '""');
+        csv += `"${time}","${log.level}","${log.scopeId}","${escapedMessage}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', 'server_logs.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+    
+    showToast('Logs Exported to CSV.', 'INFO');
 }
 
 async function rotateKey() {
@@ -945,6 +1050,7 @@ async function toggleEncryption() {
     ENCRYPT = !ENCRYPT;
     await setConfig('ENCRYPT', ENCRYPT);
     const btn = document.getElementById('toggleEncryptBtn');
+
     if (ENCRYPT) {
         if (!ENC_KEY) {
             ENC_KEY = Math.random().toString(36).substring(2, 15);
@@ -963,7 +1069,6 @@ async function toggleEncryption() {
     renderApp();
 }
 
-
 function toggleAutoScale() {
     AUTO_SCALE = !AUTO_SCALE;
     const btn = document.getElementById('autoScaleToggle');
@@ -975,7 +1080,6 @@ function toggleAutoScale() {
     showToast(`Auto-Scale ${AUTO_SCALE ? 'Enabled' : 'Disabled'}!`, 'INFO');
 }
 
-
 function showModal(id) {
     document.getElementById(id).classList.remove('hidden');
 }
@@ -984,68 +1088,23 @@ function hideModal(id) {
     document.getElementById(id).classList.add('hidden');
 }
 
-async function runInternalSpeedTest() {
-    showModal('speedTestModal');
-    const statusEl = document.getElementById('stStatus');
-    const barEl = document.getElementById('stBar');
-    const dlEl = document.getElementById('dlVal');
-    const ulEl = document.getElementById('ulVal');
-    const pingEl = document.getElementById('pingVal');
-    
-    dlEl.textContent = '0.00';
-    ulEl.textContent = '0.00';
-    pingEl.textContent = '0';
-
-    statusEl.textContent = 'Starting latency check...';
-    barEl.style.width = '0%';
-
-    const basePing = (Math.floor(Math.random() * 20) + 5) + GLOBAL_LAG_MS(); 
-    for (let i = 0; i < 5; i++) {
-        const ping = basePing + Math.floor(Math.random() * 10);
-        pingEl.textContent = ping;
-        statusEl.textContent = `Ping: ${ping}ms (Test ${i+1}/5)...`;
-        barEl.style.width = `${(i + 1) * 5}%`;
-        await new Promise(r => setTimeout(r, 200));
-    }
-
-    statusEl.textContent = 'Simulating high-speed download...';
-    const finalDL = 50 + Math.random() * 200 - (GLOBAL_LAG_MS() * 0.1); 
-    for (let i = 0; i <= 10; i++) {
-        const currentDL = (finalDL / 10) * i;
-        dlEl.textContent = Math.max(0, currentDL).toFixed(2);
-        barEl.style.width = `${50 + (i * 4)}%`;
-        await new Promise(r => setTimeout(r, 100));
-    }
-    
-    statusEl.textContent = 'Simulating upload...';
-    const finalUL = 10 + Math.random() * 50 - (GLOBAL_LAG_MS() * 0.05); 
-    for (let i = 0; i <= 10; i++) {
-        const currentUL = (finalUL / 10) * i;
-        ulEl.textContent = Math.max(0, currentUL).toFixed(2);
-        barEl.style.width = `${90 + (i * 1)}%`;
-        await new Promise(r => setTimeout(r, 100));
-    }
-
-    statusEl.textContent = `TEST COMPLETE! DL: ${Math.max(0, finalDL).toFixed(2)} Mbps / UL: ${Math.max(0, finalUL).toFixed(2)} Mbps / Ping: ${basePing}ms.`;
-    barEl.style.width = '100%';
-
-    saveLogEntry('INFO', `Internal Speed Test complete: DL ${Math.max(0, finalDL).toFixed(2)} Mbps / UL ${Math.max(0, finalUL).toFixed(2)} Mbps / Ping ${basePing}ms.`, 'NETWORK');
-
-    setTimeout(() => hideModal('speedTestModal'), 5000);
+function toggleTheme() {
+    IS_DARK_THEME = !IS_DARK_THEME;
+    document.body.classList.toggle('light-theme', !IS_DARK_THEME);
+    setConfig('THEME', IS_DARK_THEME);
+    showToast(`Theme changed to ${IS_DARK_THEME ? 'Dark' : 'Light'}.`, 'INFO');
 }
-
 
 function showToast(message, type = 'INFO') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.textContent = message;
-    
     container.appendChild(toast);
-    
+
     setTimeout(() => {
         toast.style.opacity = 0;
-        setTimeout(() => toast.remove(), 500); 
+        setTimeout(() => toast.remove(), 500);
     }, 4000);
 }
 
@@ -1057,138 +1116,111 @@ async function loadConfigs() {
     ENC_KEY = await getConfig('ENC_KEY', null);
     AUTO_SCALE = await getConfig('AUTO_SCALE', false);
 
+    // Apply theme
     document.body.classList.toggle('light-theme', !IS_DARK_THEME);
 
+    // Update buttons based on config
     const autoScaleBtn = document.getElementById('autoScaleToggle');
     autoScaleBtn.innerHTML = AUTO_SCALE ? `<i class="fas fa-tachometer-alt"></i> Auto-Scale: ON` : `<i class="fas fa-tachometer-alt"></i> Auto-Scale: OFF`;
     autoScaleBtn.classList.toggle('primary', AUTO_SCALE);
     autoScaleBtn.classList.toggle('ghost', !AUTO_SCALE);
 
     const encryptBtn = document.getElementById('toggleEncryptBtn');
-    if (ENCRYPT) {
-        encryptBtn.innerHTML = `<i class="fas fa-lock"></i> Encryption: ENABLED`;
-        encryptBtn.classList.replace('ghost', 'success');
-    } else {
-        encryptBtn.innerHTML = `<i class="fas fa-lock-open"></i> Encryption: DISABLED`;
-        encryptBtn.classList.replace('success', 'ghost');
-    }
+    encryptBtn.innerHTML = ENCRYPT ? `<i class="fas fa-lock"></i> Encryption: ENABLED` : `<i class="fas fa-lock-open"></i> Encryption: DISABLED`;
+    encryptBtn.classList.toggle('success', ENCRYPT);
+    encryptBtn.classList.toggle('ghost', !ENCRYPT);
+}
+
+async function initSimulation() {
+    SIMULATION_INTERVAL = setInterval(async () => {
+        await updateAllServers();
+    }, 2000); // Cập nhật mỗi 2 giây
+    
+    document.getElementById('wsToggle').innerHTML = '<i class="fas fa-pause"></i> Pause Simulation';
+    document.getElementById('wsToggle').classList.replace('primary', 'danger');
+    document.getElementById('wsToggle').setAttribute('data-running', '1');
+    showToast('Simulation Started.', 'SUCCESS');
+}
+
+function stopSimulation() {
+    clearInterval(SIMULATION_INTERVAL);
+    SIMULATION_INTERVAL = null;
+    document.getElementById('wsToggle').innerHTML = '<i class="fas fa-play"></i> Start Simulation';
+    document.getElementById('wsToggle').classList.replace('danger', 'primary');
+    document.getElementById('wsToggle').setAttribute('data-running', '0');
+    showToast('Simulation Paused.', 'WARN');
 }
 
 async function initApp() {
-    await openDB();
-    await loadConfigs();
-    
-    const initialServers = await getAllServers();
-    if (initialServers.length === 0) {
-        // Tạo server mới với các thuộc tính policy/script mặc định
-        await addServer('Web-01', false);
-        await addServer('DB-02', false);
-        await addServer('Cache-03', false);
+    try {
+        await openDB();
+        await loadConfigs();
         
-        const newServers = await getAllServers();
-        newServers.forEach(s => ORIGINAL_SERVERS.add(s.id));
-        SELECTED_SERVER_ID = newServers[0]?.id || null;
-    } else {
+        // Tạo server khởi tạo nếu chưa có
+        const servers = await getAllServers();
+        if (servers.length === 0) {
+            await addServer('Primary-Web-01');
+            await addServer('Data-Store-02');
+        }
+        
+        // Ghi lại danh sách server gốc
+        const initialServers = await getAllServers();
         initialServers.forEach(s => ORIGINAL_SERVERS.add(s.id));
-        SELECTED_SERVER_ID = initialServers[0]?.id || null;
-    }
-    
-    renderApp();
-    updateLogDisplay();
-    
-    // Event Listeners
-    document.getElementById('addServerBtn').addEventListener('click', () => addServer(`New Server-${Date.now().toString().substring(10)}`));
-    document.getElementById('wsToggle').addEventListener('click', () => {
-        if (document.getElementById('wsToggle').dataset.running === '0') {
-            startSimulation();
-        } else {
-            stopSimulation();
-        }
-    });
 
-    document.getElementById('themeToggle').addEventListener('click', () => {
-        IS_DARK_THEME = !IS_DARK_THEME;
-        document.body.classList.toggle('light-theme', !IS_DARK_THEME);
-        setConfig('THEME', IS_DARK_THEME);
-        showToast(`Theme changed to ${IS_DARK_THEME ? 'Dark' : 'Light'}.`, 'INFO');
-        cpuChart = null; 
-        ramChart = null;
-        latencyChart = null;
-        renderApp(); 
-    });
-    
-    document.getElementById('autoScaleToggle').addEventListener('click', toggleAutoScale);
-    document.getElementById('toggleEncryptBtn').addEventListener('click', toggleEncryption); 
-    document.getElementById('networkLag').addEventListener('change', () => {
-        saveLogEntry('SYSTEM', `Global Network Lag set to ${GLOBAL_LAG_MS()}ms.`, 'NETWORK');
-    }); 
-
-    document.getElementById('simulateSpike').addEventListener('click', simulateSpike);
-    document.getElementById('rotateKeyBtn').addEventListener('click', rotateKey);
-    document.getElementById('runSpeedTestBtn').addEventListener('click', runInternalSpeedTest);
-
-    document.getElementById('logLevelFilter').addEventListener('change', (e) => {
-        LOG_FILTER_LEVEL = e.target.value;
+        // Load ban đầu
+        await renderApp(initialServers);
         updateLogDisplay();
-    });
 
-    document.getElementById('serverList').addEventListener('click', (e) => {
-        const item = e.target.closest('.server-item');
-        if (item) {
-            SELECTED_SERVER_ID = item.getAttribute('data-id');
-            renderApp();
-        }
-    });
+        // Gắn sự kiện Global
+        document.getElementById('wsToggle').onclick = () => {
+            if (SIMULATION_INTERVAL) {
+                stopSimulation();
+            } else {
+                initSimulation();
+            }
+        };
 
-    // Export Logs
-    document.getElementById('exportLogsBtn').addEventListener('click', async () => {
-        const logs = await getLogs('ALL', 1000); 
-        let csv = 'Time,Level,Scope,Message\n';
-        logs.forEach(log => {
-            const time = new Date(log.ts).toISOString();
-            const escapedMessage = log.message.replace(/"/g, '""');
-            csv += `"${time}","${log.level}","${log.scopeId}","${escapedMessage}"\n`;
+        document.getElementById('addServerBtn').onclick = () => addServer('New-Manual-Server');
+        document.getElementById('themeToggle').onclick = toggleTheme;
+        document.getElementById('autoScaleToggle').onclick = toggleAutoScale;
+        document.getElementById('toggleEncryptBtn').onclick = toggleEncryption;
+        document.getElementById('rotateKeyBtn').onclick = rotateKey;
+        document.getElementById('simulateSpike').onclick = simulateSpike;
+        document.getElementById('runSpeedTestBtn').onclick = runSpeedTest;
+        document.getElementById('exportLogsBtn').onclick = exportLogsToCSV;
+        document.getElementById('logLevelFilter').onchange = (e) => {
+            LOG_FILTER_LEVEL = e.target.value;
+            updateLogDisplay();
+        };
+        document.getElementById('backupBtn').onclick = backupDB;
+
+
+        // Restore DB logic - TÍNH NĂNG NÂNG CAO
+        const restoreInput = document.createElement('input');
+        restoreInput.type = 'file';
+        restoreInput.accept = 'application/json';
+        restoreInput.style.display = 'none';
+        document.body.appendChild(restoreInput);
+
+        document.getElementById('backupBtn').addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (confirm("Restore Database? This will erase all current data.")) {
+                restoreInput.click();
+            }
         });
 
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', 'server_logs.csv');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast("Logs exported to CSV.", 'INFO');
-    });
-    
-    // Backup DB logic - Giữ nguyên
-    document.getElementById('backupBtn').addEventListener('click', async () => {
-        const allServers = await getAllServers();
-        const allLogs = await getLogs('ALL', 100000);
-        const backupData = {
-            servers: allServers,
-            logs: allLogs
-        };
-        const json = JSON.stringify(backupData, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', `server_sim_backup_${Date.now()}.json`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast("Database backup created.", 'INFO');
-    });
+        restoreInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-    // Restore DB function (Simple version)
-    document.getElementById('restoreFile').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
             const reader = new FileReader();
             reader.onload = async (event) => {
                 try {
                     const data = JSON.parse(event.target.result);
+                    if (!data.servers || !data.logs) throw new Error("Invalid format");
+                    
                     await restoreDB(data);
-                    showToast("Database restored successfully.", 'SUCCESS');
+                    showToast("Database restored successfully! Reloading...", 'SUCCESS');
                     e.target.value = null; // Clear file input
                 } catch (error) {
                     showToast("Failed to restore database: Invalid file or format.", 'CRITICAL');
@@ -1197,38 +1229,43 @@ async function initApp() {
             };
             reader.readAsText(file);
         }
-    });
 
-    async function restoreDB(data) {
-        return new Promise(async (resolve, reject) => {
-            const req = indexedDB.deleteDatabase(DB_NAME);
-            req.onsuccess = async () => {
-                await openDB(); 
-                
-                const serverTx = tx('servers', 'readwrite');
-                data.servers.forEach(server => serverTx.add(server));
-                
-                const logTx = tx('logs', 'readwrite');
-                data.logs.forEach(log => {
-                    try {
-                        logTx.add(log);
-                    } catch (e) {
-                        // Ignore ts collision
-                    }
-                }); 
-                
-                serverTx.transaction.oncomplete = () => {
-                    logTx.transaction.oncomplete = () => {
-                        window.location.reload(); 
-                        resolve();
+        async function restoreDB(data) {
+            return new Promise(async (resolve, reject) => {
+                const req = indexedDB.deleteDatabase(DB_NAME);
+                req.onsuccess = async () => {
+                    await openDB(); 
+                    
+                    const serverTx = tx('servers', 'readwrite');
+                    data.servers.forEach(server => serverTx.add(server));
+                    
+                    const logTx = tx('logs', 'readwrite');
+                    data.logs.forEach(log => {
+                        try {
+                            logTx.add(log);
+                        } catch (e) {
+                            // Ignore ts collision
+                        }
+                    }); 
+                    
+                    serverTx.transaction.oncomplete = () => {
+                        logTx.transaction.oncomplete = () => {
+                            window.location.reload(); 
+                            resolve();
+                        };
                     };
+                    serverTx.transaction.onerror = logTx.transaction.onerror = reject;
                 };
-                serverTx.transaction.onerror = logTx.transaction.onerror = reject;
-            };
-            req.onerror = reject;
-        });
-    }
+                req.onerror = reject;
+            });
+        }
 
+
+    } catch (e) {
+        console.error("Application Initialization Failed:", e);
+        document.getElementById('serverList').innerHTML = '<p class="status-critical">ERROR: Cannot connect to IndexedDB.</p>';
+        document.getElementById('wsToggle').disabled = true;
+    }
 }
 
 window.onload = initApp;

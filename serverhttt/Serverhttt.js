@@ -1,10 +1,10 @@
 // ===============================================
-// Professional Enterprise Server Simulator (V3.0)
+// Professional Enterprise Server Simulator (V3.1)
 // ===============================================
 
 // =================== 1. Config & DB Management ===================
 const DB_NAME = 'ServerSimDB';
-const DB_VERSION = 4;
+const DB_VERSION = 5; // Tăng version để IndexedDB tạo store mới cho policy/script
 let db = null;
 let ENCRYPT = false;
 let ENC_KEY = null; 
@@ -15,11 +15,13 @@ let LAST_SCALE_TS = 0;
 let SELECTED_SERVER_ID = null;
 let LOG_FILTER_LEVEL = 'ALL';
 let SIMULATION_INTERVAL = null; 
+let TERMINAL_HISTORY = [];
 
 // Lấy giá trị cấu hình động từ UI
 const CPU_THRESHOLD_UP = () => parseInt(document.getElementById('autoScaleThresholdUp').value, 10) || 85;
 const CPU_THRESHOLD_DOWN = () => parseInt(document.getElementById('autoScaleThresholdDown').value, 10) || 25;
 const COOLDOWN_PERIOD_SECONDS = () => parseInt(document.getElementById('autoScaleCooldown').value, 10) || 30;
+const GLOBAL_LAG_MS = () => parseInt(document.getElementById('networkLag').value, 10) || 0; 
 
 // Hàm tiện ích cho IndexedDB
 async function setConfig(key, value) {
@@ -31,435 +33,632 @@ async function setConfig(key, value) {
 }
 
 async function getConfig(key, defaultValue) {
-    return new Promise((res) => {
+    return new Promise((resolve) => {
         const req = tx('config').get(key);
-        req.onsuccess = (e) => res(e.target.result ? e.target.result.value : defaultValue);
-        req.onerror = () => res(defaultValue);
-    });
-}
-
-async function loadConfig() {
-    // Load trạng thái cấu hình từ DB (chủ yếu là trạng thái UI)
-    ENCRYPT = await getConfig('ENCRYPT', false);
-    IS_DARK_THEME = await getConfig('IS_DARK_THEME', true);
-    AUTO_SCALE = await getConfig('AUTO_SCALE', false);
-
-    // FIX/IMPROVEMENT: Load và import encryption key (JWK format)
-    const jwkKey = await getConfig('ENC_KEY_JWK', null);
-    if (ENCRYPT && jwkKey) {
-        try {
-            ENC_KEY = await crypto.subtle.importKey(
-                "jwk",
-                jwkKey,
-                { name: "AES-GCM", length: 256 },
-                true,
-                ["encrypt", "decrypt"]
-            );
-        } catch (e) {
-            saveLogEntry('CRITICAL', `Failed to import encryption key. Encryption disabled. Error: ${e.message}`);
-            ENCRYPT = false; // Disable if key fails to load
-            await setConfig('ENCRYPT', false);
-            await setConfig('ENC_KEY_JWK', null);
-        }
-    }
-
-    document.getElementById('toggleEncrypt').textContent = ENCRYPT ? 'Disable Encryption' : 'Enable Encryption';
-    document.getElementById('themeToggle').textContent = IS_DARK_THEME ? 'Light Theme' : 'Dark Theme';
-    document.getElementById('autoScaleToggle').textContent = `Auto-Scale: ${AUTO_SCALE ? 'ON' : 'OFF'}`;
-}
-
-async function openDB() {
-    return new Promise((res, rej) => {
-        const r = indexedDB.open(DB_NAME, DB_VERSION);
-        r.onupgradeneeded = (e) => {
-            const idb = e.target.result;
-            if (!idb.objectStoreNames.contains('logs')) idb.createObjectStore('logs', { keyPath: 'id', autoIncrement: true });
-            if (!idb.objectStoreNames.contains('servers')) idb.createObjectStore('servers', { keyPath: 'id' });
-            if (!idb.objectStoreNames.contains('metrics')) idb.createObjectStore('metrics', { keyPath: 'ts' });
-            if (!idb.objectStoreNames.contains('config')) idb.createObjectStore('config', { keyPath: 'key' });
+        req.onsuccess = () => resolve(req.result ? req.result.value : defaultValue);
+        req.onerror = () => {
+            console.error(`Failed to get config ${key}:`, req.error);
+            resolve(defaultValue);
         };
-        r.onsuccess = (e) => { db = e.target.result; res(db); };
-        r.onerror = (e) => rej(e.target.error);
-    })
+    });
 }
 
 function tx(storeName, mode = 'readonly') {
-    if (!db) throw new Error('DB not opened');
-    return db.transaction([storeName], mode).objectStore(storeName)
+    return db.transaction(storeName, mode).objectStore(storeName);
 }
 
-// Hàm mã hóa/giải mã
-async function encryptData(data) {
-    if (!ENCRYPT || !ENC_KEY) return JSON.stringify(data);
-    const textEncoder = new TextEncoder();
-    const dataBuffer = textEncoder.encode(JSON.stringify(data));
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const encrypted = await crypto.subtle.encrypt(
-        { name: "AES-GCM", iv: iv },
-        ENC_KEY,
-        dataBuffer
-    );
-    return JSON.stringify({ e: btoa(String.fromCharCode(...new Uint8Array(encrypted))), iv: btoa(String.fromCharCode(...iv)) });
-}
-
-async function decryptData(encryptedData) {
-    if (!encryptedData || typeof encryptedData !== 'string' || encryptedData.charAt(0) !== '{') return encryptedData; 
-    if (!ENC_KEY) return `[ENCRYPTED] Requires key for decryption.`;
-
-    try {
-        const parsed = JSON.parse(encryptedData);
-        if (!parsed.e || !parsed.iv) return encryptedData;
-        const cipherText = new Uint8Array(atob(parsed.e).split('').map(c => c.charCodeAt(0)));
-        const iv = new Uint8Array(atob(parsed.iv).split('').map(c => c.charCodeAt(0)));
-        const decrypted = await crypto.subtle.decrypt(
-            { name: "AES-GCM", iv: iv },
-            ENC_KEY,
-            cipherText
-        );
-        return new TextDecoder().decode(decrypted);
-    } catch (error) {
-        // showToast(`Decryption Error: ${error.message}. Logs might be unreadable.`, 'CRITICAL');
-        return `[DECRYPTION FAILED] Corrupt or wrong key.`;
-    }
-}
-
-// Cải tiến: Key Rotation (Re-Encryption)
-async function reEncryptAll(newKey) {
-    showToast("Starting key rotation and re-encryption...", 'INFO');
-    ENC_KEY = newKey; 
-    
-    let logTx = tx('logs', 'readwrite');
-    let logCursorRequest = logTx.openCursor();
-    let logCount = 0;
-    logCursorRequest.onsuccess = async (e) => {
-        const cursor = e.target.result;
-        if (cursor) {
-            try {
-                let decryptedText;
-                try {
-                    decryptedText = await decryptData(cursor.value.encryptedData);
-                } catch {
-                    decryptedText = cursor.value.encryptedData; 
-                }
-
-                let logData;
-                try {
-                    logData = JSON.parse(decryptedText);
-                } catch {
-                    logData = { ts: cursor.value.ts, level: 'CRITICAL', message: `Corrupt log data at ID ${cursor.value.id}` };
-                }
-
-                const newEncryptedData = await encryptData(logData);
-                const updatedLog = { ...cursor.value, encryptedData: newEncryptedData };
-                cursor.update(updatedLog);
-                logCount++;
-            } catch (err) {
-                saveLogEntry('CRITICAL', `Failed to re-encrypt log ID ${cursor.value.id}: ${err.message}`);
+async function openDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('servers')) {
+                db.createObjectStore('servers', { keyPath: 'id' });
             }
-            cursor.continue();
-        } else {
-            saveLogEntry('INFO', `Key Rotation: Re-encrypted ${logCount} log entries.`);
-            // FIX: Export key to JWK and store
-            const jwk = await crypto.subtle.exportKey("jwk", newKey);
-            await setConfig('ENC_KEY_JWK', jwk); 
-        }
+            if (!db.objectStoreNames.contains('logs')) {
+                const logsStore = db.createObjectStore('logs', { keyPath: 'ts' });
+                logsStore.createIndex('level', 'level', { unique: false });
+                logsStore.createIndex('scopeId', 'scopeId', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('config')) {
+                db.createObjectStore('config', { keyPath: 'key' });
+            }
+        };
+
+        req.onsuccess = (e) => {
+            db = e.target.result;
+            resolve(db);
+        };
+
+        req.onerror = (e) => {
+            console.error("Database error:", e.target.error);
+            reject(e.target.error);
+        };
+    });
+}
+
+// =================== 2. Simulation Logic ===================
+
+const DEFAULT_HEALTH_SCRIPT = `
+# Pseudo-Code: Health Check Script
+# This script runs every 10 seconds.
+# Return 'ok', 'warn', or 'critical' based on server metrics (cpu, ram, latency).
+
+if cpu > 90 or ram > 95 or latency > 200:
+    return 'critical'
+if cpu > 70 or ram > 80 or latency > 50:
+    return 'warn'
+return 'ok'
+`;
+
+const DEFAULT_NETWORK_POLICY = [
+    { source: '0.0.0.0/0', port: 80, action: 'ALLOW' },
+    { source: '0.0.0.0/0', port: 443, action: 'ALLOW' },
+    { source: '10.0.0.0/8', port: 22, action: 'ALLOW' },
+    { source: '0.0.0.0/0', port: 23, action: 'DENY' }
+];
+
+function generateServerData(id, name, ip, status = 'ok') {
+    return {
+        id: id,
+        name: name,
+        ip: ip,
+        status: status, // ok, warn, critical, down, booting, maintenance (MỚI)
+        cpu: 0,
+        ram: 0,
+        disk: 0,
+        latency: 0,
+        uptime: 0,
+        securityScore: 100,
+        lastUpdate: Date.now(),
+        maintenanceMode: false, // TÍNH NĂNG MỚI
+        networkPolicy: DEFAULT_NETWORK_POLICY, // TÍNH NĂNG MỚI
+        healthScript: DEFAULT_HEALTH_SCRIPT // TÍNH NĂNG MỚI
     };
 }
 
-// IMPROVEMENT: Implement full IndexedDB backup
-async function backupDB() {
-    showToast("Starting database backup...", 'INFO');
-    try {
-        const servers = await tx('servers').getAll();
-        const config = await tx('config').getAll();
-        
-        // Export recent 100 logs (avoid huge file size)
-        const logs = await getLogs('ALL', 100); 
-        
-        const backupData = {
-            version: DB_VERSION,
-            timestamp: Date.now(),
-            servers: servers,
-            config: config,
-            recent_logs: logs
-        };
-
-        const json = JSON.stringify(backupData, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', `server_sim_backup_${new Date().toISOString().replace(/:/g, '-')}.json`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast("Database backup successful! Exported to JSON.", 'SUCCESS');
-
-    } catch (e) {
-        saveLogEntry('CRITICAL', `Database backup failed: ${e.message}`);
-        showToast(`Database backup failed: ${e.message}`, 'CRITICAL');
+// TÍNH NĂNG MỚI: Mô phỏng chạy Health Check Script
+function runHealthCheck(server) {
+    if (server.maintenanceMode) return 'maintenance';
+    
+    // Đánh giá dựa trên script (pseudo-code evaluation)
+    const { cpu, ram, latency } = server;
+    let resultStatus = 'ok';
+    
+    // Vì không thể chạy JS code trong môi trường web, ta dùng logic mô phỏng dựa trên script
+    if (cpu > 90 || ram > 95 || latency > 200) {
+        resultStatus = 'critical';
+    } else if (cpu > 70 || ram > 80 || latency > 50) {
+        resultStatus = 'warn';
     }
+    
+    return resultStatus;
 }
 
 
-// =================== 2. Server/State Management ===================
-async function getServerState(id) {
-    const serverTx = tx('servers');
-    const server = await new Promise((res) => {
-        const req = serverTx.get(id);
-        req.onsuccess = (e) => res(e.target.result);
-        req.onerror = () => res(null);
-    });
+function generateMetrics(server) {
+    // 1. Nếu đang Maintenance, chỉ cập nhật uptime và giữ nguyên status
+    if (server.maintenanceMode) {
+        server.uptime += 1;
+        server.lastUpdate = Date.now();
+        return server; 
+    }
+
+    // 2. Sinh số liệu ngẫu nhiên
+    const baseCPU = server.status === 'ok' ? 30 + Math.random() * 20 : 70 + Math.random() * 25;
+    const baseRAM = server.status === 'ok' ? 40 + Math.random() * 15 : 60 + Math.random() * 30;
+    
+    server.cpu = Math.min(100, baseCPU + (Math.random() * 5));
+    server.ram = Math.min(100, baseRAM + (Math.random() * 5));
+    server.disk = 50 + Math.random() * 40; 
+    
+    const baseLatency = server.status === 'ok' ? 5 + Math.random() * 15 : 50 + Math.random() * 150;
+    server.latency = baseLatency + GLOBAL_LAG_MS(); 
+    
+    server.uptime += 1;
+    server.lastUpdate = Date.now();
+    
+    // 3. Đánh giá trạng thái bằng Health Check Script (MỚI)
+    const newStatus = runHealthCheck(server);
+
+    // Xử lý chuyển trạng thái
+    if (server.status !== 'down' && server.status !== 'booting') {
+         if (newStatus !== 'ok' && newStatus !== server.status) {
+            saveLogEntry(newStatus.toUpperCase(), `${server.name} status changed to ${newStatus.toUpperCase()} by Health Check Script (CPU: ${server.cpu.toFixed(1)}%).`, server.id);
+            server.status = newStatus;
+        } else if (newStatus === 'ok' && server.status !== 'ok') {
+            saveLogEntry('SUCCESS', `${server.name} recovered and is OK.`, server.id);
+            server.status = 'ok';
+        }
+    }
+    
+    // Xử lý Down/Booting (vẫn giữ logic cũ)
+    if (server.status === 'critical' && Math.random() < 0.005) {
+        server.status = 'down';
+        saveLogEntry('CRITICAL', `${server.name} is unresponsive and marked as DOWN.`, server.id);
+    } else if (server.status === 'down' && Math.random() < 0.002) {
+        server.status = 'booting';
+        saveLogEntry('INFO', `${server.name} is attempting to reboot/recover.`, server.id);
+    } else if (server.status === 'booting' && Math.random() < 0.2) {
+        server.status = 'ok';
+        saveLogEntry('SUCCESS', `${server.name} successfully recovered and is OK.`, server.id);
+    }
+
+    // 4. Giảm security score ngẫu nhiên nếu có vấn đề
+    if (server.status === 'critical' && Math.random() < 0.1) {
+        server.securityScore = Math.max(0, server.securityScore - 5);
+        saveLogEntry('WARN', `Security risk detected on ${server.name}. Score reduced to ${server.securityScore}.`, server.id);
+    }
+    
     return server;
 }
 
-async function getAllServers() {
-    return new Promise((res) => {
-        const req = tx('servers').getAll();
-        req.onsuccess = (e) => res(e.target.result);
-        req.onerror = () => res([]);
-    });
-}
-
-async function updateServer(id, data) {
-    const store = tx('servers', 'readwrite');
-    const server = await getServerState(id);
-    if (!server) return;
-    
-    // Logic Provisioning Delay (MỚI)
-    if (data.status && data.status === 'ok' && server.status === 'booting') {
-        saveLogEntry('INFO', `Server ${server.name} (${id}) is now fully operational (OK).`, id);
-    }
-
-    const updated = { ...server, ...data };
-    // Sử dụng await ở đây để đảm bảo IndexedDB hoàn tất trước khi return
-    await new Promise((res, rej) => {
-        const req = store.put(updated);
-        req.onsuccess = res;
-        req.onerror = rej;
-    });
-
-    renderServers();
-}
-
-function generateNewIP() {
-    const segment = () => Math.floor(Math.random() * 255);
-    return `192.168.1.${segment()}`;
-}
-
-async function addServer() {
+async function updateAllServers() {
     const servers = await getAllServers();
-    const id = `server-${Date.now()}`;
-    const newServer = {
-        id,
-        name: `Server ${String.fromCharCode(65 + servers.length)}`,
-        ip: generateNewIP(),
-        status: 'booting', // Trạng thái khởi động (MỚI)
-        cpu: 0,
-        ram: 0,
-        ts: Date.now()
-    };
-    ORIGINAL_SERVERS.add(id);
-    await tx('servers', 'readwrite').add(newServer);
-    saveLogEntry('INFO', `New Server ${newServer.name} added. Status: booting.`, id);
+    const txServers = tx('servers', 'readwrite');
+    let needsUpdate = false;
     
-    // FIX LỖI 5S BOOTING: Đảm bảo Promise được chờ (await) và lỗi được bắt (try/catch)
-    setTimeout(async () => { 
-        try {
-            await updateServer(id, { status: 'ok' });
-        } catch (error) {
-            saveLogEntry('CRITICAL', `Failed to boot server ${newServer.name} after 5s: ${error.message}`, id);
-            await updateServer(id, { status: 'down' }); 
-        }
-    }, 5000); 
-}
-
-// =================== 3. Metrics & Auto-Scaling ===================
-
-async function saveLogEntry(level, message, scopeId = 'SYSTEM') {
-    const ts = Date.now();
-    const logEntry = { ts, level, message, scopeId };
-    
-    if (level === 'CRITICAL' || level === 'WARN') {
-        updateAlertCenter(logEntry);
+    for (const server of servers) {
+        // Cập nhật server, kể cả khi down
+        const updatedServer = generateMetrics(server);
+        txServers.put(updatedServer);
+        needsUpdate = true;
     }
-    
-    try {
-        const encrypted = await encryptData(logEntry);
-        await tx('logs', 'readwrite').add({ id: Date.now() + Math.random(), ts, level, encryptedData: encrypted });
-        updateLogDisplay();
-    } catch (e) {
-        console.error("Error saving log:", e);
-        showToast("Error saving log: Check console.", 'CRITICAL');
+
+    if (needsUpdate) {
+        await new Promise(resolve => txServers.transaction.oncomplete = resolve);
+        await checkAutoScale(servers);
+        renderApp(servers);
+    } else {
+        renderApp(servers);
     }
 }
 
-async function saveMetrics(metrics) {
-    const ts = Date.now();
-    try {
-        const encrypted = await encryptData(metrics);
-        await tx('metrics', 'readwrite').add({ ts, encryptedData: encrypted });
-        updateCharts(metrics);
-        
-        const servers = await getAllServers();
-        updateHealthOverview(servers);
-        if (SELECTED_SERVER_ID) updateServerDetails(SELECTED_SERVER_ID);
-        
-        if (ts % 10000 < 500) pruneLogs(); 
-        
-        await checkAutoScale(metrics);
-    } catch (e) {
-        console.error("Error saving metrics:", e);
-    }
-}
-
-// FIX LỖI: Chuyển sang async/await và Promise.all để bắt lỗi Unhandled Rejection
-async function simulateMetrics() {
-    const servers = await getAllServers();
-    let totalCpu = 0;
-    let totalRam = 0;
-    let activeCount = 0;
-
-    // Sử dụng map để tạo mảng các Promise, thay vì forEach
-    const updatePromises = servers.map(async server => {
-        // Bỏ qua server down hoặc đang boot
-        if (server.status === 'down' || server.status === 'booting') {
-            return;
-        }
-        
-        // 1. Tính toán Metrics mới
-        const newCpu = Math.min(100, Math.max(0, server.cpu + (Math.random() * 8 - 4)));
-        const newRam = Math.min(100, Math.max(0, server.ram + (Math.random() * 6 - 3)));
-        
-        let updateData = { cpu: newCpu, ram: newRam };
-        let newStatus = server.status;
-
-        // 2. Quyết định Trạng thái mới và Log
-        if (newCpu > 95 || newRam > 98) {
-            if (server.status !== 'critical') saveLogEntry('CRITICAL', `High load detected: CPU ${newCpu.toFixed(1)}%, RAM ${newRam.toFixed(1)}% on ${server.name}`, server.id);
-            newStatus = 'critical';
-        } else if (newCpu > 80 || newRam > 85) {
-            if (server.status !== 'warn' && server.status !== 'critical') saveLogEntry('WARN', `High resource usage: CPU ${newCpu.toFixed(1)}%, RAM ${newRam.toFixed(1)}% on ${server.name}`, server.id);
-            if (server.status !== 'critical') newStatus = 'warn';
-        } else {
-            // Nếu không quá tải, trạng thái là OK (trừ khi đang boot, đã được lọc)
-            newStatus = 'ok';
-        }
-        
-        // 3. Tổng hợp dữ liệu cập nhật
-        updateData.status = newStatus;
-
-        // 4. Cộng dồn vào tổng (chỉ tính server hoạt động)
-        totalCpu += newCpu;
-        totalRam += newRam;
-        activeCount++;
-
-        // 5. Trả về Promise từ updateServer để chờ
-        return updateServer(server.id, updateData);
-    }).filter(p => p); // Lọc bỏ các giá trị undefined/null
-
-    // Đợi tất cả cập nhật xong và BẮT LỖI
-    try {
-        await Promise.all(updatePromises);
-    } catch (e) {
-        saveLogEntry('CRITICAL', `System update failed during metric simulation: ${e.message}`, 'SYSTEM');
-    }
-
-    // 6. Lưu Metrics Tổng thể
-    if (activeCount > 0) {
-        saveMetrics({
-            avgCpu: totalCpu / activeCount,
-            avgRam: totalRam / activeCount,
-            ts: Date.now()
-        });
-    }
-    renderServers(); // Cập nhật danh sách cuối cùng sau khi mọi thứ đã xong
-}
-
-async function startSimulation() {
-    if (SIMULATION_INTERVAL) return;
-    SIMULATION_INTERVAL = setInterval(simulateMetrics, 2000);
-    document.getElementById('wsToggle').dataset.running = '1';
-    document.getElementById('wsToggle').innerHTML = '<i class="fas fa-stop"></i> Stop Simulation';
-    document.getElementById('wsToggle').classList.replace('primary', 'danger');
-    saveLogEntry('INFO', 'Simulation started.');
-}
-
-function stopSimulation() {
-    if (SIMULATION_INTERVAL) clearInterval(SIMULATION_INTERVAL);
-    SIMULATION_INTERVAL = null;
-    document.getElementById('wsToggle').dataset.running = '0';
-    document.getElementById('wsToggle').innerHTML = '<i class="fas fa-play"></i> Start Simulation';
-    document.getElementById('wsToggle').classList.replace('danger', 'primary');
-    saveLogEntry('INFO', 'Simulation stopped.');
-}
-
-async function checkAutoScale(metrics) {
+async function checkAutoScale(servers) {
     if (!AUTO_SCALE) return;
-    
-    const now = Date.now();
-    const cooldown = COOLDOWN_PERIOD_SECONDS() * 1000;
-    
-    if (now - LAST_SCALE_TS < cooldown) {
+
+    const currentTime = Date.now();
+    const cooldownPeriod = COOLDOWN_PERIOD_SECONDS() * 1000;
+    if (currentTime - LAST_SCALE_TS < cooldownPeriod) {
         return; 
     }
 
-    const avgCpu = metrics.avgCpu;
-    const servers = await getAllServers();
-    const okServers = servers.filter(s => s.status === 'ok').length;
+    // Chỉ tính các server đang hoạt động VÀ KHÔNG TRONG CHẾ ĐỘ MAINTENANCE
+    const liveServers = servers.filter(s => 
+        (s.status === 'ok' || s.status === 'warn' || s.status === 'critical') && !s.maintenanceMode
+    );
+
+    const avgCpu = liveServers.length > 0 
+        ? liveServers.reduce((sum, s) => sum + s.cpu, 0) / liveServers.length 
+        : 0;
+
+    const thresholdUp = CPU_THRESHOLD_UP();
+    const thresholdDown = CPU_THRESHOLD_DOWN();
 
     // Scale UP
-    if (avgCpu >= CPU_THRESHOLD_UP() && okServers > 0) {
-        if (okServers < ORIGINAL_SERVERS.size + 5) { 
-            await addServer();
-            LAST_SCALE_TS = now;
-            saveLogEntry('WARN', `AUTO-SCALE UP: Avg CPU (${avgCpu.toFixed(1)}%) exceeded ${CPU_THRESHOLD_UP()}%. Adding new server.`, 'AUTOSCALE');
+    if (avgCpu >= thresholdUp && liveServers.length === servers.length) {
+        if (servers.length < 10) { 
+            await addServer(`Scale-UP-${servers.length + 1}`, true);
+            LAST_SCALE_TS = currentTime;
+            saveLogEntry('SYSTEM', `Auto-Scale UP triggered. New server added due to average CPU ${avgCpu.toFixed(1)}% > ${thresholdUp}%.`);
+            showToast("Auto-Scale UP: New server added.", 'INFO');
         } else {
-            saveLogEntry('CRITICAL', `AUTO-SCALE Limit Reached. Max servers deployed.`, 'AUTOSCALE');
+            saveLogEntry('WARN', `Auto-Scale UP blocked. Maximum server limit reached (10 servers).`, 'SYSTEM');
         }
-    } 
+    }
     // Scale DOWN
-    else if (avgCpu <= CPU_THRESHOLD_DOWN() && servers.length > ORIGINAL_SERVERS.size) {
-        const serverToRemove = servers.find(s => !ORIGINAL_SERVERS.has(s.id) && s.status === 'ok');
-        if (serverToRemove) {
-            await tx('servers', 'readwrite').delete(serverToRemove.id);
-            LAST_SCALE_TS = now;
-            saveLogEntry('INFO', `AUTO-SCALE DOWN: Avg CPU (${avgCpu.toFixed(1)}%) below ${CPU_THRESHOLD_DOWN()}%. Removing server ${serverToRemove.name}.`, 'AUTOSCALE');
+    else if (avgCpu <= thresholdDown && servers.length > ORIGINAL_SERVERS.size) {
+        // Chỉ xóa các server không phải là server gốc VÀ không trong maintenance
+        const removableServers = servers.filter(s => !ORIGINAL_SERVERS.has(s.id) && !s.maintenanceMode);
+        if (removableServers.length > 0) {
+            const serverToRemove = removableServers[removableServers.length - 1];
+            await deleteServer(serverToRemove.id);
+            LAST_SCALE_TS = currentTime;
+            saveLogEntry('SYSTEM', `Auto-Scale DOWN triggered. Server ${serverToRemove.name} removed due to average CPU ${avgCpu.toFixed(1)}% < ${thresholdDown}%.`);
+            showToast(`Auto-Scale DOWN: Server ${serverToRemove.name} removed.`, 'INFO');
         }
     }
 }
 
-async function pruneLogs(maxCount = 200) {
-    const store = tx('logs', 'readwrite');
-    const countRequest = store.count();
+// =================== 3. Server Management ===================
 
-    countRequest.onsuccess = (e) => {
-        const currentCount = e.target.result;
+async function getAllServers() {
+    return new Promise((resolve) => {
+        const servers = [];
+        const req = tx('servers').openCursor();
+        req.onsuccess = (e) => {
+            const cursor = e.target.result;
+            if (cursor) {
+                servers.push(cursor.value);
+                cursor.continue();
+            } else {
+                resolve(servers);
+            }
+        };
+    });
+}
+
+async function getSelectedServer() {
+    if (!SELECTED_SERVER_ID) return null;
+    return new Promise((resolve) => {
+        const req = tx('servers').get(SELECTED_SERVER_ID);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+    });
+}
+
+async function updateServer(server) {
+    if (!server) return;
+    await tx('servers', 'readwrite').put(server);
+    renderApp();
+}
+
+async function addServer(name = 'New Server', isAutoScale = false) {
+    const servers = await getAllServers();
+    const newId = `s${Date.now()}`;
+    const newIp = `192.168.1.${100 + servers.length}`;
+    const newServer = generateServerData(newId, name, newIp, isAutoScale ? 'booting' : 'ok');
+
+    await tx('servers', 'readwrite').add(newServer);
+    SELECTED_SERVER_ID = newId;
+    saveLogEntry('INFO', `Server ${newServer.name} added to the system.`, newServer.id);
+    renderApp();
+    return newServer;
+}
+
+async function deleteServer(serverId) {
+    if (!serverId) return;
+    const serverToDelete = await new Promise(resolve => {
+        const req = tx('servers').get(serverId);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+    });
+
+    if (serverToDelete) {
+        await tx('servers', 'readwrite').delete(serverId);
+        if (SELECTED_SERVER_ID === serverId) {
+            SELECTED_SERVER_ID = null;
+        }
+        saveLogEntry('CRITICAL', `Server ${serverToDelete.name} (${serverId}) deleted/decommissioned.`, serverId);
+        renderApp();
+        return true;
+    }
+    return false;
+}
+
+// Restart Service
+async function restartServerService(serverId) {
+    const server = await getSelectedServer();
+    if (!server || server.id !== serverId) return;
+
+    server.status = 'booting';
+    server.cpu = 0;
+    server.ram = 0;
+    
+    await updateServer(server);
+    saveLogEntry('WARN', `Service on ${server.name} is being restarted...`, server.id);
+    showToast(`Restarting service on ${server.name}.`, 'WARN');
+}
+
+// TÍNH NĂNG MỚI: Toggle Maintenance Mode
+async function toggleMaintenanceMode(serverId) {
+    const server = await getSelectedServer();
+    if (!server || server.id !== serverId) return;
+
+    server.maintenanceMode = !server.maintenanceMode;
+    
+    if (server.maintenanceMode) {
+        // Chuyển status sang 'maintenance' khi bật mode
+        server.status = 'maintenance'; 
+        server.cpu = 0; server.ram = 0; // Giả lập zero load
+        saveLogEntry('SYSTEM', `${server.name} placed in Maintenance Mode. Traffic diverted.`, server.id);
+        showToast(`${server.name}: Maintenance Mode ENABLED.`, 'WARN');
+    } else {
+        // Khi tắt, chuyển status sang 'booting' để hệ thống tự hồi phục
+        server.status = 'booting';
+        saveLogEntry('SYSTEM', `${server.name} removed from Maintenance Mode. Initiating system boot.`, server.id);
+        showToast(`${server.name}: Maintenance Mode DISABLED.`, 'SUCCESS');
+    }
+    
+    await updateServer(server);
+}
+
+
+// =================== 4. Logging & Terminal ===================
+
+async function saveLogEntry(level, message, scopeId = 'SYSTEM') {
+    const logEntry = {
+        ts: Date.now(),
+        level: level, // INFO, WARN, CRITICAL, SYSTEM, SUCCESS
+        message: message,
+        scopeId: scopeId
+    };
+    try {
+        await tx('logs', 'readwrite').add(logEntry);
+        updateLogDisplay();
+    } catch (e) {
+        // console.error("Failed to save log:", e);
+    }
+}
+
+async function getLogs(level = 'ALL', limit = 50) {
+    return new Promise((resolve) => {
+        const logs = [];
+        const store = tx('logs').openCursor(null, 'prev'); 
+
+        store.onsuccess = (e) => {
+            const cursor = e.target.result;
+            if (cursor && logs.length < limit) {
+                const log = cursor.value;
+                if (level === 'ALL' || log.level === level) {
+                    logs.push(log);
+                }
+                cursor.continue();
+            } else {
+                logs.sort((a, b) => a.ts - b.ts);
+                resolve(logs);
+            }
+        };
+        store.onerror = () => resolve([]);
+    });
+}
+
+async function updateLogDisplay() {
+    const logArea = document.getElementById('logArea');
+    const logs = await getLogs(LOG_FILTER_LEVEL, 50); 
+    let html = '';
+    logs.forEach(log => {
+        const level = log.level || 'CRITICAL';
+        const timeStr = new Date(log.ts).toLocaleTimeString('vi-VN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
         
-        if (currentCount > maxCount) {
-            const deleteCount = currentCount - maxCount;
-            let deleted = 0;
-            const deleteRequest = store.openCursor();
-            deleteRequest.onsuccess = (e) => {
-                const cursor = e.target.result;
-                if (cursor && deleted < deleteCount) {
-                    cursor.delete();
-                    deleted++;
-                    cursor.continue();
-                } 
-            };
+        html += `
+            <div class="log-entry">
+                <span class="log-timestamp">[${timeStr}]</span>
+                <span class="log-level log-level-${level}">${level.padEnd(8)}</span>
+                <span class="log-message">${log.message}</span>
+            </div>
+        `;
+    });
+    logArea.innerHTML = html;
+    logArea.scrollTop = logArea.scrollHeight; 
+}
+
+// Terminal Logic
+function initTerminal(serverName) {
+    const outputEl = document.getElementById('terminalOutput');
+    const inputEl = document.getElementById('terminalInput');
+    document.getElementById('terminalTitle').textContent = `Live Terminal: ${serverName}`;
+    outputEl.innerHTML = '';
+    TERMINAL_HISTORY = [];
+
+    const welcome = `
+Welcome to ${serverName} Terminal. Type 'help' for commands.
+Connected via encrypted channel: ${ENCRYPT ? 'TLS/SSH' : 'Insecure'}
+------------------------------------------------------
+$ `;
+    outputEl.textContent = welcome.trim();
+    inputEl.value = '';
+    inputEl.focus();
+
+    inputEl.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+            handleTerminalCommand(serverName, inputEl.value);
+            inputEl.value = '';
+            e.preventDefault();
         }
     };
 }
 
+async function handleTerminalCommand(serverName, command) {
+    const outputEl = document.getElementById('terminalOutput');
+    const inputEl = document.getElementById('terminalInput');
+    TERMINAL_HISTORY.push(command);
+    
+    outputEl.textContent += command + '\n';
+    
+    let result = '';
+    const parts = command.trim().toLowerCase().split(' ');
+    const cmd = parts[0];
 
-// =================== 4. UI Rendering & Interactivity ===================
+    const server = await getSelectedServer();
+
+    switch(cmd) {
+        case 'help':
+            result = `
+Available Commands:
+  status   - Show current server status and load.
+  ping     - Run a quick latency check.
+  reboot   - Restart the server service (same as GUI button).
+  policy   - View current network policy.
+  exit     - Close the terminal.
+  clear    - Clear the terminal output.
+`;
+            break;
+        case 'status':
+            if (server) {
+                result = `
+[${serverName}]
+Status: ${server.status.toUpperCase()} ${server.maintenanceMode ? '(MAINTENANCE)' : ''}
+CPU: ${server.cpu.toFixed(1)}%
+RAM: ${server.ram.toFixed(1)}%
+Latency: ${server.latency.toFixed(2)}ms
+Uptime: ~${Math.floor(server.uptime / 3600)} hours
+`;
+            } else {
+                 result = 'Error: No server selected.';
+            }
+            break;
+        case 'ping':
+            result = `Pinging default gateway... ${server.latency.toFixed(0)}ms (simulated)`;
+            break;
+        case 'reboot':
+            restartServerService(SELECTED_SERVER_ID);
+            result = 'Initiating server restart sequence... Disconnected.';
+            setTimeout(() => {
+                hideModal('terminalModal');
+                showToast(`Server ${serverName} is rebooting.`, 'WARN');
+            }, 1000);
+            break;
+        case 'policy':
+            if (server && server.networkPolicy) {
+                result = "Active Firewall Policies:\n";
+                server.networkPolicy.forEach(p => {
+                    result += `  - ${p.action.padEnd(5)} | Port: ${p.port.toString().padEnd(5)} | Source: ${p.source}\n`;
+                });
+            } else {
+                 result = 'Error: No policy found.';
+            }
+            break;
+        case 'clear':
+            outputEl.textContent = '';
+            break;
+        case 'exit':
+            hideModal('terminalModal');
+            result = 'Connection closed.';
+            break;
+        default:
+            result = `Error: command not found: ${command}`;
+    }
+
+    outputEl.textContent += result.trim() + '\n';
+    outputEl.textContent += '$ ';
+    outputEl.scrollTop = outputEl.scrollHeight;
+}
+
+
+// =================== 5. UI Rendering & Updates ===================
+
+function updateHealthOverview(servers = []) {
+    const ok = servers.filter(s => s.status === 'ok').length;
+    // THÊM: Maintenance được tính vào warn/booting cho mục đích overview
+    const warn = servers.filter(s => s.status === 'warn' || s.status === 'booting' || s.status === 'maintenance').length;
+    const danger = servers.filter(s => s.status === 'critical' || s.status === 'down').length;
+
+    document.getElementById('okCount').textContent = ok;
+    document.getElementById('warnCount').textContent = warn;
+    document.getElementById('dangerCount').textContent = danger;
+    document.getElementById('totalCount').textContent = servers.length;
+}
+
+function updateServerDetails(serverId, server = null) {
+    const detailEl = document.getElementById('serverDetailGrid');
+    const deleteBtn = document.getElementById('deleteServerBtn');
+    const restartBtn = document.getElementById('restartServiceBtn');
+    const terminalBtn = document.getElementById('liveTerminalBtn');
+    const toggleMaintenanceBtn = document.getElementById('toggleMaintenanceBtn'); // MỚI
+    const editPolicyBtn = document.getElementById('editPolicyBtn'); // MỚI
+    const editScriptBtn = document.getElementById('editScriptBtn'); // MỚI
+    
+    if (!server) {
+        detailEl.innerHTML = `<p class="muted small">Select a server to view details.</p>`;
+        deleteBtn.disabled = true;
+        restartBtn.disabled = true;
+        terminalBtn.disabled = true;
+        toggleMaintenanceBtn.disabled = true;
+        editPolicyBtn.disabled = true;
+        editScriptBtn.disabled = true;
+        return;
+    }
+
+    // Cập nhật trạng thái nút và bind sự kiện
+    deleteBtn.disabled = false;
+    deleteBtn.onclick = () => {
+        if (confirm(`Are you sure you want to delete ${server.name}?`)) {
+            deleteServer(server.id);
+        }
+    };
+    
+    restartBtn.disabled = false;
+    restartBtn.onclick = () => restartServerService(server.id);
+
+    terminalBtn.disabled = false;
+    terminalBtn.onclick = () => {
+        showModal('terminalModal');
+        initTerminal(server.name);
+    };
+
+    toggleMaintenanceBtn.disabled = false;
+    toggleMaintenanceBtn.textContent = server.maintenanceMode ? 'Maintenance: ON' : 'Maintenance: OFF';
+    toggleMaintenanceBtn.classList.toggle('danger', server.maintenanceMode);
+    toggleMaintenanceBtn.classList.toggle('network', !server.maintenanceMode);
+    toggleMaintenanceBtn.onclick = () => toggleMaintenanceMode(server.id);
+
+    editPolicyBtn.disabled = false;
+    editPolicyBtn.onclick = () => showPolicyModal(server);
+    
+    editScriptBtn.disabled = false;
+    editScriptBtn.onclick = () => showScriptModal(server);
+
+
+    const uptimeDays = Math.floor(server.uptime / 86400);
+    const uptimeHours = Math.floor((server.uptime % 86400) / 3600);
+    const uptimeMins = Math.floor((server.uptime % 3600) / 60);
+
+    const html = `
+        <div class="detail-group">
+            <div class="small">Name / ID</div>
+            <div class="detail-value">${server.name} / ${server.id}</div>
+        </div>
+        <div class="detail-group">
+            <div class="small">IP Address</div>
+            <div class="detail-value">${server.ip}</div>
+        </div>
+        <div class="detail-group">
+            <div class="small">Current Status</div>
+            <div class="detail-value"><span class="status-${server.status}">${server.status.toUpperCase()}</span></div>
+        </div>
+        <div class="detail-group">
+            <div class="small">Uptime</div>
+            <div class="detail-value">${uptimeDays}d ${uptimeHours}h ${uptimeMins}m</div>
+        </div>
+        <div class="detail-group">
+            <div class="small">Disk Usage</div>
+            <div class="detail-value">${server.disk.toFixed(1)}%</div>
+        </div>
+        <div class="detail-group">
+            <div class="small">Security Score</div>
+            <div class="detail-value">${server.securityScore}%</div>
+        </div>
+        <div class="detail-group">
+            <div class="small">Last Latency</div>
+            <div class="detail-value">${server.latency.toFixed(2)} ms</div>
+        </div>
+        <div class="detail-group">
+            <div class="small">Network Policy Rules</div>
+            <div class="detail-value">${server.networkPolicy.length} active rules</div>
+        </div>
+    `;
+    detailEl.innerHTML = html;
+}
 
 let cpuChart = null;
 let ramChart = null;
+let latencyChart = null; 
 
-function initChart(canvasId, label, color) {
-    const ctx = document.getElementById(canvasId).getContext('2d');
+function initChart(canvasId, label, color, min = 0, max = 100) {
     const isCpuChart = canvasId === 'cpuChart';
+    const isLatencyChart = canvasId === 'latencyChart';
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    
+    let thresholdValue = 0;
+    let thresholdColor = '';
+    let thresholdLabel = '';
+
+    if (isCpuChart) {
+        thresholdValue = CPU_THRESHOLD_UP();
+        thresholdColor = 'var(--danger)';
+        thresholdLabel = `Auto-Scale UP Threshold (${CPU_THRESHOLD_UP()}%)`;
+    } else if (canvasId === 'ramChart') {
+        thresholdValue = 90;
+        thresholdColor = 'var(--warn)';
+        thresholdLabel = 'High Usage Limit (90%)';
+    } else if (isLatencyChart) {
+        thresholdValue = 100; 
+        thresholdColor = 'var(--danger)';
+        thresholdLabel = 'High Latency Limit (100ms)';
+        max = 500; 
+    }
 
     return new Chart(ctx, {
         type: 'line',
@@ -479,8 +678,8 @@ function initChart(canvasId, label, color) {
             maintainAspectRatio: false,
             scales: {
                 y: {
-                    min: 0,
-                    max: 100,
+                    min: min,
+                    max: max,
                     ticks: { color: IS_DARK_THEME ? '#e6eef8' : '#333' }
                 },
                 x: {
@@ -489,21 +688,17 @@ function initChart(canvasId, label, color) {
             },
             plugins: {
                 legend: { display: false },
-                annotation: { // Đảm bảo plugin được tải và kích hoạt
+                annotation: {
                     annotations: [
                         {
                             type: 'line',
                             mode: 'horizontal',
                             scaleID: 'y',
-                            value: isCpuChart ? CPU_THRESHOLD_UP() : 90,
-                            borderColor: 'var(--danger)',
+                            value: thresholdValue,
+                            borderColor: thresholdColor, 
                             borderWidth: 1,
                             borderDash: [5, 5],
-                            label: {
-                                content: 'Threshold',
-                                enabled: true,
-                                position: 'end'
-                            }
+                            label: { content: thresholdLabel, enabled: true, position: 'end', backgroundColor: thresholdColor }
                         }
                     ]
                 }
@@ -515,403 +710,433 @@ function initChart(canvasId, label, color) {
 function updateCharts(metrics) {
     if (!cpuChart) cpuChart = initChart('cpuChart', 'CPU', 'var(--accent)');
     if (!ramChart) ramChart = initChart('ramChart', 'RAM', 'var(--success)');
-
+    if (!latencyChart) latencyChart = initChart('latencyChart', 'Latency', 'var(--network)', 0, 500); 
+    
     const chartDataLength = 20;
+    const timeLabel = new Date().toLocaleTimeString('vi-VN', { hour12: false });
 
-    // Cập nhật biểu đồ CPU
-    cpuChart.data.labels.push(new Date().toLocaleTimeString());
-    cpuChart.data.datasets[0].data.push(metrics.avgCpu);
+    // Cập nhật CPU
+    cpuChart.data.labels.push(timeLabel);
+    cpuChart.data.datasets[0].data.push(metrics.cpu);
     if (cpuChart.data.labels.length > chartDataLength) {
         cpuChart.data.labels.shift();
         cpuChart.data.datasets[0].data.shift();
     }
-    // Cập nhật ngưỡng CPU động
     if(cpuChart.options.plugins.annotation && cpuChart.options.plugins.annotation.annotations[0]) {
         cpuChart.options.plugins.annotation.annotations[0].value = CPU_THRESHOLD_UP();
+        cpuChart.options.plugins.annotation.annotations[0].label.content = `Auto-Scale UP Threshold (${CPU_THRESHOLD_UP()}%)`;
     }
 
-
-    // Cập nhật biểu đồ RAM
-    ramChart.data.labels.push(new Date().toLocaleTimeString());
-    ramChart.data.datasets[0].data.push(metrics.avgRam);
+    // Cập nhật RAM
+    ramChart.data.labels.push(timeLabel);
+    ramChart.data.datasets[0].data.push(metrics.ram);
     if (ramChart.data.labels.length > chartDataLength) {
         ramChart.data.labels.shift();
         ramChart.data.datasets[0].data.shift();
     }
     
+    // Cập nhật LATENCY
+    latencyChart.data.labels.push(timeLabel);
+    latencyChart.data.datasets[0].data.push(metrics.latency);
+    if (latencyChart.data.labels.length > chartDataLength) {
+        latencyChart.data.labels.shift();
+        latencyChart.data.datasets[0].data.shift();
+    }
+    
     cpuChart.update();
     ramChart.update();
+    latencyChart.update();
 }
 
-
-async function renderServers() {
-    const servers = await getAllServers();
-    const listEl = document.getElementById('serverList');
-    listEl.innerHTML = '';
+function renderServers(servers = []) {
+    const serverListEl = document.getElementById('serverList');
+    let html = '';
     
-    servers.sort((a, b) => a.name.localeCompare(b.name)); 
+    servers.sort((a, b) => {
+        const order = { 'critical': 0, 'down': 1, 'warn': 2, 'booting': 3, 'maintenance': 4, 'ok': 5 };
+        return order[a.status] - order[b.status];
+    });
 
     servers.forEach(server => {
-        const statusClass = `status-${server.status}`;
-        const isSelected = server.id === SELECTED_SERVER_ID ? 'selected' : '';
+        // Ưu tiên hiển thị badge Maintenance nếu đang trong mode này
+        const statusKey = server.maintenanceMode ? 'maintenance' : server.status;
+        const statusClass = `status-${statusKey}`;
+        const statusText = server.maintenanceMode ? 'MAINT.' : server.status.toUpperCase();
         
-        // FIX/IMPROVEMENT: Icon logic
-        let statusIcon;
-        if (server.status === 'ok') {
-            statusIcon = 'fa-check-circle';
-        } else if (server.status === 'down') {
-            statusIcon = 'fa-times-circle';
-        } else if (server.status === 'booting') {
-            statusIcon = 'fa-circle-notch fa-spin';
-        } else if (server.status === 'critical') { // NEW: Critical Icon
-            statusIcon = 'fa-frown-open'; 
-        } else {
-            statusIcon = 'fa-exclamation-triangle'; // For 'warn'
-        }
+        const cpuVal = (server.status === 'down' || server.status === 'booting' || server.maintenanceMode) ? 0 : server.cpu;
+        const ramVal = (server.status === 'down' || server.status === 'booting' || server.maintenanceMode) ? 0 : server.ram;
 
-
-        listEl.innerHTML += `
-            <div class="server-item ${statusClass} ${isSelected}" data-id="${server.id}">
+        html += `
+            <div class="server-item ${server.id === SELECTED_SERVER_ID ? 'selected' : ''}" data-id="${server.id}">
                 <div class="server-item-info">
                     <strong>${server.name}</strong> 
-                    <div class="small">${server.ip}</div>
-                </div>
-                <div class="text-right">
-                    <i class="fas ${statusIcon} ${statusClass}"></i>
-                    <div class="small ${statusClass}">${server.status.toUpperCase()}</div>
+                    <span class="${statusClass}" style="margin-left: 8px;">${statusText}</span>
+                    <div class="small muted" style="margin-top:2px;">${server.ip}</div>
+                    
+                    <div class="server-item-metrics">
+                        <span>CPU: ${cpuVal.toFixed(1)}%</span>
+                        <div class="server-item-metric-bar"><div class="server-item-metric-bar-fill cpu-bar" style="width: ${cpuVal}%;"></div></div>
+                        <span>RAM: ${ramVal.toFixed(1)}%</span>
+                        <div class="server-item-metric-bar"><div class="server-item-metric-bar-fill ram-bar" style="width: ${ramVal}%;"></div></div>
+                    </div>
                 </div>
             </div>
         `;
     });
-    
+    serverListEl.innerHTML = html;
     document.getElementById('serverCount').textContent = servers.length;
 }
 
-// IMPROVEMENT: New function to count metrics
-async function countMetrics() {
-    return new Promise((res) => {
-        const store = tx('metrics');
-        const countRequest = store.count();
-        countRequest.onsuccess = (e) => {
-            const count = e.target.result;
-            document.getElementById('totalMetrics').textContent = count;
-            res(count);
-        };
-        countRequest.onerror = () => {
-            document.getElementById('totalMetrics').textContent = 'N/A';
-            res(0);
+
+async function renderApp(servers = null) {
+    if (!servers) servers = await getAllServers();
+    
+    updateHealthOverview(servers);
+    renderServers(servers);
+    
+    const selectedServer = await getSelectedServer();
+    if (selectedServer) {
+        updateServerDetails(SELECTED_SERVER_ID, selectedServer);
+        updateCharts(selectedServer);
+    } else {
+        updateServerDetails(null);
+        if(cpuChart) cpuChart.data.labels = []; cpuChart.data.datasets[0].data = []; cpuChart.update();
+        if(ramChart) ramChart.data.labels = []; ramChart.data.datasets[0].data = []; ramChart.update();
+        if(latencyChart) latencyChart.data.labels = []; latencyChart.data.datasets[0].data = []; latencyChart.update();
+    }
+}
+
+
+// =================== 6. Advanced Server Configuration Modals ===================
+
+function showPolicyModal(server) {
+    showModal('policyModal');
+    document.getElementById('policyTitle').textContent = `Network Policy (Firewall): ${server.name}`;
+    renderPolicyTable(server.networkPolicy);
+    
+    const addPolicyBtn = document.getElementById('addPolicyBtn');
+    addPolicyBtn.onclick = () => {
+        const ip = document.getElementById('newPolicyIP').value.trim();
+        const port = document.getElementById('newPolicyPort').value.trim();
+        const action = document.getElementById('newPolicyAction').value;
+        
+        if (!ip || !port) {
+            showToast('Please enter both IP/CIDR and Port.', 'WARN');
+            return;
         }
+
+        const newPolicy = { source: ip, port: parseInt(port, 10), action: action };
+        server.networkPolicy.push(newPolicy);
+        updateServer(server).then(() => {
+            renderPolicyTable(server.networkPolicy);
+            saveLogEntry('INFO', `Added Network Policy Rule on ${server.name}: ${action} ${ip}:${port}`, server.id);
+            document.getElementById('newPolicyIP').value = '';
+            document.getElementById('newPolicyPort').value = '';
+            showToast('New policy rule added.', 'SUCCESS');
+        });
+    };
+}
+
+function renderPolicyTable(policies) {
+    const tbody = document.getElementById('policyTableBody');
+    tbody.innerHTML = '';
+    
+    policies.forEach((policy, index) => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td>${policy.source}</td>
+            <td>${policy.port}</td>
+            <td><span class="status-${policy.action.toLowerCase()}">${policy.action}</span></td>
+            <td><button class="btn danger ghost small" data-index="${index}"><i class="fas fa-trash"></i></button></td>
+        `;
+        row.querySelector('button').addEventListener('click', () => {
+            deletePolicyRule(index);
+        });
     });
 }
 
-
-function updateHealthOverview(servers = []) {
-    if (servers.length === 0) return;
+async function deletePolicyRule(index) {
+    const server = await getSelectedServer();
+    if (!server) return;
     
-    // FIX: Tách rõ ràng WARN (bao gồm booting) và CRITICAL/DANGER
-    const ok = servers.filter(s => s.status === 'ok').length;
-    const warn = servers.filter(s => s.status === 'warn' || s.status === 'booting').length;
-    const danger = servers.filter(s => s.status === 'critical' || s.status === 'down').length;
-
-    document.getElementById('statusOkCount').textContent = ok;
-    document.getElementById('statusWarnCount').textContent = warn;
-    document.getElementById('statusDangerCount').textContent = danger;
-    
-    // IMPROVEMENT: Cập nhật số lượng metrics
-    countMetrics();
+    const deletedPolicy = server.networkPolicy.splice(index, 1);
+    await updateServer(server);
+    renderPolicyTable(server.networkPolicy);
+    saveLogEntry('WARN', `Removed Network Policy Rule on ${server.name}: ${deletedPolicy[0].action} ${deletedPolicy[0].source}:${deletedPolicy[0].port}`, server.id);
+    showToast('Policy rule removed.', 'WARN');
 }
 
-async function updateServerDetails(serverId) {
-    const panel = document.getElementById('serverDetailsPanel');
-    if (!serverId) {
-        panel.classList.add('hidden');
-        return;
-    }
+function showScriptModal(server) {
+    showModal('scriptModal');
+    document.getElementById('scriptTitle').textContent = `Health Check Script: ${server.name}`;
+    const scriptArea = document.getElementById('healthScriptArea');
+    scriptArea.value = server.healthScript;
     
-    const server = await getServerState(serverId);
-    if (!server) {
-        panel.classList.add('hidden');
-        return;
-    }
-    
-    panel.classList.remove('hidden');
-    document.getElementById('detailsServerName').textContent = server.name;
-    document.getElementById('detailsServerIP').textContent = server.ip;
-    document.getElementById('detailsServerCPU').textContent = server.cpu.toFixed(1);
-    document.getElementById('detailsServerRAM').textContent = server.ram.toFixed(1);
-    
-    const statusText = server.status.toUpperCase();
-    document.getElementById('detailsServerStatus').innerHTML = `<span class="status-${server.status}">${statusText}</span>`;
-    
-    // Gán hành động
-    document.getElementById('pingServerBtn').onclick = () => simulatePing(serverId);
-    document.getElementById('copyIPBtn').onclick = () => { navigator.clipboard.writeText(server.ip); showToast('IP Copied!'); };
-    document.getElementById('toggleStatusBtn').onclick = () => {
-        const newStatus = server.status === 'down' ? 'ok' : 'down';
-        updateServer(serverId, { status: newStatus });
-        saveLogEntry('WARN', `Admin toggled status for ${server.name} to ${newStatus.toUpperCase()}`, serverId);
+    document.getElementById('saveScriptBtn').onclick = () => {
+        server.healthScript = scriptArea.value;
+        updateServer(server).then(() => {
+            saveLogEntry('SYSTEM', `Health Check Script updated on ${server.name}.`, server.id);
+            showToast('Health Check Script saved.', 'SUCCESS');
+            hideModal('scriptModal');
+        });
     };
     
-    document.querySelectorAll('.server-item').forEach(el => el.classList.remove('selected'));
-    document.querySelector(`.server-item[data-id="${serverId}"]`)?.classList.add('selected');
-}
-
-// MỚI: Alert Center
-function updateAlertCenter(logEntry) {
-    const alertCenter = document.getElementById('alertCenter');
-    const entryDiv = document.createElement('div');
-    entryDiv.className = `alert-item alert-${logEntry.level}`;
-    
-    const time = new Date(logEntry.ts).toLocaleTimeString();
-    entryDiv.innerHTML = `
-        <strong>${logEntry.level}</strong>: ${logEntry.message}
-        <span class="timestamp">${time} | Scope: ${logEntry.scopeId}</span>
-    `;
-    
-    if (alertCenter.firstChild && alertCenter.firstChild.classList.contains('muted')) {
-        alertCenter.innerHTML = '';
-    }
-    alertCenter.prepend(entryDiv);
-    
-    while (alertCenter.children.length > 10) {
-        alertCenter.removeChild(alertCenter.lastChild);
-    }
-}
-
-// Cải tiến: Log Filter
-async function updateLogDisplay() {
-    const logArea = document.getElementById('logArea');
-    logArea.innerHTML = '';
-    
-    const logs = await getLogs(LOG_FILTER_LEVEL);
-    
-    logs.forEach(log => {
-        const time = new Date(log.ts).toLocaleTimeString();
-        logArea.innerHTML += `
-            <div class="log-entry">
-                <span class="log-level-${log.level}">[${log.level}]</span> 
-                <span class="muted">${time}</span>: ${log.message}
-            </div>
-        `;
-    });
-}
-
-// Cải tiến: Get Logs có Filter
-async function getLogs(levelFilter = 'ALL', limit = 50) {
-    let logs = [];
-    const store = tx('logs');
-    const req = store.openCursor(null, 'prev'); 
-
-    return new Promise((res) => {
-        req.onsuccess = async (e) => {
-            const cursor = e.target.result;
-            if (cursor && logs.length < limit) {
-                try {
-                    const decryptedText = await decryptData(cursor.value.encryptedData);
-                    let log;
-                    try {
-                        log = JSON.parse(decryptedText);
-                    } catch (err) {
-                        // Log corrupted data if it's not a valid JSON after decryption attempt
-                        log = { ts: cursor.value.ts, level: 'CRITICAL', message: decryptedText };
-                    }
-                    
-                    if (levelFilter === 'ALL' || log.level === levelFilter) {
-                        logs.push(log);
-                    }
-                    cursor.continue();
-                } catch (error) {
-                    logs.push({ ts: cursor.value.ts, level: 'CRITICAL', message: `ERROR: Failed to process log entry ${cursor.value.id}` });
-                    cursor.continue();
-                }
-            } else {
-                res(logs);
-            }
-        };
-        req.onerror = () => res(logs);
-    });
-}
-
-
-function showToast(message, level = 'INFO') {
-    const toastArea = document.getElementById('toastArea');
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${level}`;
-    toast.textContent = message;
-    toastArea.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.classList.add('show');
-    }, 10);
-
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 500);
-    }, 3000);
-}
-
-// =================== 5. Event Handlers & Utility ===================
-
-function toggleTheme() {
-    IS_DARK_THEME = !IS_DARK_THEME;
-    document.body.className = IS_DARK_THEME ? 'dark-theme' : 'light-theme';
-    document.getElementById('themeToggle').textContent = IS_DARK_THEME ? 'Light Theme' : 'Dark Theme';
-    setConfig('IS_DARK_THEME', IS_DARK_THEME);
-    if (cpuChart) cpuChart.destroy();
-    if (ramChart) ramChart.destroy();
-    cpuChart = null;
-    ramChart = null;
-    simulateMetrics(); // Vẽ lại charts với theme mới
-}
-
-async function toggleEncrypt() {
-    if (ENCRYPT && !confirm("Are you sure you want to disable encryption? All new logs will be stored in plain text.")) {
-        return;
-    }
-    
-    if (!ENCRYPT) {
-        const password = prompt("Enter a secret key to enable encryption (e.g., a simple password):");
-        if (!password) {
-            showToast("Encryption setup cancelled.", 'INFO');
-            return;
+    document.getElementById('resetScriptBtn').onclick = () => {
+        if (confirm('Are you sure you want to reset the script to default?')) {
+            server.healthScript = DEFAULT_HEALTH_SCRIPT;
+            scriptArea.value = DEFAULT_HEALTH_SCRIPT;
+            updateServer(server).then(() => {
+                saveLogEntry('SYSTEM', `Health Check Script reset to default on ${server.name}.`, server.id);
+                showToast('Health Check Script reset.', 'INFO');
+            });
         }
+    };
+}
 
-        try {
-            // Sử dụng PBKDF2 để tạo khóa an toàn hơn từ mật khẩu
-            const keyMaterial = await crypto.subtle.importKey(
-                "raw",
-                new TextEncoder().encode(password),
-                { name: "PBKDF2" },
-                false,
-                ["deriveBits", "deriveKey"]
-            );
-            ENC_KEY = await crypto.subtle.deriveKey(
-                {
-                    name: "PBKDF2",
-                    salt: new TextEncoder().encode("simulator-salt"), 
-                    iterations: 100000,
-                    hash: "SHA-256"
-                },
-                keyMaterial,
-                { name: "AES-GCM", length: 256 },
-                true,
-                ["encrypt", "decrypt"]
-            );
 
-            // FIX: Export key to JWK before storing
-            const jwk = await crypto.subtle.exportKey("jwk", ENC_KEY);
-            
-            ENCRYPT = true;
-            await setConfig('ENCRYPT', true);
-            await setConfig('ENC_KEY_JWK', jwk); // STORE JWK
-            showToast("Encryption enabled successfully!", 'SUCCESS');
-        } catch (e) {
-            showToast(`Encryption setup failed: ${e.message}`, 'CRITICAL');
-            return;
+// =================== 7. Controls & Functions ===================
+
+function startSimulation() {
+    if (SIMULATION_INTERVAL) return;
+    SIMULATION_INTERVAL = setInterval(updateAllServers, 1000);
+    document.getElementById('wsToggle').innerHTML = `<i class="fas fa-stop"></i> Stop Simulation`;
+    document.getElementById('wsToggle').classList.replace('primary', 'danger');
+    document.getElementById('wsToggle').dataset.running = '1';
+    saveLogEntry('SYSTEM', 'Simulation Started.');
+}
+
+function stopSimulation() {
+    if (SIMULATION_INTERVAL) clearInterval(SIMULATION_INTERVAL);
+    SIMULATION_INTERVAL = null;
+    document.getElementById('wsToggle').innerHTML = `<i class="fas fa-play"></i> Start Simulation`;
+    document.getElementById('wsToggle').classList.replace('danger', 'primary');
+    document.getElementById('wsToggle').dataset.running = '0';
+    saveLogEntry('SYSTEM', 'Simulation Stopped.');
+}
+
+async function simulateSpike() {
+    const servers = await getAllServers();
+    const txServers = tx('servers', 'readwrite');
+    servers.forEach(server => {
+        if (server.status === 'ok' && !server.maintenanceMode) { // Bỏ qua Maintenance
+            server.cpu = 90 + Math.random() * 10;
+            server.status = 'warn';
+            txServers.put(server);
         }
+    });
+    saveLogEntry('CRITICAL', 'Simulation: Massive CPU spike initiated across all OK servers.');
+    showToast('Massive CPU Spike Simulated!', 'CRITICAL');
+    renderApp();
+}
+
+async function rotateKey() {
+    if (ENCRYPT) {
+        ENC_KEY = Math.random().toString(36).substring(2, 15);
+        await setConfig('ENC_KEY', ENC_KEY);
+        saveLogEntry('SYSTEM', 'Encryption Key rotated successfully.');
+        showToast('Encryption Key Rotated.', 'SUCCESS');
     } else {
-        ENCRYPT = false;
-        ENC_KEY = null;
-        await setConfig('ENCRYPT', false);
-        await setConfig('ENC_KEY_JWK', null); // REMOVE JWK
-        showToast("Encryption disabled. Old logs remain encrypted.", 'INFO');
+        saveLogEntry('WARN', 'Key rotation failed: Encryption is currently disabled.', 'SYSTEM');
+        showToast('Encryption is disabled!', 'WARN');
     }
-    document.getElementById('toggleEncrypt').textContent = ENCRYPT ? 'Disable Encryption' : 'Enable Encryption';
-    updateLogDisplay();
 }
+
+async function toggleEncryption() {
+    ENCRYPT = !ENCRYPT;
+    await setConfig('ENCRYPT', ENCRYPT);
+    const btn = document.getElementById('toggleEncryptBtn');
+    if (ENCRYPT) {
+        if (!ENC_KEY) {
+            ENC_KEY = Math.random().toString(36).substring(2, 15);
+            await setConfig('ENC_KEY', ENC_KEY);
+        }
+        btn.innerHTML = `<i class="fas fa-lock"></i> Encryption: ENABLED`;
+        btn.classList.replace('ghost', 'success');
+        saveLogEntry('SYSTEM', 'Global Encryption ENABLED. New traffic is now secure.');
+        showToast('Encryption Enabled!', 'SUCCESS');
+    } else {
+        btn.innerHTML = `<i class="fas fa-lock-open"></i> Encryption: DISABLED`;
+        btn.classList.replace('success', 'ghost');
+        saveLogEntry('CRITICAL', 'Global Encryption DISABLED. All traffic is now INSECURE!');
+        showToast('Encryption Disabled! Security risk!', 'CRITICAL');
+    }
+    renderApp();
+}
+
 
 function toggleAutoScale() {
     AUTO_SCALE = !AUTO_SCALE;
-    document.getElementById('autoScaleToggle').textContent = `Auto-Scale: ${AUTO_SCALE ? 'ON' : 'OFF'}`;
+    const btn = document.getElementById('autoScaleToggle');
+    btn.innerHTML = AUTO_SCALE ? `<i class="fas fa-tachometer-alt"></i> Auto-Scale: ON` : `<i class="fas fa-tachometer-alt"></i> Auto-Scale: OFF`;
+    btn.classList.toggle('primary', AUTO_SCALE);
+    btn.classList.toggle('ghost', !AUTO_SCALE);
     setConfig('AUTO_SCALE', AUTO_SCALE);
-    saveLogEntry('INFO', `Auto-Scale feature ${AUTO_SCALE ? 'enabled' : 'disabled'}.`, 'AUTOSCALE');
-}
-
-function simulatePing(serverId) {
-    const latency = Math.floor(Math.random() * 50) + 10;
-    saveLogEntry('INFO', `Ping successful to ${serverId}. Latency: ${latency}ms.`, serverId);
-    showToast(`Ping ${serverId}: ${latency}ms`, 'INFO');
-}
-
-function simulateSpike() {
-    getAllServers().then(servers => {
-        servers.forEach(server => {
-            if (server.status === 'ok') {
-                updateServer(server.id, { cpu: 98 + Math.random() * 2, ram: 90 + Math.random() * 5 });
-            }
-        });
-        saveLogEntry('WARN', `Admin triggered a system-wide load spike!`, 'SYSTEM');
-    });
+    saveLogEntry('SYSTEM', `Auto-Scale feature ${AUTO_SCALE ? 'ENABLED' : 'DISABLED'}.`);
+    showToast(`Auto-Scale ${AUTO_SCALE ? 'Enabled' : 'Disabled'}!`, 'INFO');
 }
 
 
-// =================== 6. Initialization ===================
+function showModal(id) {
+    document.getElementById(id).classList.remove('hidden');
+}
+
+function hideModal(id) {
+    document.getElementById(id).classList.add('hidden');
+}
+
+async function runInternalSpeedTest() {
+    showModal('speedTestModal');
+    const statusEl = document.getElementById('stStatus');
+    const barEl = document.getElementById('stBar');
+    const dlEl = document.getElementById('dlVal');
+    const ulEl = document.getElementById('ulVal');
+    const pingEl = document.getElementById('pingVal');
+    
+    dlEl.textContent = '0.00';
+    ulEl.textContent = '0.00';
+    pingEl.textContent = '0';
+
+    statusEl.textContent = 'Starting latency check...';
+    barEl.style.width = '0%';
+
+    const basePing = (Math.floor(Math.random() * 20) + 5) + GLOBAL_LAG_MS(); 
+    for (let i = 0; i < 5; i++) {
+        const ping = basePing + Math.floor(Math.random() * 10);
+        pingEl.textContent = ping;
+        statusEl.textContent = `Ping: ${ping}ms (Test ${i+1}/5)...`;
+        barEl.style.width = `${(i + 1) * 5}%`;
+        await new Promise(r => setTimeout(r, 200));
+    }
+
+    statusEl.textContent = 'Simulating high-speed download...';
+    const finalDL = 50 + Math.random() * 200 - (GLOBAL_LAG_MS() * 0.1); 
+    for (let i = 0; i <= 10; i++) {
+        const currentDL = (finalDL / 10) * i;
+        dlEl.textContent = Math.max(0, currentDL).toFixed(2);
+        barEl.style.width = `${50 + (i * 4)}%`;
+        await new Promise(r => setTimeout(r, 100));
+    }
+    
+    statusEl.textContent = 'Simulating upload...';
+    const finalUL = 10 + Math.random() * 50 - (GLOBAL_LAG_MS() * 0.05); 
+    for (let i = 0; i <= 10; i++) {
+        const currentUL = (finalUL / 10) * i;
+        ulEl.textContent = Math.max(0, currentUL).toFixed(2);
+        barEl.style.width = `${90 + (i * 1)}%`;
+        await new Promise(r => setTimeout(r, 100));
+    }
+
+    statusEl.textContent = `TEST COMPLETE! DL: ${Math.max(0, finalDL).toFixed(2)} Mbps / UL: ${Math.max(0, finalUL).toFixed(2)} Mbps / Ping: ${basePing}ms.`;
+    barEl.style.width = '100%';
+
+    saveLogEntry('INFO', `Internal Speed Test complete: DL ${Math.max(0, finalDL).toFixed(2)} Mbps / UL ${Math.max(0, finalUL).toFixed(2)} Mbps / Ping ${basePing}ms.`, 'NETWORK');
+
+    setTimeout(() => hideModal('speedTestModal'), 5000);
+}
+
+
+function showToast(message, type = 'INFO') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = 0;
+        setTimeout(() => toast.remove(), 500); 
+    }, 4000);
+}
+
+// =================== 8. Initialization ===================
+
+async function loadConfigs() {
+    IS_DARK_THEME = await getConfig('THEME', true);
+    ENCRYPT = await getConfig('ENCRYPT', false);
+    ENC_KEY = await getConfig('ENC_KEY', null);
+    AUTO_SCALE = await getConfig('AUTO_SCALE', false);
+
+    document.body.classList.toggle('light-theme', !IS_DARK_THEME);
+
+    const autoScaleBtn = document.getElementById('autoScaleToggle');
+    autoScaleBtn.innerHTML = AUTO_SCALE ? `<i class="fas fa-tachometer-alt"></i> Auto-Scale: ON` : `<i class="fas fa-tachometer-alt"></i> Auto-Scale: OFF`;
+    autoScaleBtn.classList.toggle('primary', AUTO_SCALE);
+    autoScaleBtn.classList.toggle('ghost', !AUTO_SCALE);
+
+    const encryptBtn = document.getElementById('toggleEncryptBtn');
+    if (ENCRYPT) {
+        encryptBtn.innerHTML = `<i class="fas fa-lock"></i> Encryption: ENABLED`;
+        encryptBtn.classList.replace('ghost', 'success');
+    } else {
+        encryptBtn.innerHTML = `<i class="fas fa-lock-open"></i> Encryption: DISABLED`;
+        encryptBtn.classList.replace('success', 'ghost');
+    }
+}
 
 async function initApp() {
     await openDB();
-    await loadConfig();
+    await loadConfigs();
     
     const initialServers = await getAllServers();
     if (initialServers.length === 0) {
-        // Khởi tạo server mặc định nếu chưa có, giải quyết vấn đề danh sách trống ban đầu
-        await addServer();
-        await addServer();
-        await addServer();
+        // Tạo server mới với các thuộc tính policy/script mặc định
+        await addServer('Web-01', false);
+        await addServer('DB-02', false);
+        await addServer('Cache-03', false);
+        
+        const newServers = await getAllServers();
+        newServers.forEach(s => ORIGINAL_SERVERS.add(s.id));
+        SELECTED_SERVER_ID = newServers[0]?.id || null;
     } else {
         initialServers.forEach(s => ORIGINAL_SERVERS.add(s.id));
+        SELECTED_SERVER_ID = initialServers[0]?.id || null;
     }
     
-    document.body.className = IS_DARK_THEME ? 'dark-theme' : 'light-theme';
-    
-    renderServers();
+    renderApp();
     updateLogDisplay();
-    updateHealthOverview(initialServers);
-    await countMetrics(); // NEW: Hiển thị số lượng metrics ban đầu
     
-    // Gán Event Listeners
-    document.getElementById('addServerBtn').addEventListener('click', addServer);
-    document.getElementById('autoScaleToggle').addEventListener('click', toggleAutoScale);
-    document.getElementById('simulateSpike').addEventListener('click', simulateSpike);
-    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-    document.getElementById('toggleEncrypt').addEventListener('click', toggleEncrypt);
+    // Event Listeners
+    document.getElementById('addServerBtn').addEventListener('click', () => addServer(`New Server-${Date.now().toString().substring(10)}`));
     document.getElementById('wsToggle').addEventListener('click', () => {
-        document.getElementById('wsToggle').dataset.running === '0' ? startSimulation() : stopSimulation();
-    });
-    
-    // IMPROVEMENT: Attach Backup listener
-    document.getElementById('backupBtn').addEventListener('click', backupDB);
-    
-    // Rotate Key
-    document.getElementById('rotateKeyBtn').addEventListener('click', async () => {
-        if (!ENCRYPT) {
-            showToast("Encryption must be enabled to rotate keys.", 'WARN');
-            return;
-        }
-        const newKey = await crypto.subtle.generateKey(
-            { name: "AES-GCM", length: 256 },
-            true,
-            ["encrypt", "decrypt"]
-        );
-        await reEncryptAll(newKey);
-        showToast('Encryption Key Rotated Successfully!');
-    });
-    
-    // Log Filter
-    document.getElementById('logFilters').addEventListener('click', (e) => {
-        if (e.target.classList.contains('filter-btn')) {
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            e.target.classList.add('active');
-            LOG_FILTER_LEVEL = e.target.getAttribute('data-level');
-            updateLogDisplay();
+        if (document.getElementById('wsToggle').dataset.running === '0') {
+            startSimulation();
+        } else {
+            stopSimulation();
         }
     });
 
-    // Server List Click
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        IS_DARK_THEME = !IS_DARK_THEME;
+        document.body.classList.toggle('light-theme', !IS_DARK_THEME);
+        setConfig('THEME', IS_DARK_THEME);
+        showToast(`Theme changed to ${IS_DARK_THEME ? 'Dark' : 'Light'}.`, 'INFO');
+        cpuChart = null; 
+        ramChart = null;
+        latencyChart = null;
+        renderApp(); 
+    });
+    
+    document.getElementById('autoScaleToggle').addEventListener('click', toggleAutoScale);
+    document.getElementById('toggleEncryptBtn').addEventListener('click', toggleEncryption); 
+    document.getElementById('networkLag').addEventListener('change', () => {
+        saveLogEntry('SYSTEM', `Global Network Lag set to ${GLOBAL_LAG_MS()}ms.`, 'NETWORK');
+    }); 
+
+    document.getElementById('simulateSpike').addEventListener('click', simulateSpike);
+    document.getElementById('rotateKeyBtn').addEventListener('click', rotateKey);
+    document.getElementById('runSpeedTestBtn').addEventListener('click', runInternalSpeedTest);
+
+    document.getElementById('logLevelFilter').addEventListener('change', (e) => {
+        LOG_FILTER_LEVEL = e.target.value;
+        updateLogDisplay();
+    });
+
     document.getElementById('serverList').addEventListener('click', (e) => {
         const item = e.target.closest('.server-item');
         if (item) {
             SELECTED_SERVER_ID = item.getAttribute('data-id');
-            updateServerDetails(SELECTED_SERVER_ID);
+            renderApp();
         }
     });
 
@@ -934,12 +1159,76 @@ async function initApp() {
         document.body.removeChild(link);
         showToast("Logs exported to CSV.", 'INFO');
     });
-
-    // Restore DB logic (placeholder)
-    document.getElementById('restoreFile').addEventListener('change', (e) => {
-        showToast("Database restore functionality is highly complex and not fully implemented in this simulator version.", 'CRITICAL');
-        e.target.value = '';
+    
+    // Backup DB logic - Giữ nguyên
+    document.getElementById('backupBtn').addEventListener('click', async () => {
+        const allServers = await getAllServers();
+        const allLogs = await getLogs('ALL', 100000);
+        const backupData = {
+            servers: allServers,
+            logs: allLogs
+        };
+        const json = JSON.stringify(backupData, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', `server_sim_backup_${Date.now()}.json`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("Database backup created.", 'INFO');
     });
+
+    // Restore DB function (Simple version)
+    document.getElementById('restoreFile').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    await restoreDB(data);
+                    showToast("Database restored successfully.", 'SUCCESS');
+                    e.target.value = null; // Clear file input
+                } catch (error) {
+                    showToast("Failed to restore database: Invalid file or format.", 'CRITICAL');
+                    console.error("Restore failed:", error);
+                }
+            };
+            reader.readAsText(file);
+        }
+    });
+
+    async function restoreDB(data) {
+        return new Promise(async (resolve, reject) => {
+            const req = indexedDB.deleteDatabase(DB_NAME);
+            req.onsuccess = async () => {
+                await openDB(); 
+                
+                const serverTx = tx('servers', 'readwrite');
+                data.servers.forEach(server => serverTx.add(server));
+                
+                const logTx = tx('logs', 'readwrite');
+                data.logs.forEach(log => {
+                    try {
+                        logTx.add(log);
+                    } catch (e) {
+                        // Ignore ts collision
+                    }
+                }); 
+                
+                serverTx.transaction.oncomplete = () => {
+                    logTx.transaction.oncomplete = () => {
+                        window.location.reload(); 
+                        resolve();
+                    };
+                };
+                serverTx.transaction.onerror = logTx.transaction.onerror = reject;
+            };
+            req.onerror = reject;
+        });
+    }
+
 }
 
-initApp();
+window.onload = initApp;

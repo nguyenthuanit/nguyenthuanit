@@ -1,25 +1,30 @@
 @echo off
+setlocal enabledelayedexpansion
+
 REM --- Vào thư mục project ---
 cd /d "C:\Users\Admin-IT\Documents\Nguyenthuanit"
 
-REM --- Tạo commit message có ngày giờ ---
-for /f "tokens=1-3 delims=/- " %%a in ("%date%") do (
-    set ngay=%%a-%%b-%%c
-)
-for /f "tokens=1-2 delims=:." %%a in ("%time%") do (
-    set gio=%%a-%%b
-)
+REM --- Lấy ngày giờ chuẩn theo Windows (yyyy-mm-dd_hh-mm-ss) ---
+for /f %%i in ('wmic os get LocalDateTime ^| find "."') do set dt=%%i
+set ngay=!dt:~0,4!-!dt:~4,2!-!dt:~6,2!
+set gio=!dt:~8,2!-!dt:~10,2!-!dt:~12,2!
 
-set msg=Update index.html - %ngay%_%gio%
+set msg=Auto Commit - !ngay!_!gio!
 
 REM --- Add + Commit ---
 git add .
-git commit -m "%msg%"
 
-REM --- Kiểm tra xem branch đã có upstream chưa ---
+git diff --cached --quiet
+if !errorlevel! equ 0 (
+    echo Khong co thay doi de commit.
+) else (
+    git commit -m "!msg!"
+)
+
+REM --- Kiem tra upstream ---
 git rev-parse --abbrev-ref --symbolic-full-name @{u} >nul 2>&1
-if %errorlevel% neq 0 (
-    echo No upstream branch, setting upstream to origin/master...
+if !errorlevel! neq 0 (
+    echo Khong co upstream. Dang set origin/master...
     git push --set-upstream origin master
 ) else (
     git push

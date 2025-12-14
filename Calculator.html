@@ -3,163 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Máy Tính Vật Lý - Đã Hoàn Thiện Chuyên Nghiệp</title>
+    <title>Máy Tính Tiêu Chuẩn</title>
     <style>
     /* ======================================== */
-    /* === calculator.css - Giao diện & FIX CUỘN DỌC === */
+    /* === calculator.css - Giao diện Đa Nền Tảng & Lịch Sử === */
     /* ======================================== */
     
+    :root {
+        --bg-color: #1a1a1a;        
+        --calculator-bg: #1f1f1f;   
+        --display-bg: #1f1f1f;      
+        --key-secondary-bg: #323232;
+        --key-primary-bg: #444444;  
+        --key-operator-bg: #323232; 
+        --key-equal-bg: #4a86c6;    
+        --text-primary: #ffffff;    
+        --text-secondary: #aaaaaa;  
+    }
+
     body {
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-family: 'Segoe UI', Arial, sans-serif;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         min-height: 100vh;
-        background-color: #1c2533;
+        background-color: var(--bg-color);
         margin: 0;
         padding: 20px;
+        color: var(--text-primary);
+        overflow-x: hidden;
     }
 
     .container {
-        background-color: #2c394b; 
-        padding: 30px;
-        border-radius: 25px;
-        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4), 0 0 0 10px rgba(255, 255, 255, 0.05);
+        background-color: var(--calculator-bg); 
+        padding: 0;
+        border-radius: 5px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+        display: flex; /* Cho phép bố cục ngang (máy tính và lịch sử) */
+        max-width: 800px; /* Giới hạn chiều rộng tổng thể */
+        width: 100%;
     }
 
     .calculator {
-        width: 340px;
-        border-radius: 15px;
+        width: 380px;
         overflow: hidden;
-        background-color: #1a1e26;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-        display: block; 
+        background-color: var(--calculator-bg);
+        flex-shrink: 0; /* Đảm bảo máy tính giữ nguyên kích thước */
     }
 
-    /* --- Màn hình hiển thị (ĐÃ SỬA LỖI CUỘN DỌC) --- */
+    /* --- Tiêu đề và Nút Lịch sử --- */
+    .header {
+        padding: 10px 20px;
+        font-size: 1.1em;
+        font-weight: 500;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .header .title {
+        font-size: 1.2em;
+        font-weight: 600;
+    }
+    .history-toggle {
+        font-size: 1.4em;
+        cursor: pointer;
+        padding: 5px;
+        transition: color 0.1s;
+    }
+    .history-toggle:hover {
+        color: #4a86c6;
+    }
+    
+    /* --- Màn hình hiển thị --- */
     .display-area {
-        background-color: #12151c;
-        padding: 20px;
+        background-color: var(--display-bg);
+        padding: 5px 20px;
         text-align: right;
-        border-top-left-radius: 15px;
-        border-top-right-radius: 15px;
-        color: #ffffff;
-        min-height: 110px;
-        position: relative;
-        opacity: 0; 
-        transition: opacity 0.5s ease;
-        
-        /* **FIX: ẨN THANH CUỘN DỌC** */
+        min-height: 100px; 
+        color: var(--text-primary);
         overflow-y: hidden; 
     }
 
-    .display-area.on {
-        opacity: 1;
-    }
-
     #preview {
-        font-size: 1.3em;
-        color: #b0c4de;
-        min-height: 30px;
+        font-size: 1.1em;
+        color: var(--text-secondary);
+        min-height: 25px;
         opacity: 0.8;
         overflow-x: auto;
         white-space: nowrap;
         padding-bottom: 5px;
-        scrollbar-width: none; 
-        -ms-overflow-style: none; 
-    }
-    #preview::-webkit-scrollbar { 
-        display: none;
+        text-align: right;
     }
 
     #result {
-        font-size: 2.8em;
+        font-size: 3.5em; 
         font-weight: 300;
-        line-height: 1.1;
-        overflow-x: hidden; /* Fix cuộn ngang */
+        line-height: 1.2;
+        overflow-x: hidden;
         white-space: nowrap;
-        display: none; 
-    }
-
-    .author-text {
-        font-size: 0.35em;
-        color: #5d6f8a;
-        position: absolute;
-        bottom: 5px;
-        right: 20px;
-    }
-
-    /* --- Hiệu ứng Con trỏ Nhấp nháy --- */
-    @keyframes blink-cursor {
-        0%, 100% { border-right-color: transparent; }
-        50% { border-right-color: #4cd964; }
-    }
-
-    #preview.typing-mode {
-        font-size: 1.8em;
-        font-weight: 500;
-        color: #4cd964;
-        border-right: 3px solid #4cd964; 
-        animation: blink-cursor 0.5s step-end infinite;
-        white-space: pre;
+        display: block; 
     }
     
-    /* --- Bàn phím --- */
+    /* --- Hàng Bộ nhớ và Bàn phím --- */
+    .memory-row {
+        display: flex;
+        justify-content: space-around;
+        padding: 5px 15px;
+        background-color: var(--calculator-bg);
+    }
+    .memory-row span {
+        font-size: 0.85em;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 5px;
+        transition: color 0.1s;
+    }
+    .memory-row span:hover {
+        color: var(--text-primary);
+    }
+
     .keys {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 1px;
-        background-color: #1a1e26; 
+        background-color: var(--calculator-bg); 
+        border-top: 1px solid #333;
     }
 
     .key {
-        padding: 20px;
+        padding: 15px 0;
         font-size: 1.2em;
         border: none;
         cursor: pointer;
-        transition: background-color 0.1s ease, transform 0.05s;
-        background-color: #2e3b4e; 
-        color: #ffffff;
+        transition: background-color 0.1s ease;
+        color: var(--text-primary);
+        text-align: center;
+        background-color: var(--key-primary-bg); 
+        font-weight: 500;
     }
 
     .key:hover {
-        background-color: #3d4a63;
+        background-color: #555555;
     }
 
     .key:active {
-        transform: scale(0.98);
-        background-color: #4a5a73;
+        background-color: #666666;
     }
 
-    .utility {
-        background-color: #38465d; 
-        color: #b0c4de;
+    .utility, .operator {
+        background-color: var(--key-secondary-bg); 
+        color: var(--text-primary);
     }
 
-    .utility:hover {
-        background-color: #4c5770;
-    }
-
-    .operator {
-        background-color: #ff9500;
-        color: #ffffff;
-        font-weight: 600;
-    }
-
-    .operator:hover {
-        background-color: #ffb547;
+    .utility:hover, .operator:hover {
+        background-color: #444444;
     }
 
     .equal-sign {
-        grid-column: span 2;
-        background-color: #34c759;
-        color: #ffffff;
-        font-weight: 700;
+        background-color: var(--key-equal-bg);
+        color: var(--text-primary);
+        font-weight: 600;
     }
 
     .equal-sign:hover {
-        background-color: #4ddb68;
+        background-color: #5c9cd8;
+    }
+    
+    /* ======================================== */
+    /* === Giao diện Lịch sử (History) === */
+    /* ======================================== */
+    
+    .history-panel {
+        width: 0;
+        overflow: hidden;
+        background-color: #242424;
+        transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
+        border-left: 1px solid #333;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .history-panel.visible {
+        width: 300px; /* Chiều rộng panel lịch sử */
+        padding: 10px;
+    }
+    
+    .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 5px;
+        border-bottom: 1px solid #333;
+    }
+    .history-header h3 {
+        margin: 0;
+        font-weight: 500;
+        font-size: 1.1em;
+    }
+    .history-clear {
+        color: #ff4d4d;
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: opacity 0.1s;
+    }
+    .history-clear:hover {
+        opacity: 0.8;
+    }
+    
+    #history-list {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding-top: 10px;
+        scrollbar-color: #555 #242424;
+        scrollbar-width: thin;
+    }
+    
+    .history-item {
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: background-color 0.1s;
+    }
+    .history-item:hover {
+        background-color: #383838;
+    }
+    
+    .history-expression {
+        font-size: 0.9em;
+        color: var(--text-secondary);
+        margin-bottom: 2px;
+    }
+    .history-result {
+        font-size: 1.2em;
+        font-weight: 600;
+    }
+    
+    /* ======================================== */
+    /* === Responsive (Tối ưu cho điện thoại) === */
+    /* ======================================== */
+    @media (max-width: 768px) {
+        body {
+            padding: 0;
+        }
+        .container {
+            flex-direction: column; /* Xếp chồng máy tính và lịch sử */
+            max-width: 100%;
+            border-radius: 0;
+            box-shadow: none;
+        }
+        .calculator {
+            width: 100%;
+        }
+        .history-panel.visible {
+            width: 100%;
+            height: 40vh; /* Lịch sử chiếm 40% màn hình khi ở chế độ mobile */
+        }
+        .keys {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+        }
+        .key {
+            padding: 12px 0;
+            font-size: 1.1em;
+        }
     }
 </style>
 </head>
@@ -167,16 +276,35 @@
 
     <div class="container">
         <div class="calculator" id="calculatorApp">
-            <div class="display-area" id="displayArea">
-                <div id="preview"></div>
-                <div id="result"></div>
-                <div class="author-text">by.Nguyen Thuan IT</div>
+            
+            <div class="header">
+                <span class="title">Standard</span>
+                <span class="history-toggle" id="history-toggle" title="Lịch sử tính toán">🗘</span>
             </div>
+
+            <div class="display-area">
+                <div id="preview"></div>
+                <div id="result">0</div>
+            </div>
+
+            <div class="memory-row">
+                <span>MC</span>
+                <span>MR</span>
+                <span>M+</span>
+                <span>M-</span>
+                <span>MS</span>
+                <span>M⋁</span>
+            </div>
+
             <div class="keys">
-                <button class="key utility" data-action="power-off">OFF</button>
-                <button class="key utility" data-action="delete">DEL</button>
                 <button class="key utility" data-action="percent">%</button>
-                
+                <button class="key utility" data-action="clear-entry">CE</button>
+                <button class="key utility" data-action="clear">C</button>
+                <button class="key utility" data-action="delete">⌫</button>
+
+                <button class="key utility" data-action="inverse">1/x</button>
+                <button class="key utility" data-action="square">x²</button>
+                <button class="key utility" data-action="sqrt">√x</button>
                 <button class="key operator" data-action="divide">÷</button>
 
                 <button class="key" data-value="7">7</button>
@@ -194,142 +322,187 @@
                 <button class="key" data-value="3">3</button>
                 <button class="key operator" data-action="add">+</button>
 
-                <button class="key utility" data-action="sign">+/-</button>
+                <button class="key utility" data-action="sign">±</button>
                 <button class="key" data-value="0">0</button>
                 <button class="key" data-value=".">.</button>
-                
                 <button class="key equal-sign" data-action="calculate">=</button>
             </div>
+        </div>
+
+        <div class="history-panel" id="history-panel">
+            <div class="history-header">
+                <h3>History</h3>
+                <span class="history-clear" id="history-clear">Clear</span>
+            </div>
+            <div id="history-list">
+                </div>
         </div>
     </div>
 
     <script>
         /* ======================================== */
-        /* === calculator.js - Logic Đã Sửa Lỗi và Tối Ưu Chuyên Nghiệp === */
+        /* === calculator.js - Logic IndexDB, Bàn Phím, và Lịch Sử === */
         /* ======================================== */
         document.addEventListener('DOMContentLoaded', () => {
             const resultDisplay = document.getElementById('result');
             const previewDisplay = document.getElementById('preview');
-            const displayArea = document.getElementById('displayArea');
             const keys = document.querySelector('.keys');
-            const powerButton = document.querySelector('[data-action="power-off"]'); 
+            const historyToggle = document.getElementById('history-toggle');
+            const historyPanel = document.getElementById('history-panel');
+            const historyList = document.getElementById('history-list');
+            const historyClear = document.getElementById('history-clear');
 
-            // Hằng số cho độ chính xác và hiển thị (Giúp code dễ bảo trì)
-            const MAX_PRECISION_DIGITS = 10; // Làm tròn tối đa 10 chữ số sau dấu phẩy trong tính toán
-            const MAX_DISPLAY_DIGITS = 15; // Số chữ số có nghĩa tối đa khi hiển thị
+            const MAX_PRECISION_DIGITS = 10; 
+            const MAX_DISPLAY_DIGITS = 15; 
             const ERROR_MESSAGE = 'Error';
-
-            let isPoweredOn = false;
+            
             let displayValue = '0';
             let previewValue = '';
             let firstOperand = null;
             let operator = null;
             let waitingForSecondOperand = false;
             
-            // --- Cải tiến: Hàm làm tròn số học chính xác ---
+            let db; // Đối tượng IndexDB
+
+            // --- 1. Quản lý IndexDB ---
+            function openDatabase() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open('CalculatorDB', 1);
+
+                    request.onupgradeneeded = (e) => {
+                        db = e.target.result;
+                        db.createObjectStore('history', { keyPath: 'id', autoIncrement: true });
+                    };
+
+                    request.onsuccess = (e) => {
+                        db = e.target.result;
+                        resolve(db);
+                    };
+
+                    request.onerror = (e) => {
+                        console.error("IndexedDB Error:", e.target.error);
+                        reject(e.target.error);
+                    };
+                });
+            }
+
+            function saveHistory(expression, result) {
+                if (!db) return;
+
+                const transaction = db.transaction(['history'], 'readwrite');
+                const store = transaction.objectStore('history');
+                const historyItem = {
+                    expression: expression,
+                    result: result,
+                    timestamp: new Date().getTime()
+                };
+
+                store.add(historyItem);
+            }
+
+            function loadHistory() {
+                if (!db) {
+                    historyList.innerHTML = '<p style="color: #888; text-align: center; padding-top: 20px;">Không thể tải lịch sử (IndexDB).</p>';
+                    return;
+                }
+
+                const transaction = db.transaction(['history'], 'readonly');
+                const store = transaction.objectStore('history');
+                const request = store.getAll();
+                historyList.innerHTML = ''; // Xóa lịch sử cũ
+                
+                request.onsuccess = (e) => {
+                    const history = e.target.result.reverse(); // Lấy lịch sử mới nhất trước
+                    
+                    if (history.length === 0) {
+                        historyList.innerHTML = '<p style="color: #888; text-align: center; padding-top: 20px;">Chưa có lịch sử.</p>';
+                        return;
+                    }
+
+                    history.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'history-item';
+                        div.setAttribute('data-result', item.result);
+                        div.innerHTML = `
+                            <div class="history-expression">${item.expression}</div>
+                            <div class="history-result">${parseFloat(item.result).toLocaleString('en-US', { maximumSignificantDigits: MAX_DISPLAY_DIGITS })}</div>
+                        `;
+                        div.addEventListener('click', () => {
+                            displayValue = item.result;
+                            firstOperand = null; 
+                            operator = null;
+                            waitingForSecondOperand = true;
+                            previewValue = '';
+                            updateDisplay();
+                        });
+                        historyList.appendChild(div);
+                    });
+                };
+
+                request.onerror = (e) => {
+                    console.error("Error loading history:", e.target.error);
+                };
+            }
+            
+            function clearHistory() {
+                if (!db) return;
+
+                const transaction = db.transaction(['history'], 'readwrite');
+                const store = transaction.objectStore('history');
+                const request = store.clear();
+
+                request.onsuccess = () => {
+                    loadHistory();
+                };
+            }
+
+            // --- 2. Logic Máy Tính (Giữ nguyên và cải tiến) ---
+
             function applyRounding(number) {
-                if (typeof number !== 'number' || isNaN(number)) return String(number);
-                // Sử dụng Math.round để tránh lỗi dấu phẩy động
+                if (typeof number !== 'number' || isNaN(number) || !isFinite(number)) return String(number);
                 const factor = Math.pow(10, MAX_PRECISION_DIGITS);
                 return String(Math.round(number * factor) / factor);
             }
 
-            // --- Hiệu ứng Chạy Chữ (Typing Effect) ---
-            function startTypingEffect(text, callback) {
-                let i = 0;
-                const typingArea = previewDisplay;
-                const textToType = text + " "; 
-
-                resultDisplay.style.display = 'none'; 
-                typingArea.textContent = '';
-                typingArea.classList.add('typing-mode'); 
-
-                const speed = 70;
-
-                function typeWriter() {
-                    if (i < textToType.length) {
-                        typingArea.textContent += textToType.charAt(i);
-                        i++;
-                        setTimeout(typeWriter, speed);
-                    } else {
-                        typingArea.classList.remove('typing-mode');
-                        setTimeout(() => {
-                            if (callback) callback();
-                        }, 800);
-                    }
-                }
-                typeWriter();
-            }
-
-            // --- Quản lý Trạng thái Mở/Tắt ---
-            function powerOn() {
-                if (isPoweredOn) {
-                    resetCalculator(); 
-                    return;
-                }
-                
-                isPoweredOn = true;
-                displayArea.classList.add('on');
-                powerButton.textContent = 'AC'; 
-                powerButton.setAttribute('data-action', 'clear');
-
-                startTypingEffect("by.Nguyen Thuan IT", resetCalculator);
-            }
-
-            function powerOff() {
-                isPoweredOn = false;
-                displayArea.classList.remove('on');
-                
-                displayValue = '';
-                previewValue = '';
-                firstOperand = null;
-                operator = null;
-                waitingForSecondOperand = false;
-                
-                powerButton.textContent = 'OFF';
-                powerButton.setAttribute('data-action', 'power-off');
-                resultDisplay.style.display = 'none';
-                previewDisplay.textContent = '';
-            }
-            
-            // --- Cải tiến: Tối ưu hóa hiển thị số lớn/khoa học ---
             function updateDisplay() {
-                if (!isPoweredOn) return;
-
                 if (!isNaN(parseFloat(displayValue))) {
                     const number = parseFloat(displayValue);
 
                     if (displayValue === ERROR_MESSAGE) {
                         resultDisplay.textContent = ERROR_MESSAGE;
                     }
-                    // Kiểm tra và chuyển sang dạng khoa học nếu số quá lớn/quá bé
                     else if (displayValue.includes('e') || 
                         (Math.abs(number) >= Math.pow(10, MAX_DISPLAY_DIGITS)) || 
                         (Math.abs(number) > 0 && Math.abs(number) < Math.pow(10, -10))) 
                     {
                         resultDisplay.textContent = number.toExponential(MAX_DISPLAY_DIGITS - 6);
                     } else {
-                        // Giới hạn chữ số có nghĩa và loại bỏ số 0 thừa
-                        resultDisplay.textContent = number.toPrecision(MAX_DISPLAY_DIGITS).replace(/\.?0+$/, '');
+                        // Định dạng số có dấu phẩy phân cách hàng nghìn
+                        resultDisplay.textContent = number.toLocaleString('en-US', {
+                            maximumSignificantDigits: MAX_DISPLAY_DIGITS
+                        });
+                        if (displayValue.endsWith('.') && !displayValue.includes('e')) {
+                             resultDisplay.textContent += '.';
+                        }
                     }
                 } else {
                     resultDisplay.textContent = displayValue;
                 }
                 
-                if (!previewDisplay.classList.contains('typing-mode')) {
-                    previewDisplay.textContent = previewValue;
-                }
+                previewDisplay.textContent = previewValue;
             }
             
-            function resetCalculator() {
+            function clearAll() { // Nút C
                 displayValue = '0';
                 previewValue = '';
                 firstOperand = null;
                 operator = null;
                 waitingForSecondOperand = false;
-                
-                previewDisplay.textContent = ''; 
-                resultDisplay.style.display = 'block';
+                updateDisplay();
+            }
+            
+            function clearEntry() { // Nút CE
+                displayValue = '0';
                 updateDisplay();
             }
             
@@ -341,7 +514,9 @@
                     if (displayValue === ERROR_MESSAGE) {
                         displayValue = digit;
                     } else {
-                        displayValue = displayValue === '0' ? digit : displayValue + digit;
+                        if (displayValue.length < MAX_DISPLAY_DIGITS + 5) {
+                            displayValue = displayValue === '0' ? digit : displayValue + digit;
+                        }
                     }
                 }
                 updateDisplay();
@@ -358,6 +533,9 @@
             }
 
             function calculate(first, second, op) {
+                first = parseFloat(first);
+                second = parseFloat(second);
+                
                 if (op === '+') return first + second;
                 if (op === '-') return first - second;
                 if (op === '×') return first * second;
@@ -385,11 +563,7 @@
                     
                     if (result === ERROR_MESSAGE) {
                         displayValue = result;
-                        firstOperand = null;
-                        operator = null;
-                        waitingForSecondOperand = false;
-                        previewValue = '';
-                        updateDisplay();
+                        clearErrorState();
                         return;
                     }
                     
@@ -404,27 +578,44 @@
             }
 
             function handleCalculate() {
-                if (firstOperand === null || operator === null || waitingForSecondOperand) {
+                if (firstOperand === null || operator === null) {
                     return;
                 }
 
                 const inputValue = parseFloat(displayValue);
+                
+                // Lưu phép tính trước khi tính toán
+                const expression = `${firstOperand} ${operator} ${inputValue}`;
+                
                 const result = calculate(firstOperand, inputValue, operator);
 
                 if (result === ERROR_MESSAGE) {
                     displayValue = result;
-                    updateDisplay();
+                    clearErrorState();
                 } else {
                     displayValue = applyRounding(result);
-                    updateDisplay();
+                    
+                    previewValue = `${expression} =`;
+                    
+                    // LƯU VÀO INDEXDB
+                    saveHistory(previewValue, displayValue);
+                    
+                    firstOperand = parseFloat(displayValue);
+                    operator = null; 
+                    waitingForSecondOperand = true;
                 }
-                
-                previewValue = '';
-                firstOperand = null;
-                operator = null;
-                waitingForSecondOperand = true;
+                updateDisplay();
+                loadHistory(); // Tải lại lịch sử sau khi tính toán
             }
             
+            function clearErrorState() {
+                firstOperand = null;
+                operator = null;
+                waitingForSecondOperand = false;
+                previewValue = '';
+                updateDisplay();
+            }
+
             function deleteLastDigit() {
                 if (displayValue === ERROR_MESSAGE || waitingForSecondOperand) return;
                 
@@ -438,7 +629,7 @@
             function toggleSign() {
                 if (displayValue === '0' || displayValue === ERROR_MESSAGE) return;
 
-                displayValue = String(parseFloat(displayValue) * -1);
+                displayValue = applyRounding(parseFloat(displayValue) * -1);
                 updateDisplay();
             }
             
@@ -455,28 +646,58 @@
                 }
                 updateDisplay();
             }
-
-            // --- SỬA LỖI VÀ HOÀN THIỆN LOGIC XỬ LÝ SỰ KIỆN NÚT BẤM ---
-            keys.addEventListener('click', (event) => {
-                const { target } = event;
-                const { action, value } = target.dataset; 
-
-                if (!target.matches('button')) return; 
-
-                // 1. Xử lý Nút ON/OFF/AC
-                if (action === 'power-off' || action === 'clear') {
-                    if (action === 'power-off') {
-                        powerOn(); 
-                    } else { // action === 'clear' (khi máy đang mở)
-                        resetCalculator(); 
-                    }
-                    return;
+            
+            function calculateSingleOperand(action) {
+                if (displayValue === ERROR_MESSAGE) return;
+                const currentValue = parseFloat(displayValue);
+                let result;
+                let expression;
+                
+                switch (action) {
+                    case 'square': 
+                        result = currentValue * currentValue;
+                        expression = `sqr(${currentValue}) =`;
+                        break;
+                    case 'sqrt': 
+                        if (currentValue < 0) {
+                            displayValue = ERROR_MESSAGE;
+                            clearErrorState();
+                            return;
+                        }
+                        result = Math.sqrt(currentValue);
+                        expression = `√(${currentValue}) =`;
+                        break;
+                    case 'inverse': 
+                        if (currentValue === 0) {
+                            displayValue = ERROR_MESSAGE;
+                            clearErrorState();
+                            return;
+                        }
+                        result = 1 / currentValue;
+                        expression = `1/(${currentValue}) =`;
+                        break;
+                    default:
+                        return;
                 }
+                
+                displayValue = applyRounding(result);
+                previewValue = expression;
+                
+                // LƯU VÀO INDEXDB
+                saveHistory(previewValue, displayValue);
+                
+                firstOperand = null;
+                operator = null; 
+                waitingForSecondOperand = true;
+                updateDisplay();
+                loadHistory(); // Tải lại lịch sử sau khi tính toán
+            }
 
-                // 2. Ngăn các nút khác hoạt động khi máy tắt hoặc đang chạy hiệu ứng
-                if (!isPoweredOn || previewDisplay.classList.contains('typing-mode')) return;
 
-                // 3. Xử lý các nút số và dấu thập phân
+            // --- 3. Xử lý Sự kiện Nút Bấm & Bàn Phím ---
+            
+            // Hàm trung gian xử lý các hành động
+            function handleAction(action, value) {
                 if (value) {
                     if (value === '.') {
                         inputDecimal('.');
@@ -484,9 +705,14 @@
                         inputDigit(value);
                     }
                 } 
-                // 4. Xử lý các nút chức năng/toán tử
                 else if (action) {
                     switch (action) {
+                        case 'clear':
+                            clearAll();
+                            break;
+                        case 'clear-entry':
+                            clearEntry();
+                            break;
                         case 'delete':
                             deleteLastDigit();
                             break;
@@ -496,22 +722,81 @@
                         case 'percent':
                             calculatePercent();
                             break;
+                        case 'square':
+                        case 'sqrt':
+                        case 'inverse':
+                            calculateSingleOperand(action);
+                            break;
                         case 'calculate':
                             handleCalculate();
                             break;
-                        // Xử lý các toán tử (+, -, ×, ÷)
                         case 'divide':
                         case 'multiply':
                         case 'subtract':
                         case 'add':
-                            handleOperator(target.textContent);
+                            // Lấy ký hiệu từ nội dung nút (÷, ×, -, +)
+                            const button = document.querySelector(`[data-action="${action}"]`);
+                            handleOperator(button ? button.textContent : action); 
                             break;
                     }
                 }
+            }
+
+            // Xử lý click chuột
+            keys.addEventListener('click', (event) => {
+                const { target } = event;
+                if (!target.matches('button')) return; 
+
+                const { action, value } = target.dataset;
+                handleAction(action, value);
             });
 
-            // Khởi tạo máy tính ở trạng thái TẮT
-            powerOff();
+            // Xử lý sự kiện bàn phím PC
+            document.addEventListener('keydown', (e) => {
+                e.preventDefault(); // Ngăn hành vi mặc định của trình duyệt (ví dụ: Space bar)
+
+                const keyMap = {
+                    '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
+                    '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
+                    '.': '.',
+                    'Enter': 'calculate',
+                    '=': 'calculate',
+                    '+': 'add',
+                    '-': 'subtract',
+                    '*': 'multiply',
+                    '/': 'divide',
+                    'Delete': 'clear', // Phím Delete = C
+                    'Backspace': 'delete' // Phím Backspace = ⌫
+                    // Không có phím cứng cho CE, % hay các hàm khác (trừ khi lập trình thêm)
+                };
+
+                const action = keyMap[e.key];
+
+                if (action === 'calculate' || action === 'add' || action === 'subtract' || action === 'multiply' || action === 'divide' || action === 'clear' || action === 'delete') {
+                    handleAction(action);
+                } else if (action) {
+                    handleAction(null, action); // Xử lý các nút số và dấu thập phân
+                }
+            });
+
+
+            // --- 4. Xử lý Lịch Sử ---
+            
+            historyToggle.addEventListener('click', () => {
+                historyPanel.classList.toggle('visible');
+                // Tải lại lịch sử mỗi khi mở panel
+                if (historyPanel.classList.contains('visible')) {
+                    loadHistory();
+                }
+            });
+            
+            historyClear.addEventListener('click', clearHistory);
+
+            // --- Khởi tạo ---
+            openDatabase().then(() => {
+                loadHistory();
+                updateDisplay();
+            });
         });
     </script>
 </body>

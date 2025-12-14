@@ -33,6 +33,8 @@
         padding: 20px;
         color: var(--text-primary);
         overflow-x: hidden;
+        /* THAY ĐỔI: Chặn chọn văn bản */
+        user-select: none;
     }
 
     .container {
@@ -43,6 +45,8 @@
         display: flex; /* Cho phép bố cục ngang (máy tính và lịch sử) */
         max-width: 800px; /* Giới hạn chiều rộng tổng thể */
         width: 100%;
+        /* THAY ĐỔI: Ngăn chặn hành vi chạm mặc định (bao gồm double-tap zoom) */
+        touch-action: manipulation;
     }
 
     .calculator {
@@ -141,6 +145,8 @@
         text-align: center;
         background-color: var(--key-primary-bg); 
         font-weight: 500;
+        /* THAY ĐỔI: Ngăn chặn hành vi chạm mặc định cho nút bấm */
+        touch-action: manipulation;
     }
 
     .key:hover {

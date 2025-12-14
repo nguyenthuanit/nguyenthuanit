@@ -41,18 +41,14 @@
     <div class="container" id="main-container" style="display: none;">
         
         <div class="config-panel">
-            <h2>⚙️ Cấu Hình Partner & Giao Dịch</h2>
+            <h2>🏦 Quản Lý Tài Khoản (Chuyên Nghiệp)</h2>
             
             <div class="config-group">
-                <label for="partner-name">Partner ID (1)</label>
-                <input type="text" id="partner-name" value="ECOMMERCE_GATEWAY" placeholder="Ví dụ: MomoWallet, ShopeePay">
+                <label for="active-account-select">Chọn Tài Khoản Hiện Tại</label>
+                <select id="active-account-select" onchange="switchAccount()">
+                    </select>
             </div>
 
-            <div class="config-group">
-                <label for="account-owner">Tên Chủ TK (10)</label>
-                <input type="text" id="account-owner" value="NGUYEN VAN A" placeholder="Tên sẽ hiển thị trong tin nhắn">
-            </div>
-            
             <div class="config-group">
                 <label for="bank-select">Ngân hàng Nhận</label>
                 <select id="bank-select">
@@ -61,21 +57,93 @@
                     <option value="MB">MB Bank</option>
                 </select>
             </div>
+
+            <div class="config-group">
+                <label for="new-account-name">Tên Gợi Nhớ (Tạo mới)</label>
+                <input type="text" id="new-account-name" placeholder="Ví dụ: Tài khoản Test API">
+            </div>
+
+            <div class="config-group half-group">
+                <div class="half-item">
+                    <label for="partner-id-input">Partner ID (1)</label>
+                    <input type="text" id="partner-id-input" value="ECOMMERCE_GATEWAY" placeholder="ID (Ví dụ: MomoWallet)">
+                </div>
+                <div class="half-item">
+                    <label for="account-owner">Tên Chủ TK (10)</label>
+                    <input type="text" id="account-owner" value="NGUYEN VAN A" placeholder="Tên sẽ hiển thị trong tin nhắn">
+                </div>
+            </div>
+            
+            <div class="action-buttons-group">
+                <button class="action-btn" style="background-color: #3f51b5;" onclick="addOrUpdateAccount()">➕ Thêm / Cập Nhật TK</button>
+            </div>
+
+            <hr class="separator">
+            
+            <h2>🔗 Cấu Hình Webhook/Callback</h2>
+            <div class="config-group">
+                <label for="webhook-url">Webhook URL</label>
+                <input type="text" id="webhook-url" value="https://sandbox.partner.com/api/callback" placeholder="URL nhận phản hồi từ Gateway">
+            </div>
+            
+            <div class="config-group half-group">
+                <div class="half-item">
+                    <label for="webhook-status">Webhook Response Status</label>
+                    <select id="webhook-status">
+                        <option value="200">200 OK (Thành công)</option>
+                        <option value="400">400 Bad Request</option>
+                        <option value="500">500 Server Error</option>
+                    </select>
+                </div>
+                 <div class="half-item">
+                    <label for="webhook-delay">Webhook Delay (ms)</label>
+                    <input type="number" id="webhook-delay" value="200" min="0">
+                </div>
+            </div>
+
+            <div class="config-group">
+                <label for="webhook-secret">Webhook Secret Key (Signature)</label>
+                <input type="text" id="webhook-secret" value="secret_test_key" placeholder="Key dùng để tạo chữ ký (signature)">
+            </div>
+            
+             <hr class="separator">
+            
+            <div class="action-buttons-group">
+                <button class="action-btn export-btn" onclick="exportTransactions()">⬇️ Xuất Lịch Sử (CSV)</button>
+                <button class="action-btn" style="background-color: var(--reset-bg);" onclick="clearAllDataAndReset()">🔄 Reset Tất Cả Dữ Liệu</button>
+            </div>
+        </div>
+
+        <div class="calculator-panel">
+            <h2>💰 Giả Lập Giao Dịch</h2>
+            
+            <div id="current-balance-display">Số dư hiện tại: 0.00 VND</div>
             
             <div class="config-group">
-                <label for="source-type-select">Loại Nguồn GD (5)</label>
-                <select id="source-type-select">
-                    <option value="Bank">Bank Transfer</option>
-                    <option value="E-Wallet">E-Wallet (Ví)</option>
-                    <option value="Card">Credit Card</option>
-                </select>
+                <label for="amount-input">Số tiền GD (VND)</label>
+                <input type="text" id="amount-input" value="100.000" placeholder="0" data-original-value="100000" oninput="formatInput(this)">
+            </div>
+            
+            <div class="config-group">
+                <label for="daily-limit-input">Hạn mức tối đa/ngày (VND)</label>
+                <input type="text" id="daily-limit-input" value="100.000.000" placeholder="0 = Không giới hạn" data-original-value="100000000" oninput="formatInput(this)">
+            </div>
+            
+            <div class="config-group">
+                <label for="transfer-content">Nội Dung Chuyển Khoản (9)</label>
+                <input type="text" id="transfer-content" placeholder="Nội dung tùy chỉnh">
+            </div>
+            
+            <div class="config-group">
+                <label for="default-content-template">Mẫu Nội Dung Mặc Định (4)</label>
+                <input type="text" id="default-content-template" value="Thanh toan don hang {TX_ID}" placeholder="Sử dụng {TX_ID} để chèn mã GD">
             </div>
             
             <hr class="separator">
             
-            <h2>⏱️ Cấu Hình Giả Lập</h2>
+            <h2>⏱️ Cấu Hình Trạng Thái</h2>
             
-             <div class="config-group">
+            <div class="config-group">
                 <label for="transaction-type-select">Loại Giao Dịch Cố Định (2)</label>
                 <select id="transaction-type-select">
                     <option value="Payment">Thanh Toán (Tiền vào)</option>
@@ -86,58 +154,39 @@
             
             <div class="config-group half-group">
                 <div class="half-item">
-                    <label for="delay-input">Độ trễ (s)</label>
-                    <input type="number" id="delay-input" value="0" min="0" placeholder="0">
+                    <label for="delay-input">Độ trễ SMS (s)</label>
+                    <input type="number" id="delay-input" value="1" min="0">
                 </div>
                 <div class="half-item">
-                    <label for="date-input">Ngày/Giờ GD</label>
-                    <div class="datetime-group">
-                        <input type="date" id="date-input" title="Ngày">
-                        <input type="time" id="time-input" title="Giờ">
-                    </div>
+                    <label for="simulated-status-select">Trạng Thái Giả Lập</label>
+                    <select id="simulated-status-select">
+                        <option value="Success">Thành Công (Success)</option>
+                        <option value="Failure">Thất Bại (Failure)</option>
+                        <option value="Pending">Đang Chờ (Pending)</option>
+                    </select>
                 </div>
             </div>
             
-            <div class="config-group">
-                <label for="refund-id">Mã GD Hoàn tiền (4)</label>
-                <input type="text" id="refund-id" placeholder="Nhập Mã GD: GDxxxxxxx">
-            </div>
-
-            <div class="config-group">
-                <label for="transfer-content">Nội dung Chuyển/Hoàn khoản</label>
-                <input type="text" id="transfer-content" value="" placeholder="Để trống để dùng Template...">
-            </div>
-            
-            <div class="config-group">
-                <label for="default-content-template">Default Content Template</label>
-                <input type="text" id="default-content-template" value="Thanh toan don hang {TX_ID}" placeholder="Sử dụng {TX_ID} để chèn Mã GD tự động">
-            </div>
-
              <div class="config-group half-group">
                 <div class="half-item">
-                    <label for="tags-input">Thẻ/Nhãn GD (8)</label>
-                    <input type="text" id="tags-input" placeholder="Ví dụ: Ecom, Voucher">
+                    <label for="error-code-input">Mã Lỗi (E100, E999)</label>
+                    <input type="text" id="error-code-input" value="E999_SYSTEM_ERROR" placeholder="Mã lỗi hệ thống">
                 </div>
+                <div class="half-item">
+                     <label for="refund-id">Ref. ID Hoàn Tiền (8)</label>
+                    <input type="text" id="refund-id" placeholder="Mã GD gốc nếu là Hoàn tiền">
                 </div>
-            
-        </div>
-        
-        <div class="calculator-panel">
-            <h2>💰 Giao Dịch & Quản Lý Số Dư</h2>
-            
-            <div id="current-balance-display">Số dư hiện tại: 0.00 VND</div>
-
-            <div class="config-group">
-                <label for="amount-input">Số tiền GD (VND)</label>
-                <input type="text" id="amount-input" value="100.000" placeholder="0" data-original-value="100000">
             </div>
 
-            <div id="history-container">
+            <div class="config-group datetime-group">
+                <div class="half-item">
+                    <label for="date-input">Ngày GD</label>
+                    <input type="date" id="date-input">
                 </div>
-            
-            <div class="config-group">
-                <label for="daily-limit-input">Hạn mức tối đa/ngày (VND)</label>
-                <input type="text" id="daily-limit-input" value="100.000.000" placeholder="0 = Không giới hạn" data-original-value="100000000">
+                <div class="half-item">
+                    <label for="time-input">Giờ GD</label>
+                    <input type="time" id="time-input" step="1">
+                </div>
             </div>
 
             <div class="action-buttons-group">
@@ -145,64 +194,39 @@
                 <button class="action-btn refund-btn" onclick="simulateRefund()">↩️ Hoàn Tiền (Tiền ra)</button>
                 <button class="action-btn fail-btn" onclick="simulateFee()">💵 Phí/Hoa Hồng (Tiền ra)</button>
             </div>
-            
-            <hr class="separator">
-            
-            <div class="config-group half-group">
-                <div class="half-item">
-                     <label for="simulated-status-select">Mô Phỏng Trạng Thái</label>
-                    <select id="simulated-status-select">
-                        <option value="Success">Success (Thành công)</option>
-                        <option value="Failure">Failure (Thất bại)</option>
-                        <option value="Pending">Pending (Chờ xử lý)</option>
-                    </select>
-                </div>
-                 <div class="half-item">
-                    <label for="error-code-input">Mã Lỗi (Failure)</label>
-                    <input type="text" id="error-code-input" value="E999_SYSTEM_ERROR" placeholder="Mã lỗi">
-                </div>
-            </div>
-            
-            <div class="action-buttons-group">
-                <button class="action-btn" onclick="simulatePending()" style="background-color: var(--fail-color);">⚠️ Mô phỏng Pending</button>
-                <button class="action-btn fail-btn" onclick="simulateFailure()">❌ Mô phỏng Thất Bại</button>
-            </div>
-            
-            <hr class="separator">
-
-            <div class="action-buttons-group">
-                <button class="action-btn export-btn" onclick="exportTransactions()">💾 Export Dữ Liệu (.CSV)</button>
-                <button class="action-btn" onclick="clearAllDataAndReset()" style="background-color: var(--reset-bg);">🗑️ Xóa Toàn Bộ Dữ Liệu & Reset</button>
-                <button class="action-btn clear-messages-btn" onclick="clearMessages()">🧹 Xóa Tin Nhắn Hiển Thị</button>
-            </div>
-            
         </div>
-        
-        <div class="message-panel">
-            <h2>💬 Thông Báo Tin Nhắn & Hệ Thống</h2>
-            <div id="message-container">
-                <p class="system-message">Chào mừng đến với Hệ thống Giả Lập Gateway Pro. Vui lòng nhập Mã PIN (1239) để bắt đầu.</p>
+
+        <div class="history-panel">
+            <h2>📜 Lịch Sử Giao Dịch</h2>
+            <div id="history-container">
+                <p style="color: #aaa; text-align: center; padding: 10px;">Đang tải...</p>
             </div>
+        </div>
+
+        <div class="message-panel">
+            <h2>💬 Tin Nhắn Ngân Hàng Giả Lập (Bank SMS/App Notification)</h2>
+            <div class="telegram-chat">
+                <div id="message-container">
+                    <div class="system-message">
+                        Chào mừng đến với Hệ thống giả lập CashBank Gateway. Vui lòng nhập thông tin cấu hình và tiến hành giả lập.
+                    </div>
+                </div>
+            </div>
+             <button class="action-btn clear-messages-btn" onclick="clearMessages()">🗑️ Xóa Tin Nhắn Hiển Thị</button>
         </div>
 
     </div>
-    
-    <div id="transaction-detail-modal" class="modal">
+
+    <div id="transaction-detail-modal" class="modal" onclick="closeModalOnOutsideClick(event)">
         <div class="modal-content">
             <span class="close-button" onclick="closeModal()">&times;</span>
-            
+
             <div class="modal-qr-section">
-                <h2 class="modal-h2" id="qr-modal-title">Mã QR (Giả Lập)</h2>
-                <div id="qr-code-display">
-                    <div class="qr-code-placeholder">
-                        <p>QR Code</p>
-                        <p style="font-size: 10px; color: #888;">(Chờ dữ liệu)</p>
-                    </div>
+                <h2 class="modal-h2">Mã QR Giả Lập</h2>
+                <div id="qr-code-display" class="qr-code-placeholder">
+                    <span>Mã QR mô phỏng</span>
                 </div>
-                <div class="config-group" style="margin-top: 20px;">
-                    <label>Nội dung QR Code (Copyable)</label>
-                    <div id="modal-qr-content" class="detail-value">...</div>
-                </div>
+                <div id="modal-qr-content">Nội dung QR</div>
             </div>
 
             <div class="modal-details">
@@ -214,6 +238,7 @@
                     <div class="detail-item"><span class="detail-label">Số Tiền:</span> <span id="modal-amount" class="detail-value"></span></div>
                     <div class="detail-item"><span class="detail-label">Nội Dung:</span> <span id="modal-content" class="detail-value"></span></div>
                     <div class="detail-item"><span class="detail-label">Trạng Thái:</span> <span id="modal-status" class="detail-value"></span></div>
+                    <div class="detail-item"><span class="detail-label">Webhook Status:</span> <span id="modal-webhook-status" class="detail-value">N/A</span></div>
                     <div class="detail-item"><span class="detail-label">Thời Gian GD:</span> <span id="modal-time" class="detail-value"></span></div>
                 </div>
             </div>
@@ -221,10 +246,9 @@
     </div>
     
     <footer id="main-footer">
-        <p>Phiên bản Gateway Simulator Pro...</p>
+        <p>Phiên bản Gateway Pro - Hỗ trợ <a href="#" style="color: var(--accent-color); text-decoration: none;">Sandbox</a> | Mã PIN mặc định: <strong>1239</strong> | <a href="https://github.com/your-repo" target="_blank" style="color: var(--accent-color); text-decoration: none;">GitHub</a></p>
     </footer>
 
     <script src="js/cashbank.js"></script>
-
 </body>
 </html>

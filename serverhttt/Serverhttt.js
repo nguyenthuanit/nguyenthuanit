@@ -1136,19 +1136,19 @@ async function initSimulation() {
         await updateAllServers();
     }, 2000); // Cập nhật mỗi 2 giây
     
-    document.getElementById('wsToggle').innerHTML = '<i class="fas fa-pause"></i> Pause Simulation';
+    document.getElementById('wsToggle').innerHTML = '<i class="fas fa-pause"></i> Pause Server';
     document.getElementById('wsToggle').classList.replace('primary', 'danger');
     document.getElementById('wsToggle').setAttribute('data-running', '1');
-    showToast('Simulation Started.', 'SUCCESS');
+    showToast('Server Started.', 'SUCCESS');
 }
 
 function stopSimulation() {
     clearInterval(SIMULATION_INTERVAL);
     SIMULATION_INTERVAL = null;
-    document.getElementById('wsToggle').innerHTML = '<i class="fas fa-play"></i> Start Simulation';
+    document.getElementById('wsToggle').innerHTML = '<i class="fas fa-play"></i> Start Server';
     document.getElementById('wsToggle').classList.replace('danger', 'primary');
     document.getElementById('wsToggle').setAttribute('data-running', '0');
-    showToast('Simulation Paused.', 'WARN');
+    showToast('Server Paused.', 'WARN');
 }
 
 async function initApp() {

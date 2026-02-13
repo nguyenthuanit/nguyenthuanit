@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NT Technology</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* === CẢI TIẾN 1: CSS VARIABLES === */
+        :root {
+            --color-brand: #4F46E5;
+            --color-brand-rgb: 79, 70, 229;
+            --color-background: #0f172a;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            background-color: var(--color-background);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        .logo-container {
+            margin: auto;
+            position: relative;
+            z-index: 1;
+            perspective: 800px;
+            animation: 
+                shine-and-fade 2s ease-in-out 3.4s forwards,
+                breathing-glow 5s ease-in-out 5.5s infinite;
+            padding: 1rem;
+            will-change: filter, transform;
+        }
+
+        .logo-svg {
+            width: 320px;
+            max-width: 100%;
+            height: auto;
+            overflow: visible;
+            transition: width 0.3s ease;
+        }
+
+        .cloud-icon-path {
+            stroke-dasharray: 500;
+            stroke-dashoffset: 500;
+            animation: draw-in 2s ease-in-out forwards;
+            stroke: var(--color-brand);
+        }
+        @keyframes draw-in { to { stroke-dashoffset: 0; } }
+
+        .logo-text-nt .char {
+            display: inline-block;
+            opacity: 0;
+            transform: rotateY(-90deg);
+            animation: flip-in 0.8s cubic-bezier(0.3, 0.8, 0.2, 1) forwards;
+            fill: var(--color-brand);
+        }
+        .logo-text-nt .char:nth-child(1) { animation-delay: 1.8s; }
+        .logo-text-nt .char:nth-child(2) { animation-delay: 2.0s; }
+        @keyframes flip-in {
+            from { opacity: 0; transform: rotateY(-90deg); }
+            to { opacity: 1; transform: rotateY(0deg); }
+        }
+
+        .logo-subtext-tech {
+            display: block;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slide-in-up 1s ease-out forwards;
+            animation-delay: 2.4s;
+            fill: var(--color-brand);
+        }
+        @keyframes slide-in-up { to { opacity: 1; transform: translateY(0); } }
+        
+        @keyframes shine-and-fade {
+            0%, 100% { filter: drop-shadow(0 0 0px rgba(var(--color-brand-rgb), 0)); }
+            50% { filter: drop-shadow(0 0 25px rgba(var(--color-brand-rgb), 1)) drop-shadow(0 0 45px rgba(var(--color-brand-rgb), 0.8)); }
+        }
+
+        @keyframes breathing-glow {
+            0%, 100% { filter: drop-shadow(0 0 8px rgba(var(--color-brand-rgb), 0.4)); }
+            50% { filter: drop-shadow(0 0 20px rgba(var(--color-brand-rgb), 0.9)); }
+        }
+
+        @media (max-width: 768px) {
+            .logo-svg {
+                width: 250px;
+            }
+            .logo-container {
+                margin-left: auto;
+                margin-right: 5vw;
+                transform: none;
+                will-change: filter; 
+            }
+        }
+
+        /* === CẢI TIẾN 2: ACCESSIBILITY (REDUCED MOTION) === */
+        @media (prefers-reduced-motion: reduce) {
+            /* Tắt animation hạt */
+            #particles-js {
+                display: none;
+            }
+            
+            /* Tắt animation logo và đưa về trạng thái cuối */
+            .logo-container {
+                animation: none;
+                /* Giữ lại hiệu ứng thở nhẹ, vì nó không quá gây rối */
+                animation: breathing-glow 5s ease-in-out 0s infinite;
+            }
+            .cloud-icon-path {
+                animation: none;
+                stroke-dashoffset: 0;
+            }
+            .logo-text-nt .char,
+            .logo-subtext-tech {
+                animation: none;
+                opacity: 1;
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+
+    <div class="logo-container">
+        <svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 120" 
+             aria-labelledby="logo-title logo-desc" role="img">
+            
+            <title id="logo-title">NT Technology Logo</title>
+            <desc id="logo-desc">Logo bao gồm một biểu tượng đám mây và chữ NT Technology.</desc>
+
+            <g transform="translate(12,8)">
+                <path class="cloud-icon-path" d="M24 64h56c12 0 20-8 20-18 0-10-8-18-20-18-1.5 0-3.2.12-4.8.36-1.1-12.5-11.6-22.36-24.6-22.36C41 6 31.4 14.2 30 26.2 28 26 24 26 18 30c-7 5-9 14-6 22 2.2 6 7 10 12 10z" 
+                fill="none" stroke-width="4" />
+            </g>
+            <g transform="translate(140,10)">
+                <text x="0" y="46" class="logo-text-nt" font-weight="800" font-size="54" transform="skewX(-10)">
+                    <tspan class="char">N</tspan><tspan class="char">T</tspan>
+                </text>
+                <text x="0" y="82" font-weight="600" font-size="20">
+                    <tspan class="logo-subtext-tech">Technology</tspan>
+                </text>
+            </g>
+        </svg>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    
+    <script>
+        (function() {
+            'use strict'; // Bật chế độ nghiêm ngặt cho code sạch hơn
+
+            // Đọc CSS variables (Cải tiến 1)
+            const computedStyles = getComputedStyle(document.documentElement);
+            const brandColor = computedStyles.getPropertyValue('--color-brand').trim() || '#4F46E5';
+
+            // Kiểm tra cài đặt (Cải tiến 2)
+            const isMobile = window.innerWidth <= 768;
+            const isMotionReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            // --- CẤU HÌNH HẠT ---
+            const particleCount = isMobile ? 30 : 60;
+            
+            // Chỉ chạy hạt nếu người dùng KHÔNG yêu cầu giảm chuyển động
+            if (!isMotionReduced) {
+                particlesJS('particles-js', {
+                    "particles": { 
+                        "number": { "value": particleCount, "density": { "enable": true, "value_area": 800 } }, 
+                        "color": { "value": brandColor }, // Dùng biến CSS
+                        "shape": { "type": "circle" }, 
+                        "opacity": { "value": 0.5, "random": true }, 
+                        "size": { "value": 3, "random": true }, 
+                        "line_linked": { "enable": true, "distance": 150, "color": brandColor, "opacity": 0.2, "width": 1 }, // Dùng biến CSS
+                        "move": { "enable": true, "speed": 1, "direction": "none", "out_mode": "out" } 
+                    },
+                    "interactivity": { "events": { "onhover": { "enable": !isMobile, "mode": "grab" } } },
+                    "retina_detect": true
+                });
+            } else {
+                // Nếu giảm chuyển động, ẩn luôn DOM element của hạt
+                const particlesEl = document.getElementById('particles-js');
+                if (particlesEl) {
+                    particlesEl.style.display = 'none';
+                }
+            }
+
+            // --- CẤU HÌNH PARALLAX ---
+            const logoContainer = document.querySelector('.logo-container');
+            
+            // Chỉ chạy parallax nếu KHÔNG phải mobile VÀ KHÔNG giảm chuyển động
+            if (!isMobile && !isMotionReduced) {
+                const tiltStrength = 15;
+                const smoothing = 0.08;
+
+                let targetX = 0, targetY = 0;
+                let currentX = 0, currentY = 0;
+                let isParallaxActive = false; // Cờ để chỉ bắt đầu khi animation kết thúc
+
+                function smoothTilt() {
+                    if (!isParallaxActive) return; // Đợi cờ
+                    
+                    currentX += (targetX - currentX) * smoothing;
+                    currentY += (targetY - currentY) * smoothing;
+
+                    logoContainer.style.transform = `rotateX(${currentX.toFixed(2)}deg) rotateY(${currentY.toFixed(2)}deg)`;
+                    
+                    requestAnimationFrame(smoothTilt);
+                }
+
+                function startParallax() {
+                    isParallaxActive = true;
+                    smoothTilt(); // Bắt đầu vòng lặp
+
+                    document.body.addEventListener('mousemove', (e) => {
+                        const { clientX, clientY } = e;
+                        const { innerWidth, innerHeight } = window;
+                        targetX = (clientY / innerHeight - 0.5) * tiltStrength;
+                        targetY = (clientX / innerWidth - 0.5) * -tiltStrength;
+                    });
+
+                    document.body.addEventListener('mouseleave', () => {
+                        targetX = 0;
+                        targetY = 0;
+                    });
+                }
+
+                // Kích hoạt thông minh
+                logoContainer.addEventListener('animationend', (e) => {
+                    if (e.animationName === 'shine-and-fade') {
+                        startParallax();
+                    }
+                });
+            }
+
+        })(); // Kết thúc IIFE
+    </script>
+</body>
+</html>

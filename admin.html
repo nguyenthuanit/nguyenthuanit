@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <aside id="sidebar">
+        <div class="sidebar-brand"><i class='bx bxs-component'></i><span>AdminPanel</span></div>
+        <ul class="sidebar-menu">
+            <li class="menu-item active" id="dashboard-link"><a href="#"><i class='bx bxs-dashboard'></i><span>Bảng điều khiển</span></a></li>
+            <li class="menu-item" id="user-management-link"><a href="#"><i class='bx bxs-user'></i><span>Quản lý Người dùng</span></a></li>
+            <li class="menu-item" id="order-management-link"><a href="#"><i class='bx bxs-receipt'></i><span>Quản lý Đơn hàng</span></a></li>
+            <li class="menu-item" id="requests-link"><a href="#"><i class='bx bx-key'></i><span>Yêu cầu Mật khẩu</span></a></li>
+            <li class="menu-item" id="settings-link"><a href="#"><i class='bx bxs-cog'></i><span>Cài đặt</span></a></li>
+            <li id="logout-btn"><a href="#"><i class='bx bxs-log-out'></i><span>Đăng xuất</span></a></li>
+        </ul>
+    </aside>
+
+    <div class="sidebar-overlay"></div>
+
+    <main id="main-content">
+        <header class="main-header">
+            <div class="header-left">
+                <button class="menu-toggle" id="menu-toggle"><i class='bx bx-menu'></i></button>
+                <h1 id="main-title">Bảng điều khiển</h1>
+            </div>
+            <div class="header-right">
+                <a href="#" id="admin-profile-link" class="user-profile-link">
+                    <div class="user-profile">
+                        <img src="https://i.pravatar.cc/150?u=admin" alt="Admin Avatar" id="admin-avatar">
+                        <span>Chào, Admin</span>
+                    </div>
+                </a>
+            </div>
+        </header>
+
+        <div class="content-body">
+            <section id="dashboard-section" class="content-section active">
+                <div class="cards-container">
+                    <div class="card">
+                        <div class="card-icon"><i class='bx bx-user-plus'></i></div>
+                        <div class="card-info"><h3 id="total-users-card">0</h3><p>Tổng số người dùng</p></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon"><i class='bx bx-cart'></i></div>
+                        <div class="card-info"><h3 id="total-orders-card">0</h3><p>Tổng số đơn hàng</p></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon"><i class='bx bx-dollar-circle'></i></div>
+                        <div class="card-info"><h3 id="monthly-revenue-card">0</h3><p>Doanh thu tháng này</p></div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="user-management-section" class="content-section">
+                <div class="section-header">
+                    <h2>Danh sách người dùng đã đăng ký</h2>
+                    <div class="search-container">
+                        <i class='bx bx-search'></i>
+                        <input type="search" id="user-search-input" placeholder="Tìm kiếm người dùng...">
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th>Tên đăng nhập</th><th>Trạng thái</th><th>Hành động</th></tr>
+                        </thead>
+                        <tbody id="users-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="pagination-container"></div>
+            </section>
+            
+            <section id="order-management-section" class="content-section">
+                <div class="section-header"><h2>Tất cả đơn hàng</h2></div>
+                 <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th>Mã ĐH</th><th>Người dùng</th><th>Ngày tạo</th><th>Tổng tiền</th><th>Trạng thái</th><th>Hành động</th></tr>
+                        </thead>
+                        <tbody id="orders-table-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="requests-section" class="content-section">
+                <div class="section-header"><h2>Yêu cầu đặt lại mật khẩu</h2></div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>Tên người dùng</th><th>Thời gian yêu cầu</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+                        <tbody id="requests-table-body"></tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <section id="settings-section" class="content-section">
+                <div class="section-container">
+                   <h2>Cài đặt Giao diện</h2>
+                   <div class="setting-item">
+                       <span>Chế độ Tối (Dark Mode)</span>
+                       <label class="switch">
+                           <input type="checkbox" id="theme-toggle-checkbox">
+                           <span class="slider"></span>
+                       </label>
+                   </div>
+                </div>
+                <div class="section-container danger-zone">
+                   <h2>Khu vực Nguy hiểm</h2>
+                    <div class="setting-item">
+                       <div>
+                           <strong>Xóa sạch toàn bộ dữ liệu</strong>
+                           <p>Hành động này sẽ xóa vĩnh viễn tất cả tài khoản, đơn hàng, và yêu cầu. Dùng cho mục đích kiểm thử và reset.</p>
+                       </div>
+                       <button class="delete-account-btn" id="delete-all-data-btn">Xóa sạch dữ liệu</button>
+                   </div>
+                </div>
+           </section>
+        </div>
+    </main>
+    
+    <div id="notification-container"></div>
+
+    <div id="modal-container" class="modal-hidden">
+        <div id="modal-content">
+            <button id="modal-close-btn">&times;</button>
+            <h2 id="modal-title">Tiêu đề Modal</h2>
+            <div id="modal-body">
+                Nội dung modal...
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support | Nguyenthuanit</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- Reset & Basic Setup --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* --- Các biến màu --- */
+        :root {
+            --primary-color: #4F46E5;
+            --secondary-color: #eef2ff;
+            
+            --body-bg: #FFFFFF;
+            --section-bg: #F9FAFB;
+            --card-bg: #FFFFFF;
+            
+            --text-dark: #111827;
+            --text-gray: #6B7280;
+            --text-light: #FFFFFF;
+
+            --border-color: #e0e0e0;
+            --shadow-color: rgba(0, 0, 0, 0.05);
+        }
+
+        body[data-theme="dark"] {
+            --secondary-color: #312e81;
+
+            --body-bg: #111827;
+            --section-bg: #1F2937;
+            --card-bg: #374151;
+
+            --text-dark: #F9FAFB;
+            --text-gray: #9CA3AF;
+            
+            --border-color: #4B5563;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            background-color: var(--body-bg);
+            color: var(--text-dark);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        ul {
+            list-style-type: none;
+        }
+
+        /* --- Header & Navbar --- */
+        .header {
+            background-color: var(--primary-color);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-logo svg.logo-icon {
+            width: 160px;
+            height: auto;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            flex-grow: 1;
+            justify-content: center;
+        }
+
+        .nav-item {
+            position: relative;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.85);
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-light);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .theme-toggle-btn, .login-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.85);
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .theme-toggle-btn:hover, .login-btn:hover {
+            color: var(--text-light);
+        }
+
+        .theme-toggle-btn .moon-icon { display: none; }
+        .theme-toggle-btn .sun-icon { display: block; }
+
+        body[data-theme="dark"] .theme-toggle-btn .moon-icon { display: block; }
+        body[data-theme="dark"] .theme-toggle-btn .sun-icon { display: none; }
+
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+        }
+
+        .btn-primary:hover {
+            background-color: #4338CA;
+        }
+        
+        .btn-lg {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .hamburger {
+            display: none;
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
+
+        .bar {
+            display: block;
+            width: 25px;
+            height: 3px;
+            margin: 5px auto;
+            transition: all 0.3s ease-in-out;
+            background-color: var(--text-light);
+        }
+
+        /* --- Dropdown Menu Styles --- */
+        .dropdown-toggle {
+            cursor: pointer;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 150%; 
+            left: 0;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px var(--shadow-color); 
+            min-width: 180px;
+            padding: 0.5rem 0;
+            z-index: 101;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, top 0.3s ease, background-color 0.3s ease;
+        }
+
+        .dropdown-menu li a {
+            color: var(--text-gray);
+            display: block;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+        .dropdown-menu li a:hover {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            transform: translateX(5px);
+        }
+        .dropdown.active > .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            top: 100%; 
+        }
+
+        /* --- Footer --- */
+        .footer {
+            background-color: var(--section-bg);
+            color: var(--text-gray);
+            font-size: 0.95rem;
+        }
+
+        .footer-main {
+            padding: 5rem 0;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 2fr;
+            gap: 3rem;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .footer-logo svg.logo-icon {
+            width: 120px;
+            height: auto;
+        }
+
+        .footer-description {
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-col h4 {
+            color: var(--text-dark);
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-col ul li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-col ul a {
+            transition: color 0.3s ease;
+        }
+
+        .footer-col ul a:hover {
+            color: var(--primary-color);
+        }
+
+        .footer-col p {
+            margin-bottom: 1.5rem;
+        }
+
+        .newsletter-form {
+            position: relative;
+        }
+
+        .newsletter-form input {
+            width: 100%;
+            padding: 0.9rem 3rem 0.9rem 1rem;
+            border-radius: 50px;
+            border: 1px solid var(--border-color);
+            background-color: var(--body-bg);
+            color: var(--text-dark);
+        }
+
+        .newsletter-form button {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .footer-bottom {
+            padding: 1.5rem 0;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .footer-bottom-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-bottom-links a:hover {
+            color: var(--primary-color);
+        }
+
+        /* --- Scroll Top Button --- */
+        .scroll-top-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 45px;
+            height: 45px;
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+        }
+
+        .scroll-top-btn.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        /* --- Support Page --- */
+        .support-section {
+            padding: 5rem 0;
+            background-color: var(--body-bg);
+        }
+
+        .support-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .support-header h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        .support-header p {
+            font-size: 1.1rem;
+            color: var(--text-gray);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .support-content-wrapper {
+            display: grid;
+            grid-template-columns: 2fr 1.2fr;
+            gap: 3rem;
+            align-items: flex-start;
+        }
+
+        .support-form-container {
+            background-color: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 24px var(--shadow-color);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-gray);
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--section-bg);
+            color: var(--text-dark);
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .support-info {
+            color: var(--text-gray);
+        }
+
+        .support-info h3 {
+            color: var(--text-dark);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .contact-list {
+            margin-top: 1.5rem;
+        }
+
+        .contact-list li {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .contact-list li strong {
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .contact-list li a {
+            color: var(--primary-color);
+        }
+        .contact-list li a:hover {
+            text-decoration: underline;
+        }
+
+        .info-notice {
+            margin-top: 2.5rem;
+            padding: 1.5rem;
+            background-color: var(--section-bg);
+            border-left: 4px solid var(--primary-color);
+            border-radius: 4px;
+        }
+        .info-notice h4 {
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        /* --- Responsive Design --- */
+        @media(max-width: 992px) {
+            .navbar {
+                justify-content: space-between;
+            }
+            
+            .header-controls {
+                display: none;
+            }
+
+            .nav-menu {
+                flex-grow: 0;
+                justify-content: flex-start;
+            }
+
+            .footer-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .support-content-wrapper {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
+            }
+        }
+
+        @media(max-width: 768px) {
+            .support-section {
+                padding-top: 3.5rem;
+                padding-bottom: 3.5rem;
+            }
+             .footer-main {
+                padding: 3.5rem 0;
+            }
+
+            .support-header h2 {
+                font-size: 2.2rem;
+            }
+
+            /* Cải thiện footer trên mobile */
+            .footer-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 2.5rem;
+            }
+            
+            .footer-col h4 {
+                margin-bottom: 1rem;
+            }
+            
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-menu {
+                position: fixed;
+                left: -100%;
+                top: 70px;
+                flex-direction: column;
+                background-color: var(--card-bg);
+                width: 100%;
+                text-align: left; 
+                transition: 0.3s;
+                box-shadow: 0 10px 27px var(--shadow-color);
+                gap: 0;
+            }
+            
+            .nav-menu .nav-link {
+                color: var(--text-gray); 
+            }
+            
+            .nav-menu .nav-link:hover {
+                color: var(--primary-color);
+            }
+
+            .nav-menu.active {
+                left: 0;
+            }
+
+            .nav-item {
+                width: 100%;
+            }
+
+            .nav-link {
+                display: block;
+                padding: 1.25rem 1.5rem;
+            }
+            
+            .nav-link:hover {
+                background-color: var(--section-bg);
+            }
+
+            .hamburger {
+                display: block;
+            }
+
+            .hamburger.active .bar:nth-child(2) {
+                opacity: 0;
+            }
+
+            .hamburger.active .bar:nth-child(1) {
+                transform: translateY(8px) rotate(45deg);
+            }
+
+            .hamburger.active .bar:nth-child(3) {
+                transform: translateY(-8px) rotate(-45deg);
+            }
+            
+            .dropdown-menu {
+                position: static; 
+                opacity: 1;
+                visibility: visible;
+                box-shadow: none;
+                border-radius: 0;
+                min-width: 100%;
+                padding: 0;
+                display: none;
+            }
+
+            .dropdown.active .dropdown-menu {
+                display: block; 
+            }
+            
+            .dropdown-menu li a {
+                padding-left: 3rem; 
+                background-color: var(--section-bg);
+            }
+
+            .dropdown-menu li a:hover {
+                background-color: var(--secondary-color);
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="light">
+
+    <header class="header">
+        <div class="container">
+            <nav class="navbar">
+                <a href="index.html" class="nav-logo" aria-label="NT Technology">
+                    <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 120" style="overflow: visible; display:block;" role="img" aria-label="NT Technology logo">
+                        <defs><style>.logo-text { font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }</style></defs>
+                        <g transform="translate(12,8)"><path d="M24 64h56c12 0 20-8 20-18 0-10-8-18-20-18-1.5 0-3.2.12-4.8.36-1.1-12.5-11.6-22.36-24.6-22.36C41 6 31.4 14.2 30 26.2 28 26 24 26 18 30c-7 5-9 14-6 22 2.2 6 7 10 12 10z" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" /></g>
+                        <g transform="translate(140,10)"><text x="0" y="46" class="logo-text" font-weight="800" font-size="54" fill="#FFFFFF" transform="skewX(-10)">NT</text><text x="0" y="82" class="logo-text" font-weight="600" font-size="20" fill="rgba(255,255,255,0.95)">Technology</text></g>
+                    </svg>
+                </a>
+                <ul class="nav-menu">
+                    <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                    <li class="nav-item"><a href="teminal/teminal.html" class="nav-link">Teminal</a></li>
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle">Pages ▾</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="HPBD.html">Blog Grid</a></li>
+                            <li><a href="coming-soon.html">Blog Single</a></li>
+                            <li><a href="login.html">Sign In</a></li>
+                            <li><a href="register.html">Sign Up</a></li>
+                            <li><a href="404.html">404</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a href="support-full.html" class="nav-link">Support</a></li> </ul>
+                <div class="header-controls">
+                    <button id="theme-toggle" class="theme-toggle-btn">
+                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                    <a href="login.html" class="login-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></a>
+                </div>
+                <div class="hamburger"><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="support-section">
+            <div class="container">
+                <div class="support-header">
+                    <h2>Liên Hệ Hỗ Trợ</h2>
+                    <p>Có câu hỏi hoặc cần trợ giúp? Hãy bắt đầu trò chuyện với chatbot của chúng tôi để được giải đáp ngay lập tức!</p>
+                </div>
+
+                <div class="support-content-wrapper">
+                    
+                    <div class="support-form-container" style="text-align: center;">
+                        <h3 style="margin-bottom: 1.5rem;">Bắt đầu trò chuyện</h3>
+                        <p style="margin-bottom: 2rem; color: var(--text-gray);">
+                            Nhấp vào nút bên dưới để được hỗ trợ ngay lập tức qua chatbot Telegram của chúng tôi. Nhanh chóng, tiện lợi và hoạt động 24/7
+                        </p>
+                        
+                        <a href="https://t.me/ThuanITSupportBot" target="_blank" class="btn btn-primary btn-lg" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            Chat với chúng tôi trên Telegram
+                        </a>
+                    </div>
+                    <div class="support-info">
+                        <h3>Thông Tin Liên Lạc</h3>
+                        <p>Bạn có thể liên hệ trực tiếp với chúng tôi qua các kênh sau:</p>
+                        <ul class="contact-list">
+                            <li>
+                                <strong>Chatbot (Telegram):</strong> 
+                                <a href="https://t.me/ThuanITSupportBot" target="_blank">@ThuanITSupportBot</a>
+                            </li>
+                            <li>
+                                <strong>Email:</strong> 
+                                <a href="mailto:support@example.com">Nguyenminhthuan101096@gmail.com</a>
+                            </li>
+                            <li>
+                                <strong>Giờ làm việc:</strong> 
+                                <span>Thứ 2 - Thứ 6, 17:00 PM - 23:00 PM</span>
+                                <span>Thứ 7 - Chủ nhật, 8:00 AM - 23:00 PM</span>
+                            </li>
+                        </ul>
+                        <div class="info-notice">
+                            <h4>Tại sao lại là Chatbot?</h4>
+                            <p>Chúng tôi sử dụng chatbot để cung cấp hỗ trợ tự động, nhanh chóng và chính xác cho các câu hỏi thường gặp, giúp bạn tiết kiệm thời gian.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-main">
+                <div class="footer-grid">
+                    <div class="footer-col">
+                        <a href="index.html" class="footer-logo" aria-label="NT Technology">
+                            <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 120" style="overflow: visible; display:block;" role="img" aria-label="NT Technology logo">
+                                <defs><style>.logo-text { font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }</style></defs>
+                                <g transform="translate(12,8)"><path d="M24 64h56c12 0 20-8 20-18 0-10-8-18-20-18-1.5 0-3.2.12-4.8.36-1.1-12.5-11.6-22.36-24.6-22.36C41 6 31.4 14.2 30 26.2 28 26 24 26 18 30c-7 5-9 14-6 22 2.2 6 7 10 12 10z" fill="none" stroke="#4F46E5" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" /></g>
+                                <g transform="translate(140,10)"><text x="0" y="46" class="logo-text" font-weight="800" font-size="54" fill="#4F46E5" transform="skewX(-10)">NT</text><text x="0" y="82" class="logo-text" font-weight="600" font-size="20" fill="#4F46E5">Technology</text></g>
+                            </svg>
+                        </a>
+                        <p class="footer-description">Liên hệ và tương tác cùng chúng tôi, <br> (đang trong quá trình phát triển).</p>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Quick Links</h4>
+                        <ul>
+                            <li><a href="#">Home</a></li>
+                            <li><a href="#">Product</a></li>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Pricing</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Services</h4>
+                        <ul>
+                            <li><a href="#">Web Development</a></li>
+                            <li><a href="#">Graphics Design</a></li>
+                            <li><a href="#">Digital Marketing</a></li>
+                            <li><a href="#">UI/UX Design</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Support</h4>
+                        <ul>
+                            <li><a href="#">Company</a></li>
+                            <li><a href="#">Press media</a></li>
+                            <li><a href="#">Our Blog</a></li>
+                            <li><a href="#">Contact Us</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Updates</h4>
+                        <p>Cập nhật lần cuối <br> 15/10/2025</p>
+                        <form class="newsletter-form">
+                            <input type="email" placeholder="Email address">
+                            <button type="submit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-bottom-links">
+                    <a href="coming-soon.html">English</a>
+                    <a href="privacy-policy.html">Privacy Policy</a>
+                    <a href="support-full.html">Support</a>
+                </div>
+                <div class="footer-copyright">
+                    <p>© 2025 Nguyenthuanit. Independently Developed.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <a href="#" id="scrollTopBtn" class="scroll-top-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg></a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Chức năng cho Menu trên di động (Hamburger) ---
+            const hamburger = document.querySelector('.hamburger');
+            const navMenu = document.querySelector('.nav-menu');
+
+            if (hamburger && navMenu) {
+                hamburger.addEventListener('click', () => {
+                    hamburger.classList.toggle('active');
+                    navMenu.classList.toggle('active');
+                });
+            }
+
+            // --- Chức năng cho Menu xổ xuống (Dropdown) ---
+            const dropdowns = document.querySelectorAll('.dropdown');
+
+            dropdowns.forEach(dropdown => {
+                const toggle = dropdown.querySelector('.dropdown-toggle');
+                
+                if (toggle) {
+                    toggle.addEventListener('click', (e) => {
+                        e.preventDefault(); 
+                        const isActive = dropdown.classList.contains('active');
+                        closeAllDropdowns();
+                        if (!isActive) {
+                            dropdown.classList.add('active');
+                        }
+                    });
+                }
+            });
+
+            function closeAllDropdowns() {
+                dropdowns.forEach(dropdown => {
+                    dropdown.classList.remove('active');
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.dropdown')) {
+                    closeAllDropdowns();
+                }
+            });
+
+
+            // --- Chức năng chuyển đổi Giao diện Sáng/Tối (Theme Toggle) ---
+            const themeToggleButton = document.getElementById('theme-toggle');
+            const body = document.body;
+            
+            function applyTheme(theme) {
+                body.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+            }
+            
+            function toggleTheme() {
+                const currentTheme = body.getAttribute('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                applyTheme(newTheme);
+            }
+
+            if (themeToggleButton) {
+                themeToggleButton.addEventListener('click', toggleTheme);
+            }
+
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+
+
+            // --- Chức năng Nút cuộn lên đầu trang (Scroll Top Button) ---
+            const scrollTopBtn = document.getElementById('scrollTopBtn');
+
+            if (scrollTopBtn) {
+                window.addEventListener('scroll', () => {
+                    if (window.scrollY > 300) {
+                        scrollTopBtn.classList.add('show');
+                    } else {
+                        scrollTopBtn.classList.remove('show');
+                    }
+                });
+
+                scrollTopBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                });
+            }
+
+            // --- MÃ JAVASCRIPT CHO FORM CŨ ĐÃ ĐƯỢC XÓA BỎ ---
+            
+        });
+    </script>
+</body>
+
+</html>

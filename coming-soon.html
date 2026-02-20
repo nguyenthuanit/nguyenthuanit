@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tính Năng Sắp Phát Triển | Nguyenthuanit</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        .error-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 6rem 20px;
+            min-height: 60vh;
+        }
+        .error-section .icon {
+            width: 80px;
+            height: 80px;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+        .error-section h2 {
+            font-size: 2rem;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
+        }
+        .error-section p {
+            color: var(--text-gray);
+            max-width: 450px;
+            margin-bottom: 2.5rem;
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <header class="header">
+        <div class="container">
+            <nav class="navbar">
+                <a href="index.html" class="nav-logo" aria-label="NT Technology">
+                  <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg"
+                       viewBox="0 0 360 120"
+                       style="overflow: visible; display:block;" role="img" aria-label="NT Technology logo">
+                    <defs>
+                      <style>
+                        .logo-text { font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+                      </style>
+                    </defs>
+                
+                    <g transform="translate(12,8)">
+                      <path d="M24 64h56c12 0 20-8 20-18 0-10-8-18-20-18-1.5 0-3.2.12-4.8.36-1.1-12.5-11.6-22.36-24.6-22.36C41 6 31.4 14.2 30 26.2 28 26 24 26 18 30c-7 5-9 14-6 22 2.2 6 7 10 12 10z"
+                            fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                
+                    <g transform="translate(140,10)">
+                      <text x="0" y="46" class="logo-text" font-weight="800" font-size="54"
+                            fill="#FFFFFF" transform="skewX(-10)">
+                        NT
+                      </text>
+                
+                      <text x="0" y="82" class="logo-text" font-weight="600" font-size="20"
+                            fill="rgba(255,255,255,0.95)">
+                        Technology
+                      </text>
+                    </g>
+                  </svg>
+                </a>
+                
+                <ul class="nav-menu">
+                    <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                    <li class="nav-item"><a href="teminal/teminal.html" class="nav-link">Teminal</a></li>
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle">Pages ▾</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="coming-soon.html">Blog Grid</a></li>
+                            <li><a href="coming-soon.html">Blog Single</a></li>
+                            <li><a href="login.html">Sign In</a></li>
+                            <li><a href="register.html">Sign Up</a></li>
+                            <li><a href="404.html">404</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a href="#" class="nav-link">Support</a></li>
+                </ul>
+
+                <div class="header-controls">
+                    <button id="theme-toggle" class="theme-toggle-btn">
+                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                    <a href="login.html" class="login-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </a>
+                </div>
+
+                <div class="hamburger">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="error-section">
+            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20.71,7.04C21.1,6.65,21.1,6,20.71,5.63L18.37,3.29C18,2.9,17.35,2.9,16.96,3.29L15.13,5.12L18.88,8.87M3,17.25V21H6.75L17.81,9.94L14.06,6.19L3,17.25Z" /></svg>
+            <h2>Tính Năng Đang Được Phát Triển</h2>
+            <p>Chúng tôi đang nỗ lực để sớm ra mắt tính năng này. Vui lòng quay lại sau.</p>
+            <a href="index.html" class="btn btn-primary btn-lg">Quay về Trang chủ</a>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-main">
+                <div class="footer-grid">
+                    <div class="footer-col">
+                        <a href="index.html" class="footer-logo" aria-label="NT Technology">
+                           <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 360 120"
+                                style="overflow: visible; display:block;" role="img" aria-label="NT Technology logo">
+                             <defs>
+                               <style>
+                                 .logo-text { font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+                               </style>
+                             </defs>
+                         
+                             <g transform="translate(12,8)">
+                               <path d="M24 64h56c12 0 20-8 20-18 0-10-8-18-20-18-1.5 0-3.2.12-4.8.36-1.1-12.5-11.6-22.36-24.6-22.36C41 6 31.4 14.2 30 26.2 28 26 24 26 18 30c-7 5-9 14-6 22 2.2 6 7 10 12 10z"
+                                     fill="none" stroke="#4F46E5" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                             </g>
+                         
+                             <g transform="translate(140,10)">
+                               <text x="0" y="46" class="logo-text" font-weight="800" font-size="54"
+                                     fill="#4F46E5" transform="skewX(-10)">
+                                 NT
+                               </text>
+                         
+                               <text x="0" y="82" class="logo-text" font-weight="600" font-size="20"
+                                     fill="#4F46E5">
+                                 Technology
+                               </text>
+                             </g>
+                           </svg>
+                        </a>
+                        <p class="footer-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Quick Links</h4>
+                        <ul>
+                            <li><a href="#">Home</a></li>
+                            <li><a href="#">Product</a></li>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Pricing</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Services</h4>
+                        <ul>
+                            <li><a href="#">Web Development</a></li>
+                            <li><a href="#">Graphics Design</a></li>
+                            <li><a href="#">Digital Marketing</a></li>
+                            <li><a href="#">UI/UX Design</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Support</h4>
+                        <ul>
+                            <li><a href="#">Company</a></li>
+                            <li><a href="#">Press media</a></li>
+                            <li><a href="#">Our Blog</a></li>
+                            <li><a href="#">Contact Us</a></li>
+                        </ul>
+                    </div>
+                     <div class="footer-col">
+                        <h4>Newsletter</h4>
+                        <p>Subscribe to receive future updates</p>
+                        <form class="newsletter-form">
+                            <input type="email" placeholder="Email address">
+                            <button type="submit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-bottom-links">
+                    <a href="#">English</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Support</a>
+                </div>
+                <div class="footer-copyright">
+                    <p>© 2025 Nguyenthuanit. Independently Developed.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <a href="#" id="scrollTopBtn" class="scroll-top-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    </a>
+    
+    <script src="js/script.js"></script>
+</body>
+</html>

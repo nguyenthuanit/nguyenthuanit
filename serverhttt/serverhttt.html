@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Enterprise Server Simulator — Professional Edition</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net/npm/chart.js" crossorigin>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1/dist/chartjs-plugin-annotation.min.js" defer></script>
+  <link rel="stylesheet" href="Serverhttt.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">NT</div>
+      <div>
+        <div class="h1">nguyenthuanit.id.vn — Enterprise smlt</div>
+        <div class="small">Hệ Thống Tập Trung — Phiên bản: **Professional 3.1**</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn" id="wsToggle" data-running="0" aria-label="Toggle Simulation"><i class="fas fa-play"></i> Start Server</button>
+      <button class="btn ghost" id="themeToggle" aria-label="Toggle Theme"><i class="fas fa-adjust"></i> Theme</button>
+      <button class="btn ghost" id="backupBtn" aria-label="Backup Database"><i class="fas fa-database"></i> Backup DB</button>
+    </div>
+  </div>
+
+  <div class="app-main">
+    
+    <aside class="sidebar card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3>Danh Sách Server (<span id="serverCount">0</span>)</h3>
+        <button class="btn primary small" id="addServerBtn" aria-label="Add New Server"><i class="fas fa-plus"></i> Add</button>
+      </div>
+      <div class="server-list" id="serverList">
+        </div>
+    </aside>
+
+    <main class="main-content">
+      
+      <section class="health-overview card">
+        <h3>Health Overview</h3>
+        <div class="health-grid">
+          <div class="health-metric health-ok">
+            <div class="large-value" id="okCount">0</div>
+            <div class="small">OK</div>
+          </div>
+          <div class="health-metric health-warn">
+            <div class="large-value" id="warnCount">0</div>
+            <div class="small">WARN / Booting</div>
+          </div>
+          <div class="health-metric health-danger">
+            <div class="large-value" id="dangerCount">0</div>
+            <div class="small">DANGER / Down</div>
+          </div>
+          <div class="health-metric health-total">
+            <div class="large-value" id="totalCount">0</div>
+            <div class="small">Total Metrics</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="realtime-metrics card">
+        <h3>Real-time Metrics (Selected Server)</h3>
+        <div class="chart-grid">
+          <div class="chart-container">
+            <h4>Average CPU Usage (%)</h4>
+            <canvas id="cpuChart"></canvas>
+          </div>
+          <div class="chart-container">
+            <h4>Average RAM Usage (%)</h4>
+            <canvas id="ramChart"></canvas>
+          </div>
+          <div class="chart-container">
+            <h4>Network Latency (ms)</h4>
+            <canvas id="latencyChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="details-logs-panel">
+        <div class="details-grid">
+          <div class="server-details card">
+            <h3>Server Details / Advanced Controls</h3>
+            <div class="detail-grid" id="serverDetailGrid">
+                </div>
+            
+            <div style="margin-top: 15px; border-top: 1px dotted rgba(255, 255, 255, 0.05); padding-top: 10px;">
+                <h4 style="margin: 5px 0 10px 0; font-size: 1rem; color: var(--muted);">Quick Actions</h4>
+                <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                    <button class="btn secondary small" id="restartServiceBtn" disabled><i class="fas fa-power-off"></i> Restart Service</button>
+                    <button class="btn ghost small" id="liveTerminalBtn" disabled><i class="fas fa-terminal"></i> Live Terminal</button>
+                    <button class="btn network small" id="toggleMaintenanceBtn" disabled><i class="fas fa-wrench"></i> Maintenance: OFF</button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 15px; border-top: 1px dotted rgba(255, 255, 255, 0.05); padding-top: 10px;">
+                <h4 style="margin: 5px 0 10px 0; font-size: 1rem; color: var(--muted);">Advanced Configuration</h4>
+                <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                    <button class="btn info ghost small" id="editPolicyBtn" disabled><i class="fas fa-shield-alt"></i> Edit Firewall Policy</button>
+                    <button class="btn ghost small" id="editScriptBtn" disabled><i class="fas fa-code"></i> Edit Health Check Script</button>
+                    <button class="btn danger small" id="deleteServerBtn" disabled><i class="fas fa-trash"></i> Decommission</button>
+                </div>
+            </div>
+          </div>
+          
+          <div class="system-logs card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <h3>System Logs</h3>
+              <div class="controls small" style="gap:5px;">
+                <select id="logLevelFilter">
+                  <option value="ALL">ALL</option>
+                  <option value="CRITICAL">CRITICAL</option>
+                  <option value="WARN">WARN</option>
+                  <option value="INFO">INFO</option>
+                </select>
+                <button class="btn ghost small" id="exportLogsBtn"><i class="fas fa-download"></i> Export</button>
+              </div>
+            </div>
+            <div class="log-area" id="logArea">
+              Loading logs...
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="control-panel card">
+      <h3>Control Panel</h3>
+      <div class="config-group">
+        <label>System Configuration</label>
+        <div style="margin-top:15px;display:flex;gap:8px;flex-direction:column;">
+          <button class="btn primary" id="autoScaleToggle"><i class="fas fa-tachometer-alt"></i> Auto-Scale: OFF</button>
+          <button class="btn secondary" id="runSpeedTestBtn"><i class="fas fa-gauge-high"></i> Run Internal Speed Test</button>
+          <button class="btn ghost" id="simulateSpike"><i class="fas fa-chart-line"></i> Simulate Spike</button>
+          <button class="btn danger ghost" id="rotateKeyBtn"><i class="fas fa-key"></i> Rotate Encryption Key</button>
+          <button class="btn success ghost" id="toggleEncryptBtn"><i class="fas fa-lock-open"></i> Encryption: DISABLED</button>
+        </div>
+      </div>
+      
+      <div class="config-group">
+        <label>Global Network Control</label>
+        <p>Network Throttle Lag (ms)</p>
+        <input type="number" id="networkLag" value="0" min="0" max="1000" />
+      </div>
+
+      <div class="config-group">
+        <label>Auto-Scale Configuration</label>
+        <p>CPU UP Threshold (%)</p>
+        <input type="number" id="autoScaleThresholdUp" value="85" min="50" max="100" />
+        <p>CPU DOWN Threshold (%)</p>
+        <input type="number" id="autoScaleThresholdDown" value="25" min="0" max="50" />
+        <p>Cooldown Period (seconds)</p>
+        <input type="number" id="autoScaleCooldown" value="30" min="10" max="300" />
+      </div>
+      
+    </aside>
+  </div>
+
+  <div class="app-foot">
+    Enterprise Server Simulator - Professional Edition | Developed by nguyenthuanit.id.vn | &copy; 2024
+  </div>
+
+  <aside class="modal hidden" id="terminalModal">
+    <div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="terminalTitle">Live Terminal: Server-??</h3>
+            <button class="btn ghost small" onclick="document.getElementById('terminalModal').classList.add('hidden');"><i class="fas fa-times"></i></button> 
+        </div>
+        <div class="terminal-container">
+            <pre class="terminal-output" id="terminalOutput"></pre>
+            <div class="terminal-input-line">
+                <span>$</span>
+                <input type="text" id="terminalInput" autocomplete="off" autofocus />
+            </div>
+        </div>
+    </div>
+  </aside>
+
+  <aside class="modal hidden" id="speedTestModal">
+    <div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Internal Network Speed Test</h3>
+            <button class="btn ghost small" onclick="document.getElementById('speedTestModal').classList.add('hidden');"><i class="fas fa-times"></i></button> 
+        </div>
+        <div style="padding: 10px 0; font-size: 0.9rem; color: var(--muted);" id="speedTestStatus">
+            Ready to start test...
+        </div>
+        <div class="speed-bar-container">
+            <div class="speed-bar" id="speedBar"></div>
+        </div>
+    </div>
+  </aside>
+
+  <aside class="modal hidden" id="policyModal">
+    <div style="max-width: 700px; width: 90%;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="policyTitle">Firewall Policy: Server-??</h3>
+            <button class="btn ghost small" onclick="document.getElementById('policyModal').classList.add('hidden');"><i class="fas fa-times"></i></button> 
+        </div>
+        <div class="config-group">
+            <label>Active Rules</label>
+            <table class="policy-table">
+                <thead>
+                    <tr>
+                        <th>Source IP</th>
+                        <th>Port</th>
+                        <th>Action</th>
+                        <th>Remove</th>
+                    </tr>
+                </thead>
+                <tbody id="policyTableBody">
+                </tbody>
+            </table>
+        </div>
+        <div class="config-group" style="border-bottom: none;">
+            <h4 style="margin: 5px 0 10px 0; font-size: 1rem; color: var(--muted);">Add New Rule</h4>
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 50px; gap: 8px; align-items: center;">
+                <input type="text" id="newPolicyIP" placeholder="Source IP / CIDR (e.g., 10.0.0.0/8)" value="" />
+                <input type="number" id="newPolicyPort" placeholder="Port" min="1" max="65535" />
+                <select id="newPolicyAction">
+                    <option value="ALLOW">ALLOW</option>
+                    <option value="DENY">DENY</option>
+                </select>
+                <button class="btn primary" id="addPolicyBtn" style="width: 100%;"><i class="fas fa-plus"></i></button>
+            </div>
+        </div>
+    </div>
+  </aside>
+
+  <aside class="modal hidden" id="scriptModal">
+    <div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="scriptTitle">Health Check Script: Server-??</h3>
+            <button class="btn ghost small" onclick="document.getElementById('scriptModal').classList.add('hidden');"><i class="fas fa-times"></i></button> 
+        </div>
+        <div class="config-group">
+            <label>Script (Pseudo-Python/Bash)</label>
+            <textarea id="healthScriptArea" placeholder="# Script chạy tự động mỗi 10s để kiểm tra tình trạng...\n# Cần trả về true/false để đánh giá health\nreturn True"></textarea>
+            <p class="muted small">Script này ảnh hưởng trực tiếp đến trạng thái **OK/WARN/CRITICAL**.</p>
+        </div>
+        <div style="display:flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn ghost" id="resetScriptBtn"><i class="fas fa-undo"></i> Reset Default</button>
+            <button class="btn primary" id="saveScriptBtn"><i class="fas fa-save"></i> Save Script</button>
+        </div>
+    </div>
+  </aside>
+  
+  <div class="toast-container" id="toast-container"></div>
+  <script src="Serverhttt.js"></script>
+</body>
+</html>

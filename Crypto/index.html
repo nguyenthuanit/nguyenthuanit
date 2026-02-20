@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NMT VIP BO - Siêu Cấp Tài Xỉu</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="top-bar">
+        <div class="logo">💎 NMT VIP BO</div>
+        <div class="wallet-info">
+            Tổng tài sản: <span id="total-asset" class="highlight">$10,000.00</span>
+            <button class="btn-deposit" onclick="openDepositModal()">+ NẠP VIP</button>
+        </div>
+    </header>
+
+    <div class="layout-grid">
+        <div class="panel left-panel">
+            <div class="stats-grid">
+                <div class="stat-box" style="grid-column: 1 / -1; border-color: var(--accent); background: rgba(252, 213, 53, 0.05);">
+                    <span class="label">Ví Tiền Mặt (USD)</span>
+                    <span class="value highlight" id="usd-balance" style="color: var(--accent); font-size: 24px;">$10,000.00</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">Tổng Lãi/Lỗ</span>
+                    <span class="value" id="realized-pnl">$0.00</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">Chuỗi (Streak)</span>
+                    <span class="value" id="win-streak" style="color: var(--text-main);">0</span>
+                </div>
+            </div>
+
+            <div class="sidebar-tabs">
+                <button class="tab-btn active" onclick="switchSidebarTab('history')">Lịch sử cá nhân</button>
+                <button class="tab-btn" onclick="switchSidebarTab('livefeed')">Live Feed 🔴</button>
+            </div>
+
+            <div id="tab-history" class="tab-content active">
+                <div class="history-list" id="history-body"></div>
+                <button class="btn-cancel" style="width: 100%; margin-top: 10px;" onclick="resetAccount()">Khôi phục dữ liệu gốc</button>
+            </div>
+
+            <div id="tab-livefeed" class="tab-content">
+                <div id="live-feed" class="live-feed-container"></div>
+            </div>
+        </div>
+
+        <div class="panel center-panel">
+            <div class="panel-header" style="text-align: center; font-size: 18px;">TỶ GIÁ NMT/USD</div>
+            
+            <div class="huge-price-container">
+                <div id="header-price" class="huge-price price-up">100.00</div>
+                <div id="market-sentiment" class="badge badge-neutral">Đang chờ...</div>
+            </div>
+
+            <div class="orderbook-panel">
+                <div class="ob-header">
+                    <span>Giá Chờ Bán (Ask)</span>
+                    <span>Khối lượng</span>
+                </div>
+                <div id="ob-asks" class="ob-list asks"></div>
+                
+                <div class="ob-current-price" id="ob-price">100.00</div>
+                
+                <div class="ob-header" style="margin-top: 5px;">
+                    <span>Giá Chờ Mua (Bid)</span>
+                    <span>Khối lượng</span>
+                </div>
+                <div id="ob-bids" class="ob-list bids"></div>
+            </div>
+
+            <div class="panel-header" style="margin-top: auto; border-bottom: none; padding-top: 15px;">Soi Cầu: Giọt Nước</div>
+            <div class="dot-history-container" id="dot-history"></div>
+        </div>
+
+        <div class="panel right-panel">
+            <div class="panel-header" style="color: var(--accent); font-size: 20px; text-align: center; border-bottom: none;">
+                ⚡ GIAO DỊCH 5S ⚡
+            </div>
+            
+            <div class="order-form">
+                <div class="bo-group">
+                    <div class="profit-box">
+                        <span class="profit-label">Lợi nhuận dự kiến</span>
+                        <span class="profit-value">95%</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Số tiền cược (USD):</label>
+                        <input type="number" id="bo-amount" value="100" min="1" oninput="updateExpectedProfit()">
+                    </div>
+                    
+                    <p class="expected-return">Nếu thắng nhận: <span id="expected-profit-text" style="color: var(--green); font-weight: bold;">$195.00</span></p>
+
+                    <div class="quick-bet-buttons">
+                        <button onclick="setQuickBet(50)">$50</button>
+                        <button onclick="setQuickBet(100)">$100</button>
+                        <button onclick="setQuickBet(500)">$500</button>
+                        <button onclick="setQuickBet('ALL')">ALL IN</button>
+                    </div>
+
+                    <button id="btn-predict" class="btn-predict" onclick="getAIPrediction()">
+                        🤖 AI Phân Tích (Win 95%)
+                    </button>
+                    <div id="ai-result" class="ai-result-box" style="display: none;"></div>
+
+                    <div class="action-buttons" style="margin-top: 20px;">
+                        <button id="btn-bo-up" class="btn btn-buy btn-huge" onclick="placeBO('UP')">📈 TĂNG</button>
+                        <button id="btn-bo-down" class="btn btn-sell btn-huge" onclick="placeBO('DOWN')">📉 GIẢM</button>
+                    </div>
+                    
+                    <div class="countdown-bar-container">
+                        <div id="countdown-bar" class="countdown-bar"></div>
+                    </div>
+                    <div id="bo-status" class="status-text">Đang chờ lệnh...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="deposit-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="width: 450px;">
+            <div class="modal-header">
+                <h3>🏦 Cổng Nạp Tự Động 24/7</h3>
+                <span class="close-btn" onclick="closeDepositModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="deposit-step-1">
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Tỉ giá: 1 USD = 25,000 VNĐ</p>
+                <div class="input-group">
+                    <input type="number" id="deposit-amount" placeholder="Nhập USD..." oninput="calculateVND()">
+                </div>
+                <p style="text-align: right; color: var(--accent); font-weight: bold; margin-bottom: 20px;">Thành tiền: <span id="vnd-preview">0 ₫</span></p>
+                <button class="btn btn-buy" style="width: 100%;" onclick="goToDepositStep2()">Tạo mã QR ➔</button>
+            </div>
+            <div class="modal-body" id="deposit-step-2" style="display: none; text-align: center;">
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Quét mã QR để thanh toán tự động.</p>
+                <img id="qr-image" src="" alt="QR" style="width: 250px; border-radius: 8px; border: 3px solid var(--accent); padding: 5px; background: #fff;">
+                <div class="banking-info" style="text-align: left; margin-top: 15px;">
+                    <p>Số tiền: <strong id="qr-vnd-amount" style="color: var(--green);">0 ₫</strong></p>
+                    <p>Nội dung: <strong id="qr-memo" style="color: #fff;">NAPUSD...</strong></p>
+                </div>
+                <button id="btn-confirm-deposit" class="btn btn-buy" style="width: 100%; margin-top: 15px;" onclick="processDeposit()">Tôi đã chuyển khoản</button>
+                <div id="deposit-loader" class="loader-container" style="display: none;">
+                    <div class="spinner"></div><p>⏳ Đang quét giao dịch...</p>
+                </div>
+                <button class="btn-cancel" style="width: 100%; margin-top: 10px;" id="btn-back-deposit" onclick="backToStep1()">Quay lại</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="floating-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

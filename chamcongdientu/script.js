@@ -3,7 +3,7 @@ const OFFICE_LAT = 9.288933426099419;
 const OFFICE_LNG = 105.67547137936793; 
 const RADIUS = 20; 
 const COOLDOWN_MINS = 30;
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzPn6kmi0oqvb5aSzuzraz_HUuATS6Nn24vs7PIOzDwlO4Y-gtTTn-fRf9X_wSjUSSI/exec"; 
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCJ5dV9T5rDMK_95iPKPATIrbZK05NfxKIQq0kLVWXNqTE3mtCgcdlJFqSXMhdMkiW/exec"; 
 const HASHED_PW = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"; // Mặc định: 123456
 
 let currentUser = "";

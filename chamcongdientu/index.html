@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4361ee">
+    <title>Hệ Thống Chấm Công Thông Minh</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+</head>
+<body>
+    <div id="global-loading" class="hidden">
+        <div class="spinner"></div>
+        <p id="loading-text">Đang xử lý...</p>
+    </div>
+
+    <div id="login-screen" class="screen">
+        <div class="login-card">
+            <div class="logo-area">
+                <span class="material-icons-round">account_circle</span>
+            </div>
+            <h2>ĐĂNG NHẬP</h2>
+            <div class="input-group">
+                <span class="material-icons-round">person</span>
+                <input type="text" id="username" placeholder="Nhập Họ và Tên" onkeypress="handleEnter(event)">
+            </div>
+            <div class="input-group">
+                <span class="material-icons-round">lock</span>
+                <input type="password" id="password" placeholder="Mật khẩu" onkeypress="handleEnter(event)">
+                <span class="material-icons-round toggle-password" onclick="togglePassword()">visibility_off</span>
+            </div>
+            <button onclick="login()" class="btn-login">VÀO HỆ THỐNG</button>
+        </div>
+    </div>
+
+    <div id="main-screen" class="screen hidden">
+        <div class="app-container">
+            <div class="user-header">
+                <div>
+                    <p class="welcome">Chào mừng trở lại,</p>
+                    <h3 id="display-name">--</h3>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div class="date-tag" id="date-display">--/--</div>
+                    <span class="material-icons-round menu-btn" onclick="toggleMenu()">menu</span>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <div class="gps-info">
+                    <span class="material-icons-round" id="gps-icon">my_location</span>
+                    <span id="status-text">Đang định vị...</span>
+                </div>
+                <div class="dist-badge"><span id="dist-val">--</span>m</div>
+            </div>
+
+            <div class="action-area">
+                <div class="button-wrapper">
+                    <button id="check-btn" class="btn-main" onclick="openCameraModal()" disabled>
+                        <span class="material-icons-round" id="btn-icon">fingerprint</span>
+                        <span id="btn-label">KIỂM TRA GPS</span>
+                        <small id="btn-timer"></small>
+                    </button>
+                </div>
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-header">
+                    <span>Tiến độ ngày công</span>
+                    <span id="progress-text">0/4 lần</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div id="progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <div class="history-section">
+                <h4>Lịch sử hôm nay</h4>
+                <div id="history-list"></div>
+            </div>
+        </div>
+
+        <div id="camera-modal" class="hidden">
+            <div class="camera-container">
+                <h3>Xác thực khuôn mặt</h3>
+                <video id="camera-stream" autoplay playsinline></video>
+                <canvas id="camera-canvas" class="hidden"></canvas>
+                <div class="camera-actions">
+                    <button class="btn-cancel" onclick="closeCameraModal()">Hủy</button>
+                    <button class="btn-capture" onclick="captureAndSubmit()">📸 Chụp & Gửi</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleMenu()"></div>
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>Tiện ích</h3>
+                <span class="material-icons-round close-btn" onclick="toggleMenu()">close</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li onclick="openChangePassModal()">
+                    <span class="material-icons-round">vpn_key</span> Đổi mật khẩu
+                </li>
+                <li class="logout-item" onclick="logout()">
+                    <span class="material-icons-round">logout</span> Đăng xuất
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="change-pass-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px;">
+            <div style="background: #fff; padding: 25px; border-radius: 20px; width: 100%; max-width: 350px;">
+                <h3 style="margin-top:0; color:#4361ee; text-align:center;">Đổi Mật Khẩu</h3>
+                
+                <div class="input-group">
+                    <span class="material-icons-round">lock_outline</span>
+                    <input type="password" id="old-pass" placeholder="Mật khẩu hiện tại">
+                </div>
+                <div class="input-group">
+                    <span class="material-icons-round">lock</span>
+                    <input type="password" id="new-pass" placeholder="Mật khẩu mới">
+                </div>
+                <div class="input-group">
+                    <span class="material-icons-round">check_circle</span>
+                    <input type="password" id="confirm-pass" placeholder="Nhập lại mật khẩu mới">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button onclick="closeChangePassModal()" style="flex: 1; padding: 12px; border: none; border-radius: 10px; background: #7d8597; color: white; cursor: pointer;">Hủy</button>
+                    <button onclick="submitChangePassword()" style="flex: 1; padding: 12px; border: none; border-radius: 10px; background: #4361ee; color: white; cursor: pointer; font-weight: bold;">Cập nhật</button>
+                </div>
+            </div>
+        </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

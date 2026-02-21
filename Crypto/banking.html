@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ngân Hàng Trung Tâm - NMT VIP BO</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            justify-content: flex-start;
+            align-items: center;
+            background-image: radial-gradient(circle at top, #1a1c23 0%, #0b0e11 100%);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .bank-container {
+            width: 100%;
+            max-width: 900px;
+            margin-top: 20px;
+            animation: slideDown 0.4s ease-out;
+        }
+        
+        /* HEADER VÀ TỔNG QUỸ */
+        .vault-header {
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--accent);
+            text-align: center;
+            box-shadow: 0 0 30px rgba(252, 213, 53, 0.1);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .vault-header::before {
+            content: '🏦';
+            position: absolute;
+            font-size: 150px;
+            opacity: 0.05;
+            top: -20px;
+            right: -20px;
+        }
+        .vault-title { color: var(--accent); font-size: 18px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+        .vault-balance { font-size: 48px; font-weight: bold; color: #fff; font-family: 'Courier New', Courier, monospace; text-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: 0.3s; }
+        .profit-badge { display: inline-block; margin-top: 10px; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; background: rgba(14, 203, 129, 0.2); color: var(--green); border: 1px solid var(--green); }
+
+        /* LƯỚI THỐNG KÊ 4 CỘT */
+        .stats-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--bg-panel);
+            padding: 20px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        .stat-card h4 { color: var(--text-muted); font-size: 12px; margin-bottom: 10px; font-weight: normal; }
+        .stat-card .val-in { color: var(--green); font-size: 20px; font-weight: bold; }
+        .stat-card .val-out { color: var(--red); font-size: 20px; font-weight: bold; }
+        .stat-card .val-fee { color: var(--accent); font-size: 20px; font-weight: bold; }
+
+        /* DANH SÁCH DÒNG TIỀN */
+        .flow-section {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 20px;
+        }
+        .flow-section h3 { margin-bottom: 15px; color: var(--text-main); font-size: 16px; border-bottom: 1px dashed var(--border); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        .live-indicator { font-size: 12px; color: var(--green); font-weight: normal; animation: blinker 1s linear infinite; }
+        
+        .flow-list { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        .flow-list::-webkit-scrollbar { width: 4px; }
+        .flow-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        
+        .flow-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg-base); padding: 12px 15px; border-radius: 8px;
+            font-size: 14px; border-left: 4px solid transparent;
+            animation: slideInLeft 0.3s ease-out;
+        }
+        .flow-item.thu { border-left-color: var(--green); }
+        .flow-item.chi { border-left-color: var(--red); }
+        
+        .flow-info strong { display: block; margin-bottom: 3px; }
+        .flow-info small { color: var(--text-muted); font-size: 12px; }
+        .flow-amount.thu { color: var(--green); font-weight: bold; }
+        .flow-amount.chi { color: var(--red); font-weight: bold; }
+
+        .btn-back { display: block; width: 100%; text-align: center; padding: 15px; background: var(--bg-panel); color: var(--text-muted); text-decoration: none; margin-top: 20px; border-radius: 8px; border: 1px solid var(--border); transition: 0.2s; font-weight: bold;}
+        .btn-back:hover { background: var(--bg-hover); color: #fff; }
+
+        @keyframes slideInLeft { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes blinker { 50% { opacity: 0.3; } }
+
+        @media (max-width: 768px) {
+            .stats-grid-4 { grid-template-columns: repeat(2, 1fr); }
+            .vault-balance { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bank-container">
+        <div class="vault-header">
+            <div class="vault-title">🏦 Tổng Quỹ Thanh Khoản Sàn</div>
+            <div class="vault-balance" id="treasury-balance">$1,000,000.00</div>
+            <div class="profit-badge" id="net-profit">Lợi nhuận ròng: +$0.00</div>
+        </div>
+
+        <div class="stats-grid-4">
+            <div class="stat-card">
+                <h4>Sàn Thu (Khách Thua)</h4>
+                <div class="val-in" id="total-in">+$0.00</div>
+            </div>
+            <div class="stat-card">
+                <h4>Sàn Chi (Khách Thắng)</h4>
+                <div class="val-out" id="total-out">-$0.00</div>
+            </div>
+            <div class="stat-card">
+                <h4>Khách Nạp Mới</h4>
+                <div class="val-fee" id="total-deposit">+$0.00</div>
+            </div>
+            <div class="stat-card">
+                <h4>Khách Đã Rút</h4>
+                <div class="val-out" id="total-withdraw">-$0.00</div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h3>Lịch Sử Dòng Tiền Sàn <span class="live-indicator">● LIVE</span></h3>
+            <div class="flow-list" id="cash-flow-list">
+                </div>
+        </div>
+
+        <a href="index.html" class="btn-back">⬅ Quay lại Sàn Giao Dịch</a>
+    </div>
+
+    <script>
+        // CẤU HÌNH NGÂN HÀNG
+        const INITIAL_FUNDS = 1000000.00; // Sàn khởi tạo với 1 Triệu Đô
+        let lastHistoryCount = -1; // Biến kiểm tra xem có lệnh mới không
+
+        function loadBankingData() {
+            const savedData = localStorage.getItem('nmt_vip_bo_lite');
+            let history = [];
+            if (savedData) {
+                history = JSON.parse(savedData).history || [];
+            }
+
+            // [NÂNG CẤP]: Nếu số lượng lệnh không đổi thì không cần vẽ lại để chống giật lag
+            if (history.length === lastHistoryCount) return; 
+            lastHistoryCount = history.length;
+
+            let currentFunds = INITIAL_FUNDS;
+            let totalIn = 0;   
+            let totalOut = 0;  
+            let totalDeposit = 0; 
+            let totalWithdraw = 0;
+
+            const flowListEl = document.getElementById('cash-flow-list');
+            flowListEl.innerHTML = '';
+
+            history.forEach(item => {
+                let html = '';
+                
+                // --- 1. LỆNH BO ---
+                if (item.action === 'UP' || item.action === 'DOWN') {
+                    const amt = Math.abs(parseFloat(item.amount));
+
+                    if (item.result === 'THẮNG') {
+                        // Khách thắng -> Sàn chi tiền trả thưởng
+                        totalOut += amt;
+                        currentFunds -= amt;
+                        html = `
+                            <div class="flow-item chi">
+                                <div class="flow-info">
+                                    <strong>Trả thưởng lệnh ${item.action}</strong>
+                                    <small>${item.time} - Khách thắng</small>
+                                </div>
+                                <div class="flow-amount chi">-$${amt.toFixed(2)}</div>
+                            </div>
+                        `;
+                    } else if (item.result === 'THUA') {
+                        // Khách thua -> Sàn ôm trọn tiền
+                        totalIn += amt;
+                        currentFunds += amt;
+                        html = `
+                            <div class="flow-item thu">
+                                <div class="flow-info">
+                                    <strong>Thu tiền lệnh ${item.action}</strong>
+                                    <small>${item.time} - Khách thua (cháy lệnh)</small>
+                                </div>
+                                <div class="flow-amount thu">+$${amt.toFixed(2)}</div>
+                            </div>
+                        `;
+                    }
+                } 
+                // --- 2. LỆNH NẠP TIỀN ---
+                else if (item.action === 'NẠP') {
+                    const amt = parseFloat(item.amount);
+                    totalDeposit += amt;
+                    currentFunds += amt; 
+                    html = `
+                        <div class="flow-item thu" style="border-left-color: var(--accent);">
+                            <div class="flow-info">
+                                <strong style="color: var(--accent);">Khách Nạp Tiền</strong>
+                                <small>${item.time} - Cấp vốn vào tài khoản</small>
+                            </div>
+                            <div class="flow-amount thu" style="color: var(--accent);">+$${amt.toFixed(2)}</div>
+                        </div>
+                    `;
+                }
+                // --- 3. LỆNH RÚT TIỀN ---
+                else if (item.action === 'RÚT') {
+                    const amt = Math.abs(parseFloat(item.amount));
+                    totalWithdraw += amt;
+                    currentFunds -= amt; 
+                    html = `
+                        <div class="flow-item chi" style="border-left-color: var(--accent);">
+                            <div class="flow-info">
+                                <strong style="color: var(--accent);">Khách Rút Tiền</strong>
+                                <small>${item.time} - Trừ quỹ trả khách</small>
+                            </div>
+                            <div class="flow-amount chi">-$${amt.toFixed(2)}</div>
+                        </div>
+                    `;
+                }
+
+                if(html) flowListEl.innerHTML += html;
+            });
+
+            if (flowListEl.innerHTML === '') {
+                flowListEl.innerHTML = '<p style="text-align:center; color: var(--text-muted); padding: 20px;">Hệ thống chưa ghi nhận dòng tiền nào.</p>';
+            }
+
+            // TÍNH TOÁN HIỂN THỊ
+            const netProfit = totalIn - totalOut;
+            const fmt = (n) => "$" + n.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            
+            document.getElementById('treasury-balance').innerText = fmt(currentFunds);
+            document.getElementById('total-in').innerText = "+" + fmt(totalIn);
+            document.getElementById('total-out').innerText = "-" + fmt(totalOut);
+            document.getElementById('total-deposit').innerText = "+" + fmt(totalDeposit);
+            document.getElementById('total-withdraw').innerText = "-" + fmt(totalWithdraw);
+
+            const profitBadge = document.getElementById('net-profit');
+            if (netProfit >= 0) {
+                profitBadge.innerText = `Lợi nhuận ròng: +${fmt(netProfit)}`;
+                profitBadge.style.color = 'var(--green)';
+                profitBadge.style.borderColor = 'var(--green)';
+                profitBadge.style.background = 'rgba(14, 203, 129, 0.2)';
+            } else {
+                profitBadge.innerText = `Sàn đang lỗ: ${fmt(netProfit)}`;
+                profitBadge.style.color = 'var(--red)';
+                profitBadge.style.borderColor = 'var(--red)';
+                profitBadge.style.background = 'rgba(246, 70, 93, 0.2)';
+            }
+        }
+
+        // TỰ ĐỘNG QUÉT DỮ LIỆU MỖI 1 GIÂY (LIVE CẬP NHẬT)
+        setInterval(loadBankingData, 1000);
+        window.onload = loadBankingData;
+    </script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập & Đăng Ký - NMT VIP BO</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, #181a20 0%, #0b0e11 100%);
+        }
+
+        .login-box {
+            background: var(--bg-panel);
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-box h2 {
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent);
+        }
+
+        .error-msg {
+            color: var(--red);
+            font-size: 13px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .success-msg {
+            color: var(--green);
+            font-size: 13px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .toggle-form {
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--text-muted);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .toggle-form:hover {
+            color: var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-box" id="login-form">
+        <h2>💎 ĐĂNG NHẬP</h2>
+        <p style="color:var(--text-muted); font-size:12px; margin-bottom: 20px;">*Hệ thống bảo mật SHA-256*</p>
+
+        <div class="input-group">
+            <label>ID Người Chơi</label>
+            <input type="text" id="login-id" placeholder="Nhập ID...">
+        </div>
+        <div class="input-group">
+            <label>Mật khẩu số</label>
+            <input type="password" id="login-pass" placeholder="Nhập mật khẩu...">
+        </div>
+
+        <div id="login-error" class="error-msg">ID hoặc mật khẩu không đúng!</div>
+
+        <button id="btn-login" class="btn btn-huge btn-buy" style="width: 100%; margin-top: 10px;"
+            onclick="doLogin()">Đăng Nhập</button>
+        <p class="toggle-form" onclick="switchForm('register')">Chưa có tài khoản? Tạo mới ngay</p>
+    </div>
+
+    <div class="login-box" id="register-form" style="display: none;">
+        <h2>📝 TẠO TÀI KHOẢN</h2>
+        <p style="color:var(--text-muted); font-size:12px; margin-bottom: 20px;">*Mật khẩu sẽ được mã hóa an toàn*</p>
+
+        <div class="input-group">
+            <label>Tạo ID Người Chơi mới</label>
+            <input type="text" id="reg-id" placeholder="Viết liền không dấu (VD: nmt2026)">
+        </div>
+        <div class="input-group">
+            <label>Mật khẩu (Chỉ nhập số)</label>
+            <input type="password" id="reg-pass" placeholder="Tối thiểu 6 số">
+        </div>
+        <div class="input-group">
+            <label>Nhập lại mật khẩu</label>
+            <input type="password" id="reg-pass-confirm" placeholder="Nhập lại cho khớp">
+        </div>
+
+        <div id="reg-error" class="error-msg"></div>
+        <div id="reg-success" class="success-msg">Tạo tài khoản thành công! Hãy đăng nhập.</div>
+
+        <button id="btn-register" class="btn btn-huge btn-buy"
+            style="width: 100%; margin-top: 10px; background: var(--accent); color: black;" onclick="doRegister()">Xác
+            Nhận Đăng Ký</button>
+        <p class="toggle-form" onclick="switchForm('login')">Đã có tài khoản? Quay lại đăng nhập</p>
+    </div>
+
+    <script>
+        // CẤU HÌNH LIÊN KẾT VỚI GOOGLE SHEETS
+        const GS_URL = "https://script.google.com/macros/s/AKfycbzENF5j2O8npZIRGKr_a7RGYnJwWB8v5sv8ThsvwxPSmJ8ykQDaT4ws4EW9kbQSkc-S/exec"; // <-- THAY LINK CỦA BẠN VÀO ĐÂY
+        const API_KEY = "NMT_SECRET_2026";
+
+        // 1. Khởi tạo Cơ sở dữ liệu ảo trong trình duyệt
+        function initDB() {
+            let db = localStorage.getItem('nmt_users_db');
+            if (!db) {
+                // Tạo sẵn 1 tài khoản Admin mặc định để quản lý (Pass: admin123)
+                const initialDB = {
+                    "admin999": { hash: "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9", role: "admin", name: "Quản Trị Viên" }
+                };
+                localStorage.setItem('nmt_users_db', JSON.stringify(initialDB));
+            }
+        }
+        initDB();
+
+        // Hàm chuyển đổi giữa form Đăng nhập và Đăng ký
+        function switchForm(formType) {
+            document.getElementById('login-form').style.display = formType === 'login' ? 'block' : 'none';
+            document.getElementById('register-form').style.display = formType === 'register' ? 'block' : 'none';
+
+            // Ẩn các thông báo lỗi khi chuyển form
+            document.getElementById('login-error').style.display = 'none';
+            document.getElementById('reg-error').style.display = 'none';
+            document.getElementById('reg-success').style.display = 'none';
+        }
+
+        // Hàm băm mật khẩu sang chuỗi SHA-256
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // =====================================
+        // XỬ LÝ ĐĂNG KÝ VÀ LƯU LÊN SHEETS
+        // =====================================
+        async function doRegister() {
+            const id = document.getElementById('reg-id').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+            const passConfirm = document.getElementById('reg-pass-confirm').value.trim();
+            const errBox = document.getElementById('reg-error');
+            const successBox = document.getElementById('reg-success');
+            const btnReg = document.getElementById('btn-register');
+
+            errBox.style.display = 'none';
+            successBox.style.display = 'none';
+
+            // Validate dữ liệu nhập vào
+            if (!id || !pass || !passConfirm) {
+                errBox.innerText = "Vui lòng nhập đầy đủ thông tin!";
+                return errBox.style.display = 'block';
+            }
+            if (pass !== passConfirm) {
+                errBox.innerText = "Mật khẩu nhập lại không khớp!";
+                return errBox.style.display = 'block';
+            }
+            if (pass.length < 6) {
+                errBox.innerText = "Mật khẩu phải có ít nhất 6 ký tự!";
+                return errBox.style.display = 'block';
+            }
+
+            let db = JSON.parse(localStorage.getItem('nmt_users_db'));
+
+            if (db[id]) {
+                errBox.innerText = "ID này đã có người sử dụng. Chọn ID khác!";
+                return errBox.style.display = 'block';
+            }
+
+            // Đổi text nút bấm để báo hiệu đang xử lý
+            btnReg.innerText = "Đang xử lý...";
+            btnReg.disabled = true;
+
+            // Băm mật khẩu người chơi vừa tạo
+            const hashedPass = await sha256(pass);
+
+            // 1. Lưu vào DB ảo trên máy để đăng nhập được ngay
+            db[id] = { hash: hashedPass, role: "user", name: id };
+            localStorage.setItem('nmt_users_db', JSON.stringify(db));
+
+            // 2. GỬI DỮ LIỆU TÀI KHOẢN LÊN GOOGLE SHEETS
+            const registerPayload = {
+                api_key: API_KEY,
+                action: "REGISTER",
+                player_id: id,
+                hash_pass: hashedPass,
+                balance: 0 // Tặng 0$ làm vốn ban đầu
+            };
+
+            try {
+                await fetch(GS_URL, {
+                    method: "POST",
+                    mode: "no-cors", // Bắt buộc có dòng này để tránh lỗi CORS chặn trình duyệt
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(registerPayload)
+                });
+                console.log("Đã gửi thông tin Đăng Ký lên Google Sheets!");
+            } catch (error) {
+                console.error("Lỗi khi lưu lên Sheets:", error);
+            }
+
+            // Hiển thị thành công và xóa trắng form
+            btnReg.innerText = "Xác Nhận Đăng Ký";
+            btnReg.disabled = false;
+            successBox.style.display = 'block';
+
+            document.getElementById('reg-id').value = '';
+            document.getElementById('reg-pass').value = '';
+            document.getElementById('reg-pass-confirm').value = '';
+
+            // Tự động chuyển về form đăng nhập sau 1.5 giây
+            setTimeout(() => switchForm('login'), 1500);
+        }
+
+        // =====================================
+        // XỬ LÝ ĐĂNG NHẬP
+        // =====================================
+        async function doLogin() {
+            const playerId = document.getElementById('login-id').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+            const btn = document.getElementById('btn-login');
+            const errBox = document.getElementById('login-error');
+
+            if (!playerId || !pass) return;
+
+            btn.innerText = "Đang xác thực Cloud...";
+            btn.disabled = true;
+            errBox.style.display = 'none';
+
+            const hashedPass = await sha256(pass);
+
+            try {
+                // 1. Gọi API lấy dữ liệu từ Google Sheets
+                const response = await fetch(GS_URL);
+                const data = await response.json();
+
+                if (data.status === "success" && data.users) {
+                    // 2. Tìm kiếm người chơi trong danh sách trả về từ Cloud
+                    const user = data.users.find(u => u.id === playerId && u.hash === hashedPass);
+
+                    if (user) {
+                        // 3. Đăng nhập thành công: Lưu session vào máy mới
+                        localStorage.setItem('nmt_session', JSON.stringify({
+                            id: user.id,
+                            hash: user.hash,
+                            role: user.role || "user",
+                            name: user.id
+                        }));
+
+                        // Đồng bộ số dư từ Cloud vào máy này để dùng luôn
+                        const localState = {
+                            usdBalance: parseFloat(user.balance) || 0,
+                            realizedPnL: 0,
+                            history: [],
+                            dotHistory: [],
+                            totalVolume: 0
+                        };
+                        localStorage.setItem('nmt_vip_bo_lite', JSON.stringify(localState));
+
+                        window.location.href = 'index.html';
+                    } else {
+                        errBox.innerText = "ID hoặc mật khẩu không đúng!";
+                        errBox.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error("Lỗi kết nối:", error);
+                errBox.innerText = "Không thể kết nối máy chủ!";
+                errBox.style.display = 'block';
+            } finally {
+                btn.innerText = "Đăng Nhập";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

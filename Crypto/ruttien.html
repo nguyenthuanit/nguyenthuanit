@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rút Tiền - NMT VIP BO</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Tùy chỉnh giao diện trang rút tiền */
+        body {
+            justify-content: center;
+            align-items: center;
+            background-image: radial-gradient(circle at center, #181a20 0%, #0b0e11 100%);
+        }
+        .withdraw-container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+            animation: slideDown 0.4s ease-out;
+            position: relative;
+        }
+        .header-title {
+            text-align: center;
+            color: var(--text-main);
+            margin-bottom: 25px;
+            font-size: 22px;
+        }
+        .header-title span { color: var(--red); }
+        .balance-box {
+            background: rgba(246, 70, 93, 0.1);
+            border: 1px dashed var(--red);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .balance-box p { color: var(--text-muted); font-size: 13px; margin-bottom: 5px; }
+        .balance-box h2 { color: var(--red); font-size: 24px; }
+
+        /* Tùy chỉnh Select Box */
+        select.styled-select {
+            width: 100%;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 15px;
+            border-radius: 6px;
+            outline: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            appearance: none; /* Ẩn mũi tên mặc định trên một số trình duyệt */
+        }
+        select.styled-select:focus { border-color: var(--accent); }
+        select.styled-select option { background: var(--bg-base); color: var(--text-main); font-weight: normal; }
+
+        /* Tùy chỉnh Input Readonly (Khóa không cho sửa) */
+        input[readonly] {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            color: var(--text-muted) !important;
+            cursor: not-allowed;
+            border: 1px dashed var(--border) !important;
+        }
+
+        /* --- CSS CHO HỆ THỐNG POPUP (MODAL) --- */
+        .custom-popup {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);
+            z-index: 2000; display: none; justify-content: center; align-items: center;
+        }
+        .popup-content {
+            background: var(--bg-panel); width: 90%; max-width: 380px;
+            border-radius: 12px; border: 1px solid var(--border);
+            padding: 25px; text-align: center; animation: zoomIn 0.3s ease-out;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        }
+        .popup-icon { font-size: 50px; margin-bottom: 10px; }
+        .popup-title { margin-bottom: 10px; font-size: 18px; color: var(--text-main); }
+        .popup-desc { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+        .popup-actions { display: flex; gap: 10px; }
+        
+        @keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="withdraw-container">
+        <h2 class="header-title">💸 Lệnh <span>Rút Tiền</span></h2>
+
+        <div class="balance-box">
+            <p>Số dư khả dụng</p>
+            <h2 id="available-balance">$0.00</h2>
+        </div>
+
+        <div class="input-group">
+            <label>Số tiền cần rút (USD)</label>
+            <input type="number" id="withdraw-amount" placeholder="Tối thiểu $50" oninput="calcVndReceive()">
+            <p style="text-align: right; font-size: 12px; color: var(--text-muted); margin-top: 5px;">Thực nhận: <span id="vnd-receive" style="color: var(--green); font-weight: bold;">0 ₫</span></p>
+        </div>
+
+        <div class="input-group" style="margin-top: 15px;">
+            <label>Ngân hàng nhận</label>
+            <select id="bank-name" class="styled-select">
+                <option value="Vietcombank">Vietcombank (VCB)</option>
+                <option value="Techcombank">Techcombank (TCB)</option>
+                <option value="MB Bank">MB Bank (MB)</option>
+                <option value="VietinBank">VietinBank</option>
+                <option value="BIDV">BIDV</option>
+                <option value="ACB">ACB</option>
+                <option value="TPBank">TPBank</option>
+                <option value="VPBank">VPBank</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Số tài khoản</label>
+            <input type="text" id="account-number" value="0987654321999" readonly>
+        </div>
+
+        <div class="input-group">
+            <label>Tên chủ tài khoản</label>
+            <input type="text" id="account-name" value="NGUYEN VAN A" readonly>
+        </div>
+
+        <div id="loading-spinner" class="loader-container" style="display: none; margin-top: 15px;">
+            <div class="spinner" style="border-top-color: var(--red);"></div>
+            <p>Đang xử lý giao dịch lên hệ thống...</p>
+        </div>
+
+        <div class="action-buttons" style="margin-top: 25px;">
+            <button class="btn btn-cancel" style="padding: 15px;" onclick="goBack()">Quay lại</button>
+            <button id="btn-submit-withdraw" class="btn btn-sell" style="padding: 15px;" onclick="confirmWithdraw()">Xác Nhận Rút ➔</button>
+        </div>
+    </div>
+
+    <div id="custom-popup" class="custom-popup">
+        <div class="popup-content">
+            <div id="popup-icon" class="popup-icon">⚠️</div>
+            <h3 id="popup-title" class="popup-title">Thông báo</h3>
+            <p id="popup-desc" class="popup-desc">Nội dung thông báo ở đây</p>
+            <div id="popup-actions" class="popup-actions">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // CẤU HÌNH KHỚP VỚI HỆ THỐNG
+        const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbzENF5j2O8npZIRGKr_a7RGYnJwWB8v5sv8ThsvwxPSmJ8ykQDaT4ws4EW9kbQSkc-S/exec"; 
+        const API_KEY = "NMT_SECRET_2026";
+        const EXCHANGE_RATE = 25000;
+        
+        let state = { usdBalance: 0, history: [] };
+        let pendingWithdrawAmount = 0;
+
+        // 1. TẢI SỐ DƯ TỪ LOCALSTORAGE
+        function loadBalance() {
+            const saved = localStorage.getItem('nmt_vip_bo_lite');
+            if (saved) {
+                const parsedData = JSON.parse(saved);
+                state = Object.assign(state, parsedData);
+                document.getElementById('available-balance').innerText = "$" + state.usdBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
+            } else {
+                showPopup("❌ Lỗi dữ liệu", "Không tìm thấy dữ liệu tài khoản! Vui lòng quay lại trang chủ.", "Lỗi", [
+                    { text: "Quay về Trang chủ", class: "btn-sell", onclick: "goBack()" }
+                ]);
+            }
+        }
+
+        // 2. TÍNH TOÁN VNĐ THỰC NHẬN
+        function calcVndReceive() {
+            const usd = parseFloat(document.getElementById('withdraw-amount').value) || 0;
+            const vnd = usd * EXCHANGE_RATE;
+            document.getElementById('vnd-receive').innerText = vnd.toLocaleString() + " ₫";
+        }
+
+        // 3. QUAY LẠI TRANG CHỦ
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        // 4. HIỂN THỊ POPUP TÙY CHỈNH
+        function showPopup(icon, title, desc, buttons) {
+            document.getElementById('popup-icon').innerHTML = icon;
+            document.getElementById('popup-title').innerHTML = title;
+            document.getElementById('popup-desc').innerHTML = desc;
+            
+            const actionsContainer = document.getElementById('popup-actions');
+            actionsContainer.innerHTML = ''; // Xóa nút cũ
+            
+            buttons.forEach(btn => {
+                const buttonEl = document.createElement('button');
+                buttonEl.className = `btn ${btn.class}`;
+                buttonEl.style.padding = "12px";
+                buttonEl.innerHTML = btn.text;
+                buttonEl.setAttribute('onclick', btn.onclick);
+                actionsContainer.appendChild(buttonEl);
+            });
+
+            document.getElementById('custom-popup').style.display = 'flex';
+        }
+
+        function closePopup() {
+            document.getElementById('custom-popup').style.display = 'none';
+        }
+
+        // 5. BƯỚC XÁC NHẬN RÚT TIỀN (HIỆN POPUP)
+        function confirmWithdraw() {
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            const bankName = document.getElementById('bank-name').value;
+            const accNum = document.getElementById('account-number').value;
+
+            if (isNaN(amount) || amount < 50) {
+                return showPopup("⚠️", "Số tiền không hợp lệ", "Vui lòng nhập số tiền rút tối thiểu là $50.", [
+                    { text: "Đã hiểu", class: "btn-cancel", onclick: "closePopup()" }
+                ]);
+            }
+            if (amount > state.usdBalance) {
+                return showPopup("💸", "Số dư không đủ", "Bạn không có đủ số dư khả dụng để thực hiện lệnh rút này.", [
+                    { text: "Đóng", class: "btn-cancel", onclick: "closePopup()" }
+                ]);
+            }
+
+            pendingWithdrawAmount = amount;
+            
+            // Hiện popup xác nhận
+            showPopup("🏦", "Xác nhận Rút Tiền", `Bạn có chắc chắn muốn rút <strong>$${amount}</strong> về ngân hàng <strong>${bankName}</strong> (STK: ${accNum}) không?`, [
+                { text: "Hủy bỏ", class: "btn-cancel", onclick: "closePopup()" },
+                { text: "Xác nhận Rút", class: "btn-sell", onclick: "processWithdraw()" }
+            ]);
+        }
+
+        // 6. XỬ LÝ RÚT TIỀN CHÍNH THỨC
+        function processWithdraw() {
+            closePopup(); // Đóng popup xác nhận
+            
+            const bankName = document.getElementById('bank-name').value;
+            const accNum = document.getElementById('account-number').value;
+            const accName = document.getElementById('account-name').value;
+
+            // Vô hiệu hóa nút và hiện loading
+            const btnSubmit = document.getElementById('btn-submit-withdraw');
+            const loader = document.getElementById('loading-spinner');
+            btnSubmit.disabled = true;
+            loader.style.display = 'block';
+
+            // Trừ tiền và lưu lịch sử
+            state.usdBalance -= pendingWithdrawAmount;
+            state.history.unshift({ 
+                action: 'RÚT', 
+                amount: -pendingWithdrawAmount, 
+                price: '-', 
+                result: 'CHỜ DUYỆT', 
+                time: new Date().toLocaleTimeString() 
+            });
+
+            // Lưu lại bộ nhớ Local
+            localStorage.setItem('nmt_vip_bo_lite', JSON.stringify(state));
+
+            // Cập nhật giao diện số dư ngay lập tức
+            document.getElementById('available-balance').innerText = "$" + state.usdBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+            // Gửi dữ liệu lên Google Sheets
+            const noteInfo = `NH: ${bankName} | STK: ${accNum} | Tên: ${accName}`;
+            sendToGoogleSheets('RÚT TIỀN', pendingWithdrawAmount, 'CHỜ DUYỆT', `-${pendingWithdrawAmount}`, state.usdBalance.toFixed(2), noteInfo);
+
+            // Giả lập độ trễ mạng 2s để nhìn chuyên nghiệp hơn
+            setTimeout(() => {
+                loader.style.display = 'none';
+                
+                // Hiện popup thành công
+                showPopup("✅", "Tạo lệnh thành công!", `Lệnh rút <strong>$${pendingWithdrawAmount}</strong> đã được ghi nhận.<br>Vui lòng chờ Admin hệ thống phê duyệt.`, [
+                    { text: "Trở về Trang chủ", class: "btn-buy", onclick: "goBack()" }
+                ]);
+            }, 2000);
+        }
+
+        // 7. HÀM GỬI LÊN GOOGLE SHEETS
+        function sendToGoogleSheets(action, amount, result, profit_loss, balance, note) {
+            const data = {
+                api_key: API_KEY, 
+                time: new Date().toLocaleString("vi-VN"),
+                action: action,
+                amount: amount,
+                result: result,
+                pnl: profit_loss,
+                balance: balance,
+                note: note
+            };
+
+            fetch(GOOGLE_SHEET_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(data)
+            }).catch(err => console.error("Lỗi gửi dữ liệu lên Sheets:", err));
+        }
+
+        // Khởi chạy khi load trang
+        window.onload = loadBalance;
+    </script>
+</body>
+</html>

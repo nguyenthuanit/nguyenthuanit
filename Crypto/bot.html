@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ngân Hàng Trung Tâm - NMT VIP BO</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            justify-content: flex-start;
+            align-items: center;
+            background-image: radial-gradient(circle at top, #1a1c23 0%, #0b0e11 100%);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .bank-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 20px auto;
+            animation: slideDown 0.4s ease-out;
+        }
+        
+        .vault-header {
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--accent);
+            text-align: center;
+            box-shadow: 0 0 30px rgba(252, 213, 53, 0.1);
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .vault-title { color: var(--accent); font-size: 18px; text-transform: uppercase; letter-spacing: 2px; }
+        .vault-balance { font-size: 48px; font-weight: bold; color: #fff; margin: 10px 0; }
+        .profit-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+
+        .stats-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--bg-panel);
+            padding: 20px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        .stat-card h4 { color: var(--text-muted); font-size: 12px; margin-bottom: 10px; }
+        .val-in { color: var(--green); font-size: 18px; font-weight: bold; }
+        .val-out { color: var(--red); font-size: 18px; font-weight: bold; }
+
+        .flow-section {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 20px;
+        }
+        .flow-list { display: flex; flex-direction: column; gap: 10px; max-height: 500px; overflow-y: auto; }
+        .flow-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg-base); padding: 12px 15px; border-radius: 8px;
+            font-size: 14px; border-left: 4px solid transparent;
+        }
+        .flow-item.thu { border-left-color: var(--green); }
+        .flow-item.chi { border-left-color: var(--red); }
+        .flow-info strong { display: block; font-size: 13px; }
+        .flow-info small { color: var(--text-muted); font-size: 11px; }
+
+        .live-indicator { font-size: 12px; color: var(--green); animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0.3; } }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        @media (max-width: 768px) { .stats-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+
+    <div class="bank-container">
+        <div class="vault-header">
+            <div class="vault-title">🏦 Tổng Quỹ Thanh Khoản Cloud</div>
+            <div class="vault-balance" id="treasury-balance">$0.00</div>
+            <div class="profit-badge" id="net-profit">Đang đồng bộ...</div>
+        </div>
+
+        <div class="stats-grid-4">
+            <div class="stat-card">
+                <h4>Sàn Thu (Khách Thua)</h4>
+                <div class="val-in" id="total-in">+$0.00</div>
+            </div>
+            <div class="stat-card">
+                <h4>Sàn Chi (Khách Thắng)</h4>
+                <div class="val-out" id="total-out">-$0.00</div>
+            </div>
+            <div class="stat-card">
+                <h4>Tổng Khách Nạp</h4>
+                <div class="val-in" id="total-deposit" style="color:var(--accent)">+$0.00</div>
+            </div>
+            <div class="stat-card">
+                <h4>Số Thành Viên</h4>
+                <div class="val-out" id="total-users" style="color:#fff">0</div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h3 style="margin-bottom:15px">Dòng Tiền Hệ Thống <span class="live-indicator">● LIVE CLOUD</span></h3>
+            <div class="flow-list" id="cash-flow-list">
+                <p style="text-align:center; color:var(--text-muted)">Đang tải dữ liệu từ Google Sheets...</p>
+            </div>
+        </div>
+
+        <a href="index.html" class="btn-back" style="display:block; text-align:center; margin-top:20px; color:var(--text-muted); text-decoration:none; padding:15px; background:var(--bg-panel); border-radius:8px;">⬅ Quay lại Sàn Giao Dịch</a>
+    </div>
+
+    <script>
+        // Cấu hình API - Dùng chung với script.js
+        const GS_URL = "https://script.google.com/macros/s/AKfycbzENF5j2O8npZIRGKr_a7RGYnJwWB8v5sv8ThsvwxPSmJ8ykQDaT4ws4EW9kbQSkc-S/exec";
+        const INITIAL_VAULT = 1000000.00; // Vốn sàn khởi tạo
+
+        async function syncWithCloud() {
+            try {
+                const response = await fetch(GS_URL);
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    renderBanking(data.history, data.users);
+                }
+            } catch (error) {
+                console.error("Lỗi đồng bộ Banking:", error);
+            }
+        }
+
+        function renderBanking(history, users) {
+            let totalIn = 0;   // Tiền sàn thu (Khách thua)
+            let totalOut = 0;  // Tiền sàn chi (Khách thắng)
+            let totalDeposit = 0;
+            let currentFunds = INITIAL_VAULT;
+
+            const flowListEl = document.getElementById('cash-flow-list');
+            flowListEl.innerHTML = '';
+
+            // 1. Duyệt lịch sử từ Sheet 'data'
+            // history là mảng: [ [Time, Action, Amount, Result, PnL, Balance, Note, ..., PlayerID, Hash], ... ]
+            history.reverse().forEach(row => {
+                const action = row[1];
+                const amount = parseFloat(row[2]) || 0;
+                const pnl = parseFloat(row[4]) || 0;
+                const result = row[3];
+                const playerId = row[10] || "Khách";
+
+                let typeClass = "thu";
+                let displayAmount = amount;
+
+                if (action.includes("Cược")) {
+                    if (result === "THẮNG") {
+                        totalOut += Math.abs(pnl);
+                        currentFunds -= Math.abs(pnl);
+                        typeClass = "chi";
+                    } else if (result === "THUA") {
+                        totalIn += Math.abs(amount);
+                        currentFunds += Math.abs(amount);
+                        typeClass = "thu";
+                    }
+                } else if (action === "NẠP TIỀN") {
+                    totalDeposit += amount;
+                    currentFunds += amount;
+                    typeClass = "thu";
+                } else if (action === "RÚT TIỀN") {
+                    currentFunds -= Math.abs(amount);
+                    typeClass = "chi";
+                }
+
+                // Vẽ item vào danh sách
+                const itemHtml = `
+                    <div class="flow-item ${typeClass}">
+                        <div class="flow-info">
+                            <strong>${action} - <span style="color:var(--accent)">${playerId}</span></strong>
+                            <small>${row[0]} | Kết quả: ${result}</small>
+                        </div>
+                        <div style="font-weight:bold" class="${typeClass}">
+                            ${typeClass === 'thu' ? '+' : '-'}$${Math.abs(amount).toFixed(2)}
+                        </div>
+                    </div>
+                `;
+                flowListEl.innerHTML += itemHtml;
+            });
+
+            // 2. Cập nhật UI Thống kê
+            const fmt = (n) => "$" + n.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('treasury-balance').innerText = fmt(currentFunds);
+            document.getElementById('total-in').innerText = "+" + fmt(totalIn);
+            document.getElementById('total-out').innerText = "-" + fmt(totalOut);
+            document.getElementById('total-deposit').innerText = "+" + fmt(totalDeposit);
+            document.getElementById('total-users').innerText = users.length;
+
+            // Tính lợi nhuận ròng (Chỉ tính từ thắng/thua của khách)
+            const netProfit = totalIn - totalOut;
+            const profitBadge = document.getElementById('net-profit');
+            profitBadge.innerText = netProfit >= 0 ? `Lợi nhuận ròng: +${fmt(netProfit)}` : `Sàn đang lỗ: ${fmt(netProfit)}`;
+            profitBadge.style.background = netProfit >= 0 ? "rgba(14, 203, 129, 0.2)" : "rgba(246, 70, 93, 0.2)";
+            profitBadge.style.color = netProfit >= 0 ? "var(--green)" : "var(--red)";
+            profitBadge.style.border = `1px solid ${netProfit >= 0 ? 'var(--green)' : 'var(--red)'}`;
+        }
+
+        // Tự động cập nhật mỗi 5 giây để giảm tải cho Google API
+        setInterval(syncWithCloud, 5000);
+        window.onload = syncWithCloud;
+    </script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+/* =========================================
+   NMT VIP BO EXCHANGE - BẢNG MÀU & BIẾN SỐ
+========================================= */
+:root {
+    --bg-base: #0b0e11;
+    --bg-panel: #181a20;
+    --bg-hover: #2b3139;
+    --text-main: #eaecef;
+    --text-muted: #848e9c;
+    --green: #0ecb81;
+    --red: #f6465d;
+    --border: #2b3139;
+    --accent: #fcd535;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, sans-serif; }
+body { background-color: var(--bg-base); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* HEADER - CẢI TIẾN CHỐNG TRÀN */
+.top-bar { 
+    background-color: var(--bg-panel); 
+    padding: 0 20px; 
+    min-height: 60px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    border-bottom: 1px solid var(--border); 
+    flex-shrink: 0; 
+}
+.logo { font-size: 20px; font-weight: bold; color: var(--accent); white-space: nowrap; }
+.wallet-info { 
+    font-size: 14px; 
+    font-weight: bold; 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    flex-wrap: nowrap; /* Mặc định trên PC không xuống dòng */
+}
+.highlight { color: #fff; }
+
+/* BỐ CỤC 3 CỘT PRO */
+.layout-grid { 
+    display: grid; 
+    grid-template-columns: 280px 1fr 340px; 
+    gap: 4px; 
+    padding: 4px; 
+    height: calc(100vh - 60px); 
+    background: var(--bg-base); 
+}
+
+.panel { background-color: var(--bg-panel); display: flex; flex-direction: column; overflow: hidden; }
+.left-panel { padding: 15px 10px; border-radius: 4px; }
+.center-panel { padding: 15px; border-radius: 4px; display: flex; flex-direction: column; } 
+.right-panel { padding: 15px; border-radius: 4px; }
+
+/* CỘT TRÁI: THỐNG KÊ & TABS */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+.stat-box { background: var(--bg-base); padding: 10px; border-radius: 6px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 5px; }
+.stat-box .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase;}
+.stat-box .value { font-size: 16px; font-weight: bold; }
+
+.sidebar-tabs { display: flex; margin-bottom: 10px; background: var(--bg-base); border-radius: 6px; padding: 4px; }
+.tab-btn { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 8px; cursor: pointer; border-radius: 4px; font-size: 12px; font-weight: bold; transition: 0.2s;}
+.tab-btn.active { background: var(--bg-hover); color: var(--text-main); }
+.tab-content { display: none; flex: 1; overflow-y: auto; flex-direction: column; }
+.tab-content.active { display: flex; }
+
+.history-list { display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; padding-right: 5px;}
+.history-list::-webkit-scrollbar { width: 4px; }
+.history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.hist-item { background: var(--bg-base); border-radius: 6px; padding: 10px; border-left: 4px solid var(--text-muted); font-size: 13px; display: flex; justify-content: space-between; align-items: center;}
+.hist-item.win { border-left-color: var(--green); }
+.hist-item.loss { border-left-color: var(--red); }
+.hist-left { display: flex; flex-direction: column; gap: 3px; }
+.hist-right { text-align: right; font-weight: bold; }
+
+.live-feed-container { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 5px; }
+.feed-item { background: var(--bg-base); padding: 10px; border-radius: 6px; font-size: 12px; animation: slideInLeft 0.3s ease-out; }
+@keyframes slideInLeft { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* CỘT GIỮA: GIÁ, SỔ LỆNH & GIỌT NƯỚC */
+.panel-header { font-size: 16px; font-weight: bold; color: var(--text-muted); margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+.huge-price-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 0; border-bottom: 1px dashed var(--border); margin-bottom: 15px;}
+.huge-price { font-size: 56px; font-weight: bold; font-family: 'Courier New', Courier, monospace; letter-spacing: 2px; transition: color 0.3s; line-height: 1; margin-bottom: 10px;}
+.price-up { color: var(--green); }
+.price-down { color: var(--red); }
+.badge { font-size: 12px; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text-muted);}
+
+.orderbook-panel { font-family: 'Courier New', Courier, monospace; font-size: 13px; display: flex; flex-direction: column; flex: 1; }
+.ob-header { display: flex; justify-content: space-between; color: var(--text-muted); margin-bottom: 5px; font-size: 11px; text-transform: uppercase;}
+.ob-list { display: flex; flex-direction: column; gap: 4px; }
+.asks { flex-direction: column-reverse; justify-content: flex-end; }
+.ob-row { display: flex; justify-content: space-between; padding: 4px 5px; background: rgba(255,255,255,0.02); border-radius: 4px; }
+.ob-row.ask .price { color: var(--red); font-weight: bold;}
+.ob-row.bid .price { color: var(--green); font-weight: bold;}
+
+.ob-current-price { font-size: 20px; font-weight: bold; text-align: center; margin: 10px 0; padding: 8px; background: var(--bg-base); border-radius: 4px; border: 1px solid var(--border); }
+
+.dot-history-container { display: flex; flex-wrap: wrap; gap: 8px; background: var(--bg-base); padding: 15px; border-radius: 8px; border: 1px solid var(--border); justify-content: flex-start; align-content: flex-start; height: 120px; }
+.dot { width: 18px; height: 18px; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5); transition: 0.3s; }
+.dot.up { background-color: var(--green); box-shadow: 0 0 8px var(--green); }
+.dot.down { background-color: var(--red); box-shadow: 0 0 8px var(--red); }
+.dot.tie { background-color: var(--text-muted); }
+.dot.blink { animation: blinker 0.8s linear infinite; box-shadow: 0 0 15px #fff; border: 2px solid #fff;}
+@keyframes blinker { 50% { opacity: 0.3; } }
+
+/* CỘT PHẢI: FORM ĐẶT CƯỢC */
+.bo-group { background: var(--bg-base); padding: 20px; border-radius: 8px; border: 1px solid var(--border); flex: 1; display: flex; flex-direction: column; justify-content: center;}
+.profit-box { display: flex; justify-content: space-between; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px dashed var(--border); }
+.profit-label { color: var(--text-muted); font-size: 14px; }
+.profit-value { color: var(--accent); font-weight: bold; font-size: 16px; }
+
+.input-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px; }
+.input-group input { width: 100%; background: var(--bg-panel); border: 1px solid var(--border); color: var(--accent); padding: 15px; border-radius: 6px; outline: none; font-size: 24px; font-weight: bold; text-align: center; }
+.input-group input:focus { border-color: var(--accent); }
+
+.expected-return { font-size: 13px; color: var(--text-muted); text-align: center; margin-top: 5px; margin-bottom: 15px;}
+
+.quick-bet-buttons { display: flex; gap: 8px; }
+.quick-bet-buttons button { flex: 1; background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-muted); padding: 10px 0; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+.quick-bet-buttons button:hover { border-color: var(--accent); color: var(--accent); }
+
+.action-buttons { display: flex; gap: 10px; margin-top: 20px; }
+.btn { flex: 1; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; }
+.btn-huge { font-size: 18px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);}
+.btn-buy { background: var(--green); }
+.btn-buy:hover { background: #0b9e65; }
+.btn-sell { background: var(--red); }
+.btn-sell:hover { background: #c93346; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(100%); transform: none !important; box-shadow: none; }
+
+.countdown-bar-container { width: 100%; height: 6px; background: var(--bg-panel); border-radius: 3px; margin-top: 25px; overflow: hidden; }
+.countdown-bar { height: 100%; width: 0%; background: var(--accent); transition: width 1s linear; }
+.status-text { text-align: center; margin-top: 15px; font-size: 14px; color: var(--text-muted); font-weight: bold; height: 40px; line-height: 1.4;}
+
+/* NÚT BOT AI DỰ ĐOÁN 95% */
+.btn-predict {
+    width: 100%;
+    margin-top: 20px;
+    background: linear-gradient(45deg, #8a2be2, #4b0082);
+    color: white;
+    padding: 12px;
+    border: 1px solid #b82bf2;
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(138, 43, 226, 0.4);
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+    animation: pulse-purple 2s infinite;
+}
+.btn-predict:hover { background: linear-gradient(45deg, #9b30ff, #5c2494); box-shadow: 0 0 15px rgba(138, 43, 226, 0.8); }
+.btn-predict:disabled { animation: none; opacity: 0.7; cursor: not-allowed; }
+
+.ai-result-box {
+    margin-top: 10px; padding: 10px; background: rgba(138, 43, 226, 0.1); border: 1px dashed #8a2be2;
+    border-radius: 6px; text-align: center; font-size: 14px; color: #fff; animation: slideDown 0.3s ease-out;
+}
+@keyframes pulse-purple { 0% { box-shadow: 0 0 5px rgba(138,43,226, 0.2); } 50% { box-shadow: 0 0 15px rgba(138,43,226, 0.8); } 100% { box-shadow: 0 0 5px rgba(138,43,226, 0.2); } }
+
+/* CÁC THÀNH PHẦN PHỤ / MODAL NẠP TIỀN */
+.btn-cancel { background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); padding: 8px; cursor: pointer; border-radius: 4px; font-size: 12px; transition: 0.2s; white-space: nowrap;}
+.btn-cancel:hover { background: var(--text-muted); color: white; }
+.btn-deposit { background: var(--accent); border: none; color: #000; padding: 8px 15px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; white-space: nowrap;}
+.btn-deposit:hover { background: #e0b920; }
+
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; }
+.modal-content { background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border); animation: slideDown 0.3s ease-out; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+.modal-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;}
+.modal-header h3 { color: var(--accent); font-size: 16px;}
+.close-btn { font-size: 26px; color: var(--text-muted); cursor: pointer; font-weight:bold; }
+.close-btn:hover { color: var(--red); }
+.modal-body { padding: 25px; }
+.banking-info { background: var(--bg-base); padding: 15px; border-radius: 6px; font-size: 14px; line-height: 1.8; border: 1px dashed var(--text-muted); }
+.loader-container { text-align: center; margin-top: 20px; color: var(--accent); font-weight: bold; font-size: 14px; }
+.spinner { border: 3px solid rgba(252, 213, 53, 0.2); border-top: 3px solid var(--accent); border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; margin: 0 auto 10px auto; }
+
+@keyframes slideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* HIỆU ỨNG TIỀN BAY LÊN */
+#floating-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+.floating-text { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); font-size: 40px; font-weight: bold; text-shadow: 0 4px 10px rgba(0,0,0,0.8); animation: floatUp 2s ease-out forwards; }
+@keyframes floatUp { 0% { opacity: 0; transform: translate(-50%, -30px) scale(0.5); } 20% { opacity: 1; transform: translate(-50%, -50px) scale(1.2); } 80% { opacity: 1; transform: translate(-50%, -100px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -120px) scale(1); } }
+
+/* =========================================
+   GIAO DIỆN MOBILE (CẢI TIẾN TRẬT TỰ & CHỐNG TRÀN)
+========================================= */
+@media (max-width: 900px) {
+    body { height: auto; overflow-y: auto; }
+    
+    /* Header Mobile: Cho phép xuống hàng nếu quá chật */
+    .top-bar { 
+        height: auto; 
+        padding: 10px 15px; 
+        flex-direction: column; 
+        gap: 10px; 
+        align-items: center;
+    }
+    
+    .wallet-info { 
+        width: 100%; 
+        justify-content: center; 
+        flex-wrap: wrap; 
+        gap: 8px;
+    }
+
+    .layout-grid { display: flex; flex-direction: column; height: auto; gap: 15px; padding: 10px; }
+    
+    .center-panel { order: 1; min-height: 450px; }
+    .right-panel { order: 2; }
+    .left-panel { order: 3; min-height: 400px; }
+
+    .huge-price { font-size: 48px; }
+    .action-buttons { flex-direction: row; gap: 8px; }
+    .btn-huge { font-size: 16px; padding: 15px; }
+    .quick-bet-buttons button { padding: 8px 0; font-size: 12px; }
+    
+    /* Giọt nước: Tự thích ứng màn hình */
+    .dot-history-container { 
+        height: auto; 
+        min-height: 90px; 
+        padding: 10px; 
+        gap: 6px; 
+    }
+    .dot { width: 14px; height: 14px; }
+}

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ngân Hàng Trung Tâm - NMT VIP BO</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            justify-content: flex-start;
+            align-items: center;
+            background-image: radial-gradient(circle at top, #1a1c23 0%, #0b0e11 100%);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .bank-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 20px auto;
+            animation: slideDown 0.4s ease-out;
+        }
+        
+        .vault-header {
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--accent);
+            text-align: center;
+            box-shadow: 0 0 30px rgba(252, 213, 53, 0.1);
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .vault-title { color: var(--accent); font-size: 18px; text-transform: uppercase; letter-spacing: 2px; }
+        .vault-balance { font-size: 48px; font-weight: bold; color: #fff; margin: 10px 0; font-family: 'Courier New', monospace;}
+        .profit-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; border: 1px solid var(--text-muted);}
+
+        .stats-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--bg-panel);
+            padding: 20px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        .stat-card h4 { color: var(--text-muted); font-size: 12px; margin-bottom: 10px; text-transform: uppercase;}
+        .val-in { color: var(--green); font-size: 20px; font-weight: bold; }
+        .val-out { color: var(--red); font-size: 20px; font-weight: bold; }
+
+        .flow-section {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 20px;
+        }
+        .flow-list { display: flex; flex-direction: column; gap: 10px; max-height: 500px; overflow-y: auto; padding-right: 5px;}
+        .flow-list::-webkit-scrollbar { width: 4px; }
+        .flow-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        
+        .flow-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg-base); padding: 12px 15px; border-radius: 8px;
+            font-size: 14px; border-left: 4px solid transparent;
+        }
+        .flow-item.thu { border-left-color: var(--green); }
+        .flow-item.chi { border-left-color: var(--red); }
+        .flow-info strong { display: block; font-size: 14px; margin-bottom: 3px;}
+        .flow-info small { color: var(--text-muted); font-size: 12px; }
+
+        .live-indicator { font-size: 12px; color: var(--green); animation: blinker 1s linear infinite; margin-left: 10px; vertical-align: middle;}
+        @keyframes blinker { 50% { opacity: 0.3; } }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        @media (max-width: 768px) { .stats-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+
+    <div class="bank-container">
+        <div class="vault-header">
+            <div class="vault-title">🏦 Tổng Quỹ Thanh Khoản Cloud</div>
+            <div class="vault-balance" id="treasury-balance">$0.00</div>
+            <div class="profit-badge" id="net-profit">Đang đồng bộ...</div>
+        </div>
+
+        <div class="stats-grid-4">
+            <div class="stat-card">
+                <h4>Sàn Thu (Khách Thua)</h4>
+                <div class="val-in" id="total-in">+$0.00</div>
+            </div>
+            <div class="stat-card">
+                <h4>Sàn Chi (Khách Thắng)</h4>
+                <div class="val-out" id="total-out">-$0.00</div>
+            </div>
+            <div class="stat-card">
+                <h4>Tổng Khách Nạp</h4>
+                <div class="val-in" id="total-deposit" style="color:var(--accent)">+$0.00</div>
+            </div>
+            <div class="stat-card">
+                <h4>Số Thành Viên</h4>
+                <div class="val-out" id="total-users" style="color:#fff">0</div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h3 style="margin-bottom:15px; color: var(--text-main); font-size: 16px;">Biến Động Dòng Tiền <span class="live-indicator">● LIVE CLOUD</span></h3>
+            <div class="flow-list" id="cash-flow-list">
+                <p style="text-align:center; color:var(--text-muted); padding: 20px;">Đang tải dữ liệu từ Google Sheets...</p>
+            </div>
+        </div>
+
+        <button class="btn-cancel" style="display:block; width: 100%; text-align:center; margin-top:20px; font-weight: bold; padding:15px; border-radius:8px;" onclick="goBack()">⬅ Quay lại Sàn Giao Dịch</button>
+    </div>
+
+    <script>
+        // === THAY LINK GOOGLE SCRIPT MỚI CỦA BẠN VÀO ĐÂY ===
+        const GS_URL = "https://script.google.com/macros/s/AKfycbypWHtNHG5Svb6GkaAddQzwtxdShbJkPN_IYLKQEDJjgN71LAI-_6plLg-RJTsLEgsDpw/exec";
+        const INITIAL_VAULT = 1000000.00; // Vốn sàn khởi tạo ban đầu (1 Triệu Đô)
+
+        // Lấy ID từ URL để lúc ấn nút "Quay Lại" không bị văng ra trang Login
+        const urlParams = new URLSearchParams(window.location.search);
+        const playerId = urlParams.get('id') || "";
+
+        async function syncWithCloud() {
+            try {
+                // Gọi tới hàm GET_BANK_STATS mà chúng ta đã thiết lập trong Google Apps Script
+                const response = await fetch(GS_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "GET_BANK_STATS" })
+                });
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    renderBanking(data.stats, data.history);
+                }
+            } catch (error) {
+                console.error("Lỗi đồng bộ Cloud Banking:", error);
+            }
+        }
+
+        function renderBanking(stats, history) {
+            // 1. Cập nhật Thống kê Tổng
+            const currentFunds = INITIAL_VAULT + stats.totalIn + stats.totalDeposit - stats.totalOut;
+            const fmt = (n) => "$" + n.toLocaleString(undefined, {minimumFractionDigits: 2});
+            
+            document.getElementById('treasury-balance').innerText = fmt(currentFunds);
+            document.getElementById('total-in').innerText = "+" + fmt(stats.totalIn);
+            document.getElementById('total-out').innerText = "-" + fmt(stats.totalOut);
+            document.getElementById('total-deposit').innerText = "+" + fmt(stats.totalDeposit);
+            document.getElementById('total-users').innerText = stats.totalUsers;
+
+            // Tính lợi nhuận ròng của Sàn (Sàn Thu - Sàn Chi) (Không cộng tiền khách nạp vào lợi nhuận)
+            // Sàn chi bao gồm cả tiền trả thưởng và tiền rút
+            const netProfit = stats.totalIn - stats.totalOut; 
+            const profitBadge = document.getElementById('net-profit');
+            
+            profitBadge.innerText = netProfit >= 0 ? `Sàn đang Lời: +${fmt(netProfit)}` : `Sàn đang Lỗ: ${fmt(netProfit)}`;
+            profitBadge.style.background = netProfit >= 0 ? "rgba(14, 203, 129, 0.15)" : "rgba(246, 70, 93, 0.15)";
+            profitBadge.style.color = netProfit >= 0 ? "var(--green)" : "var(--red)";
+            profitBadge.style.borderColor = netProfit >= 0 ? "var(--green)" : "var(--red)";
+
+            // 2. Render Danh sách Dòng tiền (History)
+            const flowListEl = document.getElementById('cash-flow-list');
+            flowListEl.innerHTML = '';
+
+            history.forEach(row => {
+                let typeClass = "thu"; // Mặc định là màu xanh (Tiền vào sàn)
+                let displayAmount = row.amount;
+
+                // Xác định dòng tiền ra/vào túi của SÀN
+                if (row.action.includes("Cược")) {
+                    if (row.result === "THẮNG") {
+                        typeClass = "chi"; // Khách thắng -> Sàn chi (Màu đỏ)
+                        displayAmount = row.pnl; // Lấy tiền lãi phải trả
+                    } else if (row.result === "THUA") {
+                        typeClass = "thu"; // Khách thua -> Sàn thu (Màu xanh)
+                        displayAmount = row.amount; // Lấy tiền cược của khách
+                    }
+                } else if (row.action === "NẠP TIỀN") {
+                    typeClass = "thu"; // Khách nạp -> Quỹ sàn tăng (Màu xanh)
+                    displayAmount = row.amount;
+                } else if (row.action === "RÚT TIỀN") {
+                    typeClass = "chi"; // Khách rút -> Quỹ sàn giảm (Màu đỏ)
+                    displayAmount = row.amount;
+                }
+
+                // Vẽ HTML cho từng dòng
+                const itemHtml = `
+                    <div class="flow-item ${typeClass}">
+                        <div class="flow-info">
+                            <strong>${row.action} - <span style="color:var(--accent)">${row.id}</span></strong>
+                            <small>${row.time} | KQ: ${row.result}</small>
+                        </div>
+                        <div style="font-weight:bold; font-size: 16px;" class="${typeClass}">
+                            ${typeClass === 'thu' ? '+' : '-'}$${Math.abs(displayAmount).toFixed(2)}
+                        </div>
+                    </div>
+                `;
+                flowListEl.innerHTML += itemHtml;
+            });
+        }
+
+        function goBack() {
+            if (playerId) {
+                window.location.href = `index.html?id=${playerId}`;
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Tự động cập nhật mỗi 5 giây để luôn lấy dữ liệu mới nhất từ Google Sheets
+        setInterval(syncWithCloud, 5000);
+        
+        // Chạy lần đầu ngay khi mở trang
+        window.onload = syncWithCloud;
+    </script>
+</body>
+</html>

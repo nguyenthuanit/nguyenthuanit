@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ngân Hàng Trung Tâm & Rút Tiền - NMT VIP BO</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { justify-content: flex-start; align-items: center; background-image: radial-gradient(circle at top, #1a1c23 0%, #0b0e11 100%); padding: 15px; overflow-y: auto; }
+        .bank-container { width: 100%; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        
+        /* Bố cục 2 cột cho màn PC, 1 cột cho Mobile */
+        .grid-layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 768px) { .grid-layout { grid-template-columns: 1fr 1fr; } }
+
+        /* Panel chung */
+        .panel-box { background: var(--bg-panel); border-radius: 12px; border: 1px solid var(--border); padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .panel-title { color: var(--accent); font-size: 18px; margin-bottom: 20px; text-align: center; text-transform: uppercase; letter-spacing: 1px;}
+        
+        /* Cột Ngân hàng */
+        .vault-balance { font-size: 40px; font-weight: bold; color: #fff; margin: 10px 0; text-align: center; font-family: 'Courier New', monospace; }
+        .stats-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: var(--bg-base); padding: 15px 10px; border-radius: 8px; border: 1px dashed var(--border); text-align: center; }
+        .flow-list { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        .flow-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-base); padding: 12px; border-radius: 8px; font-size: 13px; }
+        .thu { color: var(--green); border-left: 3px solid var(--green); }
+        .chi { color: var(--red); border-left: 3px solid var(--red); }
+        
+        /* Cột Rút tiền */
+        .balance-box { background: rgba(246, 70, 93, 0.1); border: 1px dashed var(--red); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
+        .balance-box p { color: var(--text-muted); font-size: 13px; margin-bottom: 5px; }
+        .balance-box h2 { color: var(--red); font-size: 24px; }
+        select.styled-select { width: 100%; background: var(--bg-base); border: 1px solid var(--border); color: var(--accent); padding: 14px; border-radius: 6px; outline: none; font-size: 15px; cursor: pointer; }
+        .input-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px; }
+        .input-group input { width: 100%; background: var(--bg-base); border: 1px solid var(--border); color: white; padding: 14px; border-radius: 6px; outline: none; box-sizing: border-box; }
+        input[readonly] { background-color: rgba(255, 255, 255, 0.05) !important; color: var(--text-muted) !important; cursor: not-allowed; border: 1px dashed var(--border) !important; }
+        
+        .loading-overlay { text-align: center; padding: 30px; color: var(--accent); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const playerId = urlParams.get('id');
+        if (!playerId || playerId.trim() === "") window.location.replace('login.html'); 
+    </script>
+
+    <div class="bank-container">
+        
+        <div class="grid-layout">
+            <div class="panel-box">
+                <h2 class="panel-title">💸 Lệnh Rút Tiền Của <span style="color:white" id="display-id">...</span></h2>
+                
+                <div class="balance-box">
+                    <p>Số dư khả dụng hiện tại</p>
+                    <h2 id="available-balance">$0.00</h2>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label>Số tiền cần rút (USD)</label>
+                    <input type="number" id="withdraw-amount" placeholder="Tối thiểu $50" oninput="calcVndReceive()">
+                    <p style="text-align: right; font-size: 12px; color: var(--text-muted); margin-top: 5px;">Thực nhận: <span id="vnd-receive" style="color: var(--green); font-weight: bold;">0 ₫</span></p>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label>Ngân hàng nhận</label>
+                    <select id="bank-name" class="styled-select">
+                        <option value="Vietcombank">Vietcombank (VCB)</option>
+                        <option value="Techcombank">Techcombank (TCB)</option>
+                        <option value="MB Bank">MB Bank (MB)</option>
+                        <option value="VietinBank">VietinBank</option>
+                    </select>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label>Số tài khoản</label>
+                    <input type="text" id="account-number" value="0987654321999" readonly>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label>Tên chủ tài khoản</label>
+                    <input type="text" id="account-name" value="NGUYEN VAN A" readonly>
+                </div>
+
+                <button id="btn-submit-withdraw" class="btn-buy" style="width: 100%; padding: 15px; font-size: 16px; border-radius: 8px; margin-top: 10px; background: var(--red); color: white;" onclick="checkAdminBeforeWithdraw()">Xác Nhận Rút Tiền</button>
+            </div>
+
+            <div class="panel-box">
+                <h2 class="panel-title">🏦 TỔNG QUỸ SÀN BO</h2>
+                <div class="vault-balance" id="treasury-balance">$0.00</div>
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <span id="net-profit-badge" style="padding: 5px 15px; border-radius: 20px; font-size: 13px; font-weight: bold; border: 1px solid var(--text-muted);">Đang đồng bộ...</span>
+                </div>
+
+                <div class="stats-grid-2">
+                    <div class="stat-card">
+                        <h4 style="color: var(--text-muted); font-size: 11px;">SÀN THU (KHÁCH THUA)</h4>
+                        <div id="total-in" style="color: var(--green); font-weight: bold; font-size: 16px; margin-top: 5px;">$0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4 style="color: var(--text-muted); font-size: 11px;">SÀN CHI (KHÁCH THẮNG/RÚT)</h4>
+                        <div id="total-out" style="color: var(--red); font-weight: bold; font-size: 16px; margin-top: 5px;">$0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4 style="color: var(--text-muted); font-size: 11px;">TỔNG NẠP MỚI</h4>
+                        <div id="total-deposit" style="color: var(--accent); font-weight: bold; font-size: 16px; margin-top: 5px;">$0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4 style="color: var(--text-muted); font-size: 11px;">TỔNG USER</h4>
+                        <div id="total-users" style="color: #fff; font-weight: bold; font-size: 16px; margin-top: 5px;">0</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom: 10px; font-size: 14px; color: var(--text-muted); border-bottom: 1px solid var(--border); padding-bottom: 10px;">LỊCH SỬ DÒNG TIỀN (LIVE)</h3>
+                <div id="flow-list" class="flow-list">
+                    <div class="loading-overlay">Đang tải dữ liệu đám mây...</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-cancel" style="padding: 15px; font-size: 16px; border-radius: 8px; width: 100%;" onclick="goBack()">⬅ Quay Lại Sàn Giao Dịch</button>
+    </div>
+
+    <div id="admin-auth-modal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: var(--bg-panel); border-radius: 12px; border: 1px solid var(--border); padding: 25px; width: 90%; max-width: 350px; text-align: center;">
+            <h3 style="color: var(--red); margin-bottom: 15px;">🔒 KHÓA DUYỆT RÚT TIỀN</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Chức năng rút tiền bị khóa. Cần Admin nhập mật khẩu hệ thống để duyệt lệnh.</p>
+            <input type="password" id="admin-secret-key" placeholder="Nhập mật khẩu duyệt lệnh..." style="width: 100%; background: var(--bg-base); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 6px; outline: none; margin-bottom: 15px; text-align: center;">
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-cancel" style="flex: 1; padding: 10px; border-radius: 6px;" onclick="document.getElementById('admin-auth-modal').style.display='none'">Hủy</button>
+                <button class="btn-buy" style="flex: 1; border: none; border-radius: 6px; color: white; font-weight: bold; background: var(--red);" onclick="verifyAdminKey()">DUYỆT LỆNH</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === THAY LINK GOOGLE SCRIPT MỚI VÀO ĐÂY ===
+        const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbypWHtNHG5Svb6GkaAddQzwtxdShbJkPN_IYLKQEDJjgN71LAI-_6plLg-RJTsLEgsDpw/exec";
+        const EXCHANGE_RATE = 25000;
+        const INITIAL_FUNDS = 1000000.00; // Vốn ban đầu của hệ thống
+        
+        let personalBalance = 0;
+        let pendingWithdrawAmount = 0;
+        let isAdminAuthed = false;
+
+        document.getElementById('display-id').innerText = playerId;
+
+        // 1. TẢI DỮ LIỆU TỔNG HỢP TỪ CLOUD
+        async function fetchAllData() {
+            try {
+                // Lấy số dư cá nhân
+                const balRes = await fetch(GOOGLE_SHEET_URL, {
+                    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "GET_BALANCE", id: playerId })
+                });
+                const balData = await balRes.json();
+                if (balData.status === "success") {
+                    personalBalance = parseFloat(balData.balance) || 0;
+                    document.getElementById('available-balance').innerText = "$" + personalBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
+                }
+
+                // Lấy Thống kê Ngân hàng
+                const bankRes = await fetch(GOOGLE_SHEET_URL, {
+                    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "GET_BANK_STATS", id: playerId })
+                });
+                const bankData = await bankRes.json();
+                if (bankData.status === "success") {
+                    updateBankUI(bankData.stats, bankData.history);
+                }
+            } catch (e) { console.warn("Lỗi đồng bộ Cloud"); }
+        }
+
+        // Cập nhật giao diện Ngân hàng
+        function updateBankUI(stats, history) {
+            const currentVault = INITIAL_FUNDS + stats.totalIn + stats.totalDeposit - stats.totalOut;
+            const f = (v) => "$" + v.toLocaleString(undefined, {minimumFractionDigits: 2});
+            
+            document.getElementById('treasury-balance').innerText = f(currentVault);
+            document.getElementById('total-in').innerText = "+" + f(stats.totalIn);
+            document.getElementById('total-out').innerText = "-" + f(stats.totalOut);
+            document.getElementById('total-deposit').innerText = "+" + f(stats.totalDeposit);
+            document.getElementById('total-users').innerText = stats.totalUsers;
+
+            const net = stats.totalIn - (stats.totalOut - stats.totalDeposit); // Ước tính lợi nhuận ròng
+            const badge = document.getElementById('net-profit-badge');
+            badge.innerText = net >= 0 ? `Lợi nhuận ròng: +${f(net)}` : `Sàn đang lỗ: ${f(net)}`;
+            badge.style.border = `1px solid ${net >= 0 ? 'var(--green)' : 'var(--red)'}`;
+            badge.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
+
+            // Render danh sách giao dịch
+            const listContainer = document.getElementById('flow-list');
+            listContainer.innerHTML = '';
+            history.forEach(row => {
+                let rowClass = "thu";
+                if (row.action.includes("Cược")) {
+                    rowClass = row.result === "THẮNG" ? "chi" : "thu";
+                } else if (row.action === "RÚT TIỀN") { rowClass = "chi"; }
+
+                const displayAmt = row.action.includes("Cược") && row.result === "THẮNG" ? row.pnl : row.amount;
+
+                listContainer.innerHTML += `
+                    <div class="flow-item ${rowClass}">
+                        <div><strong>${row.action} (${row.id})</strong><br><small style="color:var(--text-muted)">${row.time}</small></div>
+                        <div style="font-weight:bold">${rowClass === 'thu' ? '+' : '-'}$${Math.abs(displayAmt).toFixed(2)}</div>
+                    </div>`;
+            });
+        }
+
+        // Tự động quét 5 giây / lần
+        setInterval(fetchAllData, 5000);
+        window.onload = fetchAllData;
+
+        // --- XỬ LÝ RÚT TIỀN CÓ KHÓA ADMIN ---
+        function calcVndReceive() {
+            const usd = parseFloat(document.getElementById('withdraw-amount').value) || 0;
+            document.getElementById('vnd-receive').innerText = (usd * EXCHANGE_RATE).toLocaleString() + " ₫";
+        }
+
+        function checkAdminBeforeWithdraw() {
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            if (isNaN(amount) || amount < 50) return alert("Số tiền rút tối thiểu là $50.");
+            if (amount > personalBalance) return alert("Số dư không đủ để rút!");
+
+            pendingWithdrawAmount = amount;
+
+            if (isAdminAuthed) {
+                processWithdraw();
+            } else {
+                document.getElementById('admin-secret-key').value = '';
+                document.getElementById('admin-auth-modal').style.display = 'flex';
+            }
+        }
+
+        function verifyAdminKey() {
+            const key = document.getElementById('admin-secret-key').value;
+            // MẬT KHẨU ĐỂ DUYỆT LỆNH RÚT LÀ: adminrut
+            if (key === "adminrut") {
+                document.getElementById('admin-auth-modal').style.display = 'none';
+                isAdminAuthed = true;
+                processWithdraw();
+            } else {
+                alert("❌ Mật khẩu duyệt lệnh sai!");
+            }
+        }
+
+        async function processWithdraw() {
+            const bankName = document.getElementById('bank-name').value;
+            const accNum = document.getElementById('account-number').value;
+            const btnSubmit = document.getElementById('btn-submit-withdraw');
+
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = "Đang xử lý trên Cloud...";
+
+            // Trừ tiền tạm thời trên UI
+            personalBalance -= pendingWithdrawAmount;
+            document.getElementById('available-balance').innerText = "$" + personalBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+            // Gửi dữ liệu lên Sheets
+            const payload = {
+                action: "SAVE_TRANSACTION",
+                id: playerId,
+                time: new Date().toLocaleString("vi-VN"),
+                tradeAction: "RÚT TIỀN",
+                amount: pendingWithdrawAmount,
+                result: "CHỜ DUYỆT",
+                pnl: -pendingWithdrawAmount,
+                balance: personalBalance.toFixed(2),
+                note: `NH: ${bankName} | STK: ${accNum}`
+            };
+
+            try {
+                await fetch(GOOGLE_SHEET_URL, {
+                    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(payload)
+                });
+                alert(`✅ Rút thành công $${pendingWithdrawAmount}. Dữ liệu đã ghi lên Cloud!`);
+                document.getElementById('withdraw-amount').value = '';
+                calcVndReceive();
+                fetchAllData(); // Tải lại ngay lập tức để dòng tiền chạy
+            } catch (err) { alert("Lỗi mạng, vui lòng thử lại!"); }
+
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = "Xác Nhận Rút Tiền";
+        }
+
+        function goBack() { window.location.href = `index.html?id=${playerId}`; }
+    </script>
+</body>
+</html>

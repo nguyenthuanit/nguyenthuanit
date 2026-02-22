@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NMT VIP BO - Hệ Thống Giao Dịch Siêu Cấp</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <script>
+        if (!new URLSearchParams(window.location.search).get('id')) {
+            window.location.replace('login.html'); 
+        }
+    </script>
+
+    <header class="top-bar">
+        <div class="logo">💎 NMT BO - <span id="vip-badge" style="color:var(--text-muted); font-size:12px;">VIP 0</span></div>
+        <div class="wallet-info">
+            <span style="font-size: 13px; color: var(--text-muted); margin-right: 10px;">ID: <strong id="user-display" style="color: var(--accent);">Loading...</strong></span>
+            <span>Ví thực: <strong id="total-asset" class="highlight">$0.00</strong></span>
+            <button class="btn-deposit" onclick="checkAdminBeforeDeposit()">+ NẠP</button>
+            <button class="btn-cancel" style="color: var(--red); border-color: var(--red);" onclick="checkAdminBeforeBanking()">- RÚT / NGÂN HÀNG</button>
+            <button class="btn-cancel" style="margin-left: 10px;" onclick="logOut()">Thoát</button>
+            <button class="btn-cancel" style="color: var(--red); border-color: var(--red); margin-left: 10px;" onclick="openDeleteAccountModal()">Xóa TK</button>
+        </div>
+    </header>
+
+    <div class="layout-grid">
+        <div class="panel left-panel">
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="label">Lợi nhuận ròng</span>
+                    <span id="realized-pnl" class="value">$0.00</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">Số dư khả dụng</span>
+                    <span id="usd-balance" class="value">0.00</span>
+                </div>
+            </div>
+
+            <div class="sidebar-tabs">
+                <button class="tab-btn active" onclick="switchSidebarTab('history', event)">LỊCH SỬ</button>
+                <button class="tab-btn" onclick="switchSidebarTab('feed', event)">LIVE FEED</button>
+            </div>
+
+            <div id="tab-history" class="tab-content active history-list">
+                <div id="history-body"></div>
+            </div>
+
+            <div id="tab-feed" class="tab-content live-feed-container">
+                <div id="live-feed"></div>
+            </div>
+
+            <button class="btn-cancel" style="margin-top: 10px; width: 100%;" onclick="resetAccount()">🔄 Khôi phục tài khoản</button>
+        </div>
+
+        <div class="panel center-panel">
+            <div class="panel-header" style="text-align: center;">TỶ GIÁ BTC/USD: <span id="header-price">100.00</span></div>
+
+            <div class="orderbook-panel">
+                <div class="ob-header"><span>Size</span><span>Price</span><span>Size</span></div>
+                <div class="ob-list asks">
+                    <div class="ob-row ask"><span style="color:var(--text-muted)">1.24</span><span class="price">100.05</span><span style="color:var(--text-muted)">0.5</span></div>
+                    <div class="ob-row ask"><span style="color:var(--text-muted)">0.85</span><span class="price">100.03</span><span style="color:var(--text-muted)">1.2</span></div>
+                </div>
+
+                <div id="ob-price" class="ob-current-price price-up">100.00</div>
+
+                <div class="ob-list bids">
+                    <div class="ob-row bid"><span style="color:var(--text-muted)">2.10</span><span class="price">99.98</span><span style="color:var(--text-muted)">0.8</span></div>
+                    <div class="ob-row bid"><span style="color:var(--text-muted)">0.45</span><span class="price">99.95</span><span style="color:var(--text-muted)">3.1</span></div>
+                </div>
+            </div>
+
+            <div style="margin-top: auto;">
+                <div class="panel-header" style="font-size: 12px; margin-bottom: 5px;">KẾT QUẢ TRƯỚC (GIỌT NƯỚC)</div>
+                <div id="dot-history" class="dot-history-container"></div>
+            </div>
+        </div>
+
+        <div class="panel right-panel">
+            <div class="bo-group">
+                <div class="profit-box">
+                    <span class="profit-label">Lợi nhuận dự kiến (95%):</span>
+                    <span id="expected-profit-text" class="profit-value">$195.00</span>
+                </div>
+
+                <div class="input-group">
+                    <label>Số tiền cược (USD)</label>
+                    <input type="number" id="bo-amount" value="100" oninput="updateExpectedProfit()">
+                </div>
+
+                <div class="quick-bet-buttons">
+                    <button onclick="setQuickBet(10)">$10</button>
+                    <button onclick="setQuickBet(50)">$50</button>
+                    <button onclick="setQuickBet(100)">$100</button>
+                    <button onclick="setQuickBet('ALL')">ALL IN</button>
+                </div>
+
+                <button class="btn-predict" onclick="checkBotAIAccess()">🤖 Mở Siêu Bot AI V4.0 (Yêu cầu VIP)</button>
+                <div id="ai-result" class="ai-result-box" style="display: none;"></div>
+
+                <div class="countdown-bar-container">
+                    <div id="countdown-bar" class="countdown-bar"></div>
+                </div>
+                <div id="bo-status" class="status-text">ĐANG CHỜ LỆNH...</div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-huge btn-buy" onclick="placeBO('UP')">TĂNG 📈</button>
+                    <button class="btn btn-huge btn-sell" onclick="placeBO('DOWN')">GIẢM 📉</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="deposit-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="width: 400px;">
+            <div class="modal-header">
+                <h3>🏦 Nạp USD (Tỷ giá 25,000đ)</h3>
+                <span class="close-btn" onclick="closeDepositModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="deposit-step-1">
+                    <div class="input-group">
+                        <label>Số lượng USD muốn nạp:</label>
+                        <input type="number" id="deposit-amount" placeholder="Tối thiểu $10" oninput="calculateVND()">
+                    </div>
+                    <p style="text-align: right; color: var(--text-muted); margin-bottom: 20px;">Tương đương: <strong id="vnd-preview" style="color: var(--accent);">0 ₫</strong></p>
+                    <button class="btn btn-huge btn-buy" style="width: 100%;" onclick="goToDepositStep2()">Tạo Mã QR Nạp Tiền</button>
+                </div>
+
+                <div id="deposit-step-2" style="display: none;">
+                    <div class="banking-info" style="text-align: center;">
+                        <img id="qr-image" src="" alt="QR Code" style="width: 200px; height: 200px; border-radius: 8px; margin-bottom: 15px;">
+                        <p style="margin-bottom: 5px;">Số tiền: <strong id="qr-vnd-amount" style="color: var(--green); font-size: 18px;"></strong></p>
+                        <p>Nội dung CK: <strong id="qr-memo" style="color: var(--accent); letter-spacing: 1px;"></strong></p>
+                    </div>
+
+                    <div id="deposit-loader" class="loader-container" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Đang xác nhận dữ liệu lên Cloud...</p>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button class="btn-cancel" style="flex: 1;" onclick="backToStep1()">Quay lại</button>
+                        <button id="btn-confirm-deposit" class="btn btn-buy" style="flex: 2; padding: 12px;" onclick="processDeposit()">Xác Nhận Đã Chuyển</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-auth-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="width: 350px; text-align: center;">
+            <div class="modal-body">
+                <h3 style="color: var(--accent); margin-bottom: 15px;">🔒 KHÓA BẢO MẬT NẠP TIỀN</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Chức năng nạp tiền bị khóa. Vui lòng nhập mật khẩu quản trị hệ thống để mở.</p>
+                <input type="password" id="admin-secret-key" placeholder="Nhập mật khẩu Admin..." style="width: 100%; background: var(--bg-base); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 6px; outline: none; margin-bottom: 15px; text-align: center;">
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-cancel" style="flex: 1; padding: 10px;" onclick="document.getElementById('admin-auth-modal').style.display='none'">Hủy</button>
+                    <button class="btn-buy" style="flex: 1; border: none; border-radius: 6px; color: black; font-weight: bold;" onclick="verifyAdminKey()">MỞ KHÓA</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="banking-auth-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="width: 350px; text-align: center;">
+            <div class="modal-body">
+                <h3 style="color: var(--red); margin-bottom: 15px;">🔒 KHÓA DUYỆT RÚT TIỀN</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Chức năng rút tiền bị khóa. Cần Admin nhập mật khẩu hệ thống để duyệt lệnh.</p>
+                <input type="password" id="banking-secret-key" placeholder="Nhập mật khẩu Admin..." style="width: 100%; background: var(--bg-base); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 6px; outline: none; margin-bottom: 15px; text-align: center;">
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-cancel" style="flex: 1; padding: 10px;" onclick="document.getElementById('banking-auth-modal').style.display='none'">Hủy</button>
+                    <button class="btn-sell" style="flex: 1; border: none; border-radius: 6px; color: white; font-weight: bold;" onclick="verifyBankingKey()">DUYỆT LỆNH</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ai-auth-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="width: 350px; text-align: center;">
+            <div class="modal-body">
+                <h3 style="color: #0f0; margin-bottom: 15px; font-family: 'Courier New', Courier, monospace;">🤖 XÁC THỰC BOT AI</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Tính năng này bị khóa đối với người chơi thường. Vui lòng nhập mã kích hoạt VIP.</p>
+                <input type="password" id="ai-secret-key" placeholder="Nhập mã kích hoạt..." style="width: 100%; background: var(--bg-base); border: 1px solid var(--border); color: #0f0; padding: 12px; border-radius: 6px; outline: none; margin-bottom: 15px; text-align: center; font-family: 'Courier New', Courier, monospace;">
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-cancel" style="flex: 1; padding: 10px;" onclick="document.getElementById('ai-auth-modal').style.display='none'">Hủy</button>
+                    <button class="btn-buy" style="flex: 1; border: none; border-radius: 6px; color: white; font-weight: bold; background: linear-gradient(45deg, #8a2be2, #4b0082);" onclick="verifyAIPassword()">KÍCH HOẠT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="delete-account-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="width: 350px; text-align: center;">
+        <div class="modal-body">
+            <h3 style="color: var(--red); margin-bottom: 15px;">⚠️ XÓA TÀI KHOẢN VĨNH VIỄN</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Toàn bộ dữ liệu giao dịch và số dư sẽ bị xóa sạch khỏi Cloud. Nhập mật khẩu của bạn để xác nhận.</p>
+            <input type="password" id="delete-secret-key" placeholder="Nhập mật khẩu tài khoản..." style="width: 100%; background: var(--bg-base); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 6px; outline: none; margin-bottom: 15px; text-align: center;">
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-cancel" style="flex: 1; padding: 10px;" onclick="document.getElementById('delete-account-modal').style.display='none'">Hủy</button>
+                <button id="btn-confirm-delete" class="btn-sell" style="flex: 1; border: none; border-radius: 6px; color: white; font-weight: bold;" onclick="processDeleteAccount()">XÓA NGAY</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div id="floating-container"></div>
+    <script src="script.js"></script>
+</body>
+</html>

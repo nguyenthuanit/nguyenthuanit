@@ -1,0 +1,160 @@
+/* --- Cài đặt chung --- */
+html {
+    font-size: 16px;
+}
+
+body {
+    font-family: 'Consolas', 'Monaco', 'Courier New', Courier, monospace;
+    font-size: 1rem;
+    line-height: 1.4;
+    margin: 0;
+    transition: color 0.5s, background-color 0.5s; /* Hiệu ứng chuyển theme mượt mà hơn */
+    background-color: var(--main-bg);
+    color: var(--main-color);
+}
+
+/* --- Giao diện Terminal --- */
+#terminal {
+    padding: 15px;
+    height: 100vh;
+    box-sizing: border-box;
+    overflow-y: auto;
+    cursor: text;
+    position: relative;
+    z-index: 1;
+}
+
+#history p {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+#history a {
+    text-decoration: underline;
+    color: var(--link-color, var(--main-color));
+}
+
+#history a:hover {
+    opacity: 0.8;
+}
+
+#input-line {
+    display: flex;
+    align-items: center;
+}
+
+#prompt {
+    margin-right: 8px;
+    color: var(--prompt-color, var(--main-color));
+}
+
+#command-input {
+    background-color: transparent;
+    border: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    outline: none;
+    flex-grow: 1;
+    padding: 0;
+}
+
+/* --- Con trỏ nhấp nháy --- */
+.cursor {
+    display: inline-block;
+    width: 10px;
+    height: 1.2rem;
+    animation: blink 1s step-end infinite;
+    background-color: var(--main-color);
+}
+
+@keyframes blink {
+    from, to {
+        background-color: transparent;
+    }
+    50% {
+        background-color: var(--main-color);
+    }
+}
+
+/* --- THÊM MỚI: Kiểu cho trình soạn thảo Nano --- */
+#editor-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--main-bg);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+#editor-textarea {
+    flex-grow: 1;
+    background-color: transparent;
+    color: var(--main-color);
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: inherit;
+    padding: 15px;
+    resize: none;
+}
+
+#editor-statusbar {
+    background-color: var(--main-color);
+    color: var(--main-bg);
+    padding: 4px 15px;
+    font-weight: bold;
+    text-align: center;
+}
+
+
+/* --- CÁC THEME MÀU SẮC --- */
+:root {
+    --main-bg: #000000;
+    --main-color: #00ff41;
+    --prompt-color: #00ff41;
+    --link-color: #33ff66;
+}
+
+body.theme-hacker {
+    --main-bg: #0d0d0d;
+    --main-color: #dc143c;
+    --prompt-color: #ff3355;
+    --link-color: #ff4561;
+}
+
+body.theme-cyberpunk {
+    --main-bg: #2a0045;
+    --main-color: #00f7ff;
+    --prompt-color: #ff00ff;
+    --link-color: #00f7ff;
+}
+
+body.theme-solarized-light {
+    --main-bg: #fdf6e3;
+    --main-color: #657b83;
+    --prompt-color: #268bd2;
+    --link-color: #2aa198;
+}
+
+body.theme-dracula {
+    --main-bg: #282a36;
+    --main-color: #f8f8f2;
+    --prompt-color: #50fa7b;
+    --link-color: #8be9fd;
+}
+
+/* --- Tối ưu cho di động (Responsive) --- */
+@media (max-width: 600px) {
+    html {
+        font-size: 14px;
+    }
+
+    #terminal {
+        padding: 10px;
+    }
+}

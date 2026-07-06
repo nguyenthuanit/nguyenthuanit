@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Giả Lập Gateway & Tin Nhắn CHUYÊN NGHIỆP</title>
+    <link rel="stylesheet" href="css/cashbank.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="lock-screen">
+        <div class="lock-card">
+            <h2 class="lock-title">🔐 Nhập Mã PIN Bảo Mật</h2>
+            <p class="lock-hint">Mã PIN mặc định: **1239**</p>
+            
+            <div id="pin-display" class="pin-display">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+            
+            <div class="pin-buttons">
+                <button onclick="enterPin(1)">1</button>
+                <button onclick="enterPin(2)">2</button>
+                <button onclick="enterPin(3)">3</button>
+                <button onclick="enterPin(4)">4</button>
+                <button onclick="enterPin(5)">5</button>
+                <button onclick="enterPin(6)">6</button>
+                <button onclick="enterPin(7)">7</button>
+                <button onclick="enterPin(8)">8</button>
+                <button onclick="enterPin(9)">9</button>
+                <button class="delete-btn" onclick="deletePin()"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2zM11 9l4 4m0-4l-4 4'/></svg>" width="24" height="24"></button>
+                <button onclick="enterPin(0)">0</button>
+                <button class="enter-btn" onclick="checkPassword()">ENTER</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="main-container" style="display: none;">
+        
+        <div class="config-panel">
+            <h2>🏦 Quản Lý Tài Khoản (Chuyên Nghiệp)</h2>
+            
+            <div class="config-group">
+                <label for="active-account-select">Chọn Tài Khoản Hiện Tại</label>
+                <select id="active-account-select" onchange="switchAccount()">
+                    </select>
+            </div>
+
+            <div class="config-group">
+                <label for="bank-select">Ngân hàng Nhận</label>
+                <select id="bank-select">
+                    <option value="VCB">Vietcombank</option>
+                    <option value="TCB">Techcombank</option>
+                    <option value="MB">MB Bank</option>
+                </select>
+            </div>
+
+            <div class="config-group">
+                <label for="new-account-name">Tên Gợi Nhớ (Tạo mới)</label>
+                <input type="text" id="new-account-name" placeholder="Ví dụ: Tài khoản Test API">
+            </div>
+
+            <div class="config-group half-group">
+                <div class="half-item">
+                    <label for="partner-id-input">Partner ID (1)</label>
+                    <input type="text" id="partner-id-input" value="ECOMMERCE_GATEWAY" placeholder="ID (Ví dụ: MomoWallet)">
+                </div>
+                <div class="half-item">
+                    <label for="account-owner">Tên Chủ TK (10)</label>
+                    <input type="text" id="account-owner" value="NGUYEN VAN A" placeholder="Tên sẽ hiển thị trong tin nhắn">
+                </div>
+            </div>
+            
+            <div class="action-buttons-group">
+                <button class="action-btn" style="background-color: #3f51b5;" onclick="addOrUpdateAccount()">➕ Thêm / Cập Nhật TK</button>
+            </div>
+
+            <hr class="separator">
+            
+            <h2>🔗 Cấu Hình Webhook/Callback</h2>
+            <div class="config-group">
+                <label for="webhook-url">Webhook URL</label>
+                <input type="text" id="webhook-url" value="https://sandbox.partner.com/api/callback" placeholder="URL nhận phản hồi từ Gateway">
+            </div>
+            
+            <div class="config-group half-group">
+                <div class="half-item">
+                    <label for="webhook-status">Webhook Response Status</label>
+                    <select id="webhook-status">
+                        <option value="200">200 OK (Thành công)</option>
+                        <option value="400">400 Bad Request</option>
+                        <option value="500">500 Server Error</option>
+                    </select>
+                </div>
+                 <div class="half-item">
+                    <label for="webhook-delay">Webhook Delay (ms)</label>
+                    <input type="number" id="webhook-delay" value="200" min="0">
+                </div>
+            </div>
+
+            <div class="config-group">
+                <label for="webhook-secret">Webhook Secret Key (Signature)</label>
+                <input type="text" id="webhook-secret" value="secret_test_key" placeholder="Key dùng để tạo chữ ký (signature)">
+            </div>
+            
+             <hr class="separator">
+            
+            <div class="action-buttons-group">
+                <button class="action-btn export-btn" onclick="exportTransactions()">⬇️ Xuất Lịch Sử (CSV)</button>
+                <button class="action-btn" style="background-color: var(--reset-bg);" onclick="clearAllDataAndReset()">🔄 Reset Tất Cả Dữ Liệu</button>
+            </div>
+        </div>
+
+        <div class="calculator-panel">
+            <h2>💰 Giả Lập Giao Dịch</h2>
+            
+            <div id="current-balance-display">Số dư hiện tại: 0.00 VND</div>
+            
+            <div class="config-group">
+                <label for="amount-input">Số tiền GD (VND)</label>
+                <input type="text" id="amount-input" value="100.000" placeholder="0" data-original-value="100000" oninput="formatInput(this)">
+            </div>
+            
+            <div class="config-group">
+                <label for="daily-limit-input">Hạn mức tối đa/ngày (VND)</label>
+                <input type="text" id="daily-limit-input" value="100.000.000" placeholder="0 = Không giới hạn" data-original-value="100000000" oninput="formatInput(this)">
+            </div>
+            
+            <div class="config-group">
+                <label for="transfer-content">Nội Dung Chuyển Khoản (9)</label>
+                <input type="text" id="transfer-content" placeholder="Nội dung tùy chỉnh">
+            </div>
+            
+            <div class="config-group">
+                <label for="default-content-template">Mẫu Nội Dung Mặc Định (4)</label>
+                <input type="text" id="default-content-template" value="Thanh toan don hang {TX_ID}" placeholder="Sử dụng {TX_ID} để chèn mã GD">
+            </div>
+            
+            <hr class="separator">
+            
+            <h2>⏱️ Cấu Hình Trạng Thái</h2>
+            
+            <div class="config-group">
+                <label for="transaction-type-select">Loại Giao Dịch Cố Định (2)</label>
+                <select id="transaction-type-select">
+                    <option value="Payment">Thanh Toán (Tiền vào)</option>
+                    <option value="Refund">Hoàn Tiền (Tiền ra)</option>
+                    <option value="Fee">Phí/Hoa Hồng (Tiền ra)</option>
+                </select>
+            </div>
+            
+            <div class="config-group half-group">
+                <div class="half-item">
+                    <label for="delay-input">Độ trễ SMS (s)</label>
+                    <input type="number" id="delay-input" value="1" min="0">
+                </div>
+                <div class="half-item">
+                    <label for="simulated-status-select">Trạng Thái Giả Lập</label>
+                    <select id="simulated-status-select">
+                        <option value="Success">Thành Công (Success)</option>
+                        <option value="Failure">Thất Bại (Failure)</option>
+                        <option value="Pending">Đang Chờ (Pending)</option>
+                    </select>
+                </div>
+            </div>
+            
+             <div class="config-group half-group">
+                <div class="half-item">
+                    <label for="error-code-input">Mã Lỗi (E100, E999)</label>
+                    <input type="text" id="error-code-input" value="E999_SYSTEM_ERROR" placeholder="Mã lỗi hệ thống">
+                </div>
+                <div class="half-item">
+                     <label for="refund-id">Ref. ID Hoàn Tiền (8)</label>
+                    <input type="text" id="refund-id" placeholder="Mã GD gốc nếu là Hoàn tiền">
+                </div>
+            </div>
+
+            <div class="config-group datetime-group">
+                <div class="half-item">
+                    <label for="date-input">Ngày GD</label>
+                    <input type="date" id="date-input">
+                </div>
+                <div class="half-item">
+                    <label for="time-input">Giờ GD</label>
+                    <input type="time" id="time-input" step="1">
+                </div>
+            </div>
+
+            <div class="action-buttons-group">
+                <button class="action-btn payment-btn" onclick="simulatePayment()">✅ Thanh Toán (Tiền vào)</button>
+                <button class="action-btn refund-btn" onclick="simulateRefund()">↩️ Hoàn Tiền (Tiền ra)</button>
+                <button class="action-btn fail-btn" onclick="simulateFee()">💵 Phí/Hoa Hồng (Tiền ra)</button>
+            </div>
+        </div>
+
+        <div class="history-panel">
+            <h2>📜 Lịch Sử Giao Dịch</h2>
+            <div id="history-container">
+                <p style="color: #aaa; text-align: center; padding: 10px;">Đang tải...</p>
+            </div>
+        </div>
+
+        <div class="message-panel">
+            <h2>💬 Tin Nhắn Ngân Hàng Giả Lập (Bank SMS/App Notification)</h2>
+            <div class="telegram-chat">
+                <div id="message-container">
+                    <div class="system-message">
+                        Chào mừng đến với Hệ thống giả lập CashBank Gateway. Vui lòng nhập thông tin cấu hình và tiến hành giả lập.
+                    </div>
+                </div>
+            </div>
+             <button class="action-btn clear-messages-btn" onclick="clearMessages()">🗑️ Xóa Tin Nhắn Hiển Thị</button>
+        </div>
+
+    </div>
+
+    <div id="transaction-detail-modal" class="modal" onclick="closeModalOnOutsideClick(event)">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+
+            <div class="modal-qr-section">
+                <h2 class="modal-h2">Mã QR Giả Lập</h2>
+                <div id="qr-code-display" class="qr-code-placeholder">
+                    <span>Mã QR mô phỏng</span>
+                </div>
+                <div id="modal-qr-content">Nội dung QR</div>
+            </div>
+
+            <div class="modal-details">
+                <h2 class="modal-h2" id="detail-modal-title">Chi Tiết Giao Dịch</h2>
+                <div id="modal-details-container">
+                    <div class="detail-item"><span class="detail-label">Mã Giao Dịch:</span> <span id="modal-tx-id" class="detail-value"></span></div>
+                    <div class="detail-item"><span class="detail-label">Tài Khoản Nhận:</span> <span id="modal-bank-acc" class="detail-value"></span></div>
+                    <div class="detail-item"><span class="detail-label">Ngân Hàng:</span> <span id="modal-bank-name" class="detail-value"></span></div>
+                    <div class="detail-item"><span class="detail-label">Số Tiền:</span> <span id="modal-amount" class="detail-value"></span></div>
+                    <div class="detail-item"><span class="detail-label">Nội Dung:</span> <span id="modal-content" class="detail-value"></span></div>
+                    <div class="detail-item"><span class="detail-label">Trạng Thái:</span> <span id="modal-status" class="detail-value"></span></div>
+                    <div class="detail-item"><span class="detail-label">Webhook Status:</span> <span id="modal-webhook-status" class="detail-value">N/A</span></div>
+                    <div class="detail-item"><span class="detail-label">Thời Gian GD:</span> <span id="modal-time" class="detail-value"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer id="main-footer">
+        <p>Phiên bản Gateway Pro - Hỗ trợ <a href="#" style="color: var(--accent-color); text-decoration: none;">Sandbox</a> | Mã PIN mặc định: <strong>1239</strong> | <a href="https://github.com/your-repo" target="_blank" style="color: var(--accent-color); text-decoration: none;">GitHub</a></p>
+    </footer>
+
+    <script src="js/cashbank.js"></script>
+</body>
+</html>

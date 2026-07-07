@@ -331,7 +331,7 @@ const FileExplorer = {
 
     async handleLogin() {
         const enteredPassword = this.passwordInput.value;
-        const correctHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
+        const correctHash = '937377f056160fc4b15e0b770c67136a5f03c15205b4d3bf918268fefa2c6d0a';
 
         const encoder = new TextEncoder();
         const data = encoder.encode(enteredPassword);

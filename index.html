@@ -7,6 +7,7 @@
     <title>Trang chủ | Nguyenthuanit</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body data-theme="light">
@@ -107,8 +108,9 @@
         <section class="hero">
             <div class="container hero-container">
                 <div class="hero-text">
-                    <h1>WIn-depth Research. A Passion for Technology.</h1>
-                    <p>"Dự án này là nơi thực hành và chuẩn hóa các kiến thức cơ bản. Mục tiêu không phải là sự phức tạp, mà là tạo ra một sản phẩm hoạt động hiệu quả từ những thành phần đơn giản nhất." </p>
+                    <h1>In-depth Research. A Passion for Technology.</h1>
+                    <p>"Dự án này là nơi thực hành các kiến thức cơ bản. Mục tiêu không phải là sự phức tạp, mà là tạo
+                        ra một sản phẩm hoạt động hiệu quả từ những thành phần đơn giản nhất." </p>
                     <p style="font-weight: bold; font-style: italic;">Nguyễn Thuận IT (nhà phát triển)</p>
                     <div class="hero-buttons">
                         <a href="login.html" class="btn btn-primary btn-lg">System Registration</a>
@@ -247,53 +249,175 @@
                                 </g>
                             </svg>
                         </a>
-                        <p class="footer-description">Liên hệ và tương tác cùng chúng tôi, <br> (đang trong quá trình
-                            phát triển).</p>
+                        <h3>NT Technology</h3>
+                        <p class="footer-description">"Phát triển giải pháp công nghệ từ những điều cơ bản, tối ưu hiệu quả, định hình chuyên nghiệp và liên tục học hỏi mỗi ngày." </p>
                     </div>
                     <div class="footer-col">
-                        <h4>Quick Links</h4>
+                        <h4>Home</h4>
                         <ul>
-                            <li><a href="index.html">Home</a></li>
-                            <li><a href="#">Product</a></li>
-                            <li><a href="#">Careers</a></li>
-                            <li><a href="#">Pricing</a></li>
+                            <li><a href="index.html">Trang Chủ</a></li>
+                            <li><a href="#">Hệ thống khác</a></li>
+                            <li><a href="#">LOGO</a></li>
                         </ul>
                     </div>
                     <div class="footer-col">
-                        <h4>Services</h4>
+                        <h4>Dịch Vụ</h4>
                         <ul>
-                            <li><a href="#">Web Development</a></li>
+                            <li><a href="#">Hệ thống Cashier</a></li>
                             <li><a href="#">Graphics Design</a></li>
                             <li><a href="#">Digital Marketing</a></li>
-                            <li><a href="#">UI/UX Design</a></li>
                         </ul>
                     </div>
                     <div class="footer-col">
-                        <h4>Support</h4>
+                        <h4>Hỗ trợ</h4>
                         <ul>
-                            <li><a href="#">Company</a></li>
-                            <li><a href="#">Press media</a></li>
-                            <li><a href="#">Our Blog</a></li>
-                            <li><a href="support-full.html">Contact Us</a></li>
+                            <li><a href="#">Về chúng tôi</a></li>
+                            <li><a href="#">Tin tức</a></li>
+                            <li><a href="support-full.html">Liên hệ</a></li>
                         </ul>
                     </div>
                     <div class="footer-col">
                         <h4>Updates</h4>
                         <p>Cập nhật lần cuối <br> 25/10/2025</p>
-                        <form class="newsletter-form">
-                            <input type="email" placeholder="Email address">
-                            <button type="submit">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                                </svg>
-                            </button>
-                        </form>
+                        <div class="update-wrapper" style="width: 100%; position: relative;">
+                            <form class="newsletter-form" id="updateSystemForm" action="">
+                                <button type="submit" id="updateSystemBtn"
+                                    style="position: static; width: 100%; border-radius: 50px; padding: 0.9rem 1.5rem; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                                    <span id="updateBtnText">Kiểm tra cập nhật</span>
+                                    <svg id="updateIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round"
+                                        style="transition: transform 0.3s ease;">
+                                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                                    </svg>
+                                </button>
+                            </form>
+
+                            <div id="updateDetailsBox"
+                                style="max-height: 0; overflow: hidden; opacity: 0; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); margin-top: 12px; text-align: left; background: var(--card-bg, #374151); border-radius: 8px; border: 1px solid var(--border-color, #4B5563); font-size: 0.85rem;">
+                                <div style="padding: 12px 15px;">
+                                    <div
+                                        style="color: #2ecc71; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                                        <span>✨ Hệ thống đã được làm mới!</span>
+                                    </div>
+                                    <p style="margin: 0 0 6px 0; color: var(--text-dark); font-weight: 500;">Chi tiết
+                                        biên bản cập nhật (v1.1.5):</p>
+                                    <ul
+                                        style="margin: 0; padding-left: 18px; color: var(--text-gray, #9CA3AF); list-style-type: disc;">
+                                        <li style="margin-bottom: 4px;">Cải tiến & thêm tính năng....</li>
+                                        <li style="margin-bottom: 4px;">Tối ưu hóa tốc độ phản hồi danh mục Tools & Resources.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <style>
+                                @keyframes spinAround {
+                                    from {
+                                        transform: rotate(0deg);
+                                    }
+
+                                    to {
+                                        transform: rotate(360deg);
+                                    }
+                                }
+
+                                .spinning-animation {
+                                    animation: spinAround 0.8s linear infinite !important;
+                                }
+                            </style>
+
+                            <script>
+                                document.getElementById('updateSystemForm').addEventListener('submit', function (e) {
+                                    // 1. Ngăn trang load lại ngay lập tức để người dùng kịp nhìn thấy hiệu ứng
+                                    e.preventDefault();
+
+                                    const btn = document.getElementById('updateSystemBtn');
+                                    const icon = document.getElementById('updateIcon');
+                                    const text = document.getElementById('updateBtnText');
+                                    const detailsBox = document.getElementById('updateDetailsBox');
+
+                                    // Khóa nút tránh việc người dùng bấm liên tục (Spam)
+                                    btn.style.pointerEvents = 'none';
+                                    btn.style.opacity = '0.8';
+                                    text.innerText = 'Đang đồng bộ dữ liệu...';
+
+                                    // Kích hoạt hiệu ứng xoay vòng cho Icon SVG
+                                    icon.classList.add('spinning-animation');
+
+                                    // 2. Giả lập quá trình check/tải dữ liệu mất 1.5 giây
+                                    setTimeout(() => {
+                                        // Dừng hiệu ứng xoay
+                                        icon.classList.remove('spinning-animation');
+                                        text.innerText = 'Đã cập nhật mới nhất!';
+                                        btn.style.background = '#2ecc71'; // Đổi sang màu xanh lá báo thành công
+                                        btn.style.borderColor = '#2ecc71';
+                                        btn.style.color = '#ffffff';
+
+                                        // Hiển thị hộp thông báo chi tiết bằng hiệu ứng trượt mượt mà (Slide Down)
+                                        detailsBox.style.maxHeight = '200px';
+                                        detailsBox.style.opacity = '1';
+                                        detailsBox.style.padding = '4px 0';
+
+                                        // 3. Chờ thêm 3.5 giây nữa để khách kịp đọc thông báo chi tiết, sau đó tự động reload trang thật sự
+                                        setTimeout(() => {
+                                            window.location.reload();
+                                        }, 3500);
+
+                                    }, 1500);
+                                });
+                            </script>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <div class="footer-owner-info"
+                style="border-top: 1px solid var(--border-color); padding: 2.5rem 0; display: flex; flex-wrap: wrap; gap: 2rem; justify-content: space-between; align-items: flex-start;">
+
+                <!-- Cột 1: Thông tin công ty / Cá nhân -->
+                <div class="owner-details" style="flex: 1; min-width: 300px;">
+                    <h3
+                        style="color: var(--text-dark); font-size: 1.15rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        INDEPENDENT DEVELOPER</h3>
+                    <p style="margin-bottom: 0.75rem; color: var(--primary-color);"><strong>NGUYENTHUANIT PORTFOLIO
+                            PROJECT (NT TECHNOLOGY)</strong></p>
+                    <p style="margin-bottom: 0.6rem; display: flex; align-items: flex-start; gap: 10px;">
+                        <i class="fas fa-map-marker-alt" style="margin-top: 4px; color: var(--text-gray);"></i>
+                        <span><strong>Địa chỉ 1:</strong> Xã Vĩnh Trạch, Thành phố Cà Mau, Tỉnh Cà Mau, Việt Nam.</span>
+                    </p>
+                    <p style="margin-bottom: 0.6rem; display: flex; align-items: flex-start; gap: 10px;">
+                        <i class="fas fa-map-marker-alt" style="margin-top: 4px; color: var(--text-gray);"></i>
+                        <span><strong>Địa chỉ 2:</strong> Cimahi, Cimahi Tengah, Kota Cimahi, Jawa Barat,
+                            Indonesia.</span>
+                    </p>
+                    <p style="margin-bottom: 0.6rem; display: flex; align-items: flex-start; gap: 10px;">
+                        <i class="fas fa-user-tie" style="margin-top: 4px; color: var(--text-gray);"></i>
+                        <span><strong>Tác giả:</strong> Nguyễn Thuận (Independent Developer)</span>
+                    </p>
+                </div>
+
+                <!-- Cột 2: Thông tin liên hệ và Chứng nhận -->
+                <div class="owner-contact" style="flex: 1; min-width: 300px;">
+                    <h3
+                        style="color: var(--text-dark); font-size: 1.15rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Liên hệ & Xác nhận</h3>
+                    <p style="margin-bottom: 0.6rem; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-phone-alt" style="color: var(--text-gray);"></i>
+                        <span><strong>Hotline:</strong> 0942.833.888</span>
+                    </p>
+                    <p style="margin-bottom: 0.6rem; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-envelope" style="color: var(--text-gray);"></i>
+                        <span><strong>Email:</strong> Nguyenminhthuan1095@gmail.com</span>
+                    </p>
+                    <p style="margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-globe" style="color: var(--text-gray);"></i>
+                        <span><strong>Website:</strong> www.nguyenthuanit.id.vn</span>
+                    </p>
+                </div>
+
+            </div>
+            <!-- END: THÔNG TIN NGƯỜI SỞ HỮU WEBSITE CHUYÊN NGHIỆP -->
+
             <div class="footer-bottom">
                 <div class="footer-bottom-links">
                     <a href="welcome_logo.html">Welcome NT</a>
@@ -301,7 +425,7 @@
                     <a href="support-full.html">Support</a>
                 </div>
                 <div class="footer-copyright">
-                    <p>© 2025 Nguyenthuanit. Independently Developed.</p>
+                    <p>© 2026 Nguyenthuanit. Independently Developed.</p>
                 </div>
             </div>
         </div>

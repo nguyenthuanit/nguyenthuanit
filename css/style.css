@@ -498,10 +498,11 @@ body[data-theme="dark"] .theme-toggle-btn .sun-icon {
     padding: 5rem 0;
 }
 
+/* Tối ưu hóa phân bố không gian cho các cột ở Footer chính */
 .footer-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr 2fr;
-    gap: 3rem;
+    grid-template-columns: 3fr 1.5fr 1.5fr 1.5fr 3.5fr;
+    gap: 2rem;
 }
 
 .footer-logo {
@@ -537,22 +538,30 @@ body[data-theme="dark"] .theme-toggle-btn .sun-icon {
     color: var(--primary-color);
 }
 
+/* Nâng cấp Typography in hoa chuyên nghiệp cho tiêu đề menu */
 .footer-col h4 {
     color: var(--text-dark);
-    font-size: 1.1rem;
-    margin-bottom: 1.5rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1.25rem;
 }
 
 .footer-col ul li {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.85rem;
 }
 
-.footer-col ul a {
-    transition: color 0.3s ease;
+/* Tạo hiệu ứng trượt chữ mượt mà khi hover vào liên kết */
+.footer-col ul li a {
+    color: var(--text-gray);
+    display: inline-block;
+    transition: color 0.3s ease, transform 0.3s ease;
 }
 
-.footer-col ul a:hover {
+.footer-col ul li a:hover {
     color: var(--primary-color);
+    transform: translateX(5px);
 }
 
 .footer-col p {

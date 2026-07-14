@@ -4,43 +4,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang chủ | Nguyenthuanit</title>
+    <title>Trang chủ | Nguyenthuanit - Independent Developer</title>
+    <!-- CSS -->
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body data-theme="light">
 
+    <!-- Header / Navbar -->
     <header class="header">
         <div class="container">
             <nav class="navbar">
                 <a href="welcome_logo.html" class="nav-logo" aria-label="NT Technology">
                     <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 120"
-                        style="overflow: visible; display:block;" role="img" aria-label="NT Technology logo">
-                        <defs>
-                            <style>
-                                .logo-text {
-                                    font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-                                }
-                            </style>
-                        </defs>
-
+                        role="img" aria-label="NT Technology logo">
                         <g transform="translate(12,8)">
-                            <path
-                                d="M24 64h56c12 0 20-8 20-18 0-10-8-18-20-18-1.5 0-3.2.12-4.8.36-1.1-12.5-11.6-22.36-24.6-22.36C41 6 31.4 14.2 30 26.2 28 26 24 26 18 30c-7 5-9 14-6 22 2.2 6 7 10 12 10z"
-                                fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"
-                                stroke-linejoin="round" />
+                            <path d="M24 64h56c12 0 20-8 20-18 0-10-8-18-20-18-1.5 0-3.2.12-4.8.36-1.1-12.5-11.6-22.36-24.6-22.36C41 6 31.4 14.2 30 26.2 28 26 24 26 18 30c-7 5-9 14-6 22 2.2 6 7 10 12 10z"
+                                fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
                         </g>
-
                         <g transform="translate(140,10)">
-                            <text x="0" y="46" class="logo-text" font-weight="800" font-size="54" fill="#FFFFFF"
-                                transform="skewX(-10)">
+                            <text x="0" y="46" class="logo-text" font-weight="800" font-size="54" fill="#FFFFFF" transform="skewX(-10)">
                                 NT
                             </text>
-
-                            <text x="0" y="82" class="logo-text" font-weight="600" font-size="20"
-                                fill="rgba(255,255,255,0.95)">
+                            <text x="0" y="82" class="logo-text" font-weight="600" font-size="20" fill="rgba(255,255,255,0.95)">
                                 Technology
                             </text>
                         </g>
@@ -66,10 +56,8 @@
                 </ul>
 
                 <div class="header-controls">
-                    <button id="theme-toggle" class="theme-toggle-btn">
-                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                    <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme">
+                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="5"></circle>
                             <line x1="12" y1="1" x2="12" y2="3"></line>
                             <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -80,15 +68,12 @@
                             <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
                             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                         </svg>
-                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                         </svg>
                     </button>
-                    <a href="login.html" class="login-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <a href="login.html" class="login-btn" aria-label="Login">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
@@ -105,20 +90,19 @@
     </header>
 
     <main>
+        <!-- Hero Section -->
         <section class="hero">
             <div class="container hero-container">
                 <div class="hero-text">
                     <h1>In-depth Research. A Passion for Technology.</h1>
-                    <p>"Dự án này là nơi thực hành các kiến thức cơ bản. Mục tiêu không phải là sự phức tạp, mà là tạo
-                        ra một sản phẩm hoạt động hiệu quả từ những thành phần đơn giản nhất." </p>
-                    <p style="font-weight: bold; font-style: italic;">Nguyễn Minh Thuận (nhà phát triển)</p>
+                    <p class="hero-quote">"Dự án này là nơi thực hành các kiến thức cơ bản. Mục tiêu không phải là sự phức tạp, mà là tạo ra một sản phẩm hoạt động hiệu quả từ những thành phần đơn giản nhất."</p>
+                    <p class="hero-author">Nguyễn Minh Thuận (Nhà phát triển)</p>
                     <div class="hero-buttons">
                         <a href="login.html" class="btn btn-primary btn-lg">System Registration</a>
                         <div class="contact-info">
                             <span><i class="fab fa-telegram-plane"></i> Contact Us on Telegram</span>
                             <a href="https://t.me/@ThuanITSupportBot" target="_blank">@ThuanITSupportBot</a>
                         </div>
-
                     </div>
                 </div>
                 <div class="hero-image-wrapper">
@@ -130,12 +114,12 @@
             </div>
         </section>
 
+        <!-- Services & Tools Section -->
         <section class="services">
             <div class="container">
                 <div class="services-grid">
                     <div class="service-card">
-                        <svg class="service-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#4a90e2"
-                            alt="Directory Icon">
+                        <svg class="service-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#4a90e2">
                             <path d="M20,22H4a2,2,0,0,1-2-2V4A2,2,0,0,1,4,2h8l6,6V20A2,2,0,0,1,20,22ZM12,4V9h5Z" />
                         </svg>
                         <h3>File Explorer</h3>
@@ -143,22 +127,19 @@
                         <a href="credential/credential.html" class="read-more">Truy Cập</a>
                     </div>
                     <div class="service-card">
-                        <img src="https://img.icons8.com/dotty/80/4a90e2/database.png" alt="Server Icon"
-                            class="service-icon">
+                        <img src="https://img.icons8.com/dotty/80/4a90e2/database.png" alt="Server Icon" class="service-icon">
                         <h3>Server</h3>
                         <p>Hệ Thống Tập Trung<br> kiểm soát nguồn (Kết nối & bảo trì )</p>
                         <a href="serverhttt/serverhttt.html" class="read-more">Truy Cập</a>
                     </div>
                     <div class="service-card">
-                        <img src="https://img.icons8.com/ios/50/4a90e2/command-line.png" alt="Employment Icon"
-                            class="service-icon">
+                        <img src="https://img.icons8.com/ios/50/4a90e2/command-line.png" alt="Terminal Icon" class="service-icon">
                         <h3>Teminal</h3>
-                        <p>giao diện dòng lệnh (CLI)<br> tính năng dành cho kỹ thuật.</p>
+                        <p>Giao diện dòng lệnh (CLI)<br> tính năng dành cho kỹ thuật.</p>
                         <a href="teminal/teminal.html" class="read-more">Truy Cập</a>
                     </div>
                     <div class="service-card">
-                        <img src="https://img.icons8.com/dotty/80/4a90e2/cloud.png" alt="Cloud Icon"
-                            class="service-icon">
+                        <img src="https://img.icons8.com/dotty/80/4a90e2/cloud.png" alt="Cloud Icon" class="service-icon">
                         <h3>Cloud</h3>
                         <p>Lưu trữ đám mây<br> Dịch vụ lưu trữ trực tuyến.</p>
                         <a href="coming-soon.html" class="read-more">Truy Cập</a>
@@ -170,37 +151,37 @@
                         <h2>Resources & Tools</h2>
                     </div>
                     <div class="tools-grid">
-                        <a href="Calculator.html" style="text-decoration: none; color: inherit;">
+                        <a href="Calculator.html" class="tool-link">
                             <div class="tool-item">
                                 <img src="https://img.icons8.com/ios/50/6B7280/calculator.png" alt="Calculator Icon">
                                 <span>Máy tính</span>
                             </div>
                         </a>
-                        <a href="cashbank.html" style="text-decoration: none; color: inherit;">
+                        <a href="cashbank.html" class="tool-link">
                             <div class="tool-item">
                                 <img src="https://img.icons8.com/ios/50/6B7280/timer.png" alt="Timer Icon">
                                 <span>Thử nghiệm</span>
                             </div>
                         </a>
-                        <a href="coming-soon.html" style="text-decoration: none; color: inherit;">
+                        <a href="coming-soon.html" class="tool-link">
                             <div class="tool-item">
                                 <img src="https://img.icons8.com/ios/50/6B7280/settings.png" alt="Settings Icon">
                                 <span>Settings</span>
                             </div>
                         </a>
-                        <a href="coming-soon.html" style="text-decoration: none; color: inherit;">
+                        <a href="coming-soon.html" class="tool-link">
                             <div class="tool-item">
                                 <img src="https://img.icons8.com/ios/50/6B7280/phone.png" alt="Phone Icon">
                                 <span>Contact Us!</span>
                             </div>
                         </a>
-                        <a href="cashbank.html" style="text-decoration: none; color: inherit;">
+                        <a href="cashbank.html" class="tool-link">
                             <div class="tool-item">
                                 <img src="https://img.icons8.com/ios/50/6B7280/shopping-cart.png" alt="Cart Icon">
                                 <span>Buy services Online!</span>
                             </div>
                         </a>
-                        <a href="coming-soon.html" style="text-decoration: none; color: inherit;">
+                        <a href="coming-soon.html" class="tool-link">
                             <div class="tool-item">
                                 <img src="https://img.icons8.com/ios/50/6B7280/icloud.png" alt="Cloud Icon">
                                 <span>Online File Storage</span>
@@ -210,9 +191,9 @@
                 </div>
             </div>
         </section>
-
     </main>
 
+    <!-- FOOTER CHUYÊN NGHIỆP -->
     <footer class="footer">
         <div class="container">
             <div class="footer-main">
@@ -220,38 +201,25 @@
                     <div class="footer-col">
                         <a href="#" class="footer-logo" aria-label="NT Technology">
                             <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 120"
-                                style="overflow: visible; display:block;" role="img" aria-label="NT Technology logo">
-                                <defs>
-                                    <style>
-                                        .logo-text {
-                                            font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-                                        }
-                                    </style>
-                                </defs>
-
+                                role="img" aria-label="NT Technology logo">
                                 <g transform="translate(12,8)">
-                                    <path
-                                        d="M24 64h56c12 0 20-8 20-18 0-10-8-18-20-18-1.5 0-3.2.12-4.8.36-1.1-12.5-11.6-22.36-24.6-22.36C41 6 31.4 14.2 30 26.2 28 26 24 26 18 30c-7 5-9 14-6 22 2.2 6 7 10 12 10z"
-                                        fill="none" stroke="#4F46E5" stroke-width="5" stroke-linecap="round"
-                                        stroke-linejoin="round" />
+                                    <path d="M24 64h56c12 0 20-8 20-18 0-10-8-18-20-18-1.5 0-3.2.12-4.8.36-1.1-12.5-11.6-22.36-24.6-22.36C41 6 31.4 14.2 30 26.2 28 26 24 26 18 30c-7 5-9 14-6 22 2.2 6 7 10 12 10z"
+                                        fill="none" stroke="#4F46E5" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
                                 </g>
-
                                 <g transform="translate(140,10)">
-                                    <text x="0" y="46" class="logo-text" font-weight="800" font-size="54" fill="#4F46E5"
-                                        transform="skewX(-10)">
+                                    <text x="0" y="46" class="logo-text" font-weight="800" font-size="54" fill="#4F46E5" transform="skewX(-10)">
                                         NT
                                     </text>
-
-                                    <text x="0" y="82" class="logo-text" font-weight="600" font-size="20"
-                                        fill="#4F46E5">
+                                    <text x="0" y="82" class="logo-text" font-weight="600" font-size="20" fill="#4F46E5">
                                         Technology
                                     </text>
                                 </g>
                             </svg>
                         </a>
                         <h3>NT Technology</h3>
-                        <p class="footer-description">Nhà phát triển website độc lập, vận hành bằng niềm đam mê các ngôn ngữ lập trình và tinh thần nghiên cứu công nghệ </p>
+                        <p class="footer-description">Nhà phát triển website độc lập, vận hành bằng niềm đam mê các ngôn ngữ lập trình và tinh thần nghiên cứu công nghệ.</p>
                     </div>
+
                     <div class="footer-col">
                         <h4>Home</h4>
                         <ul>
@@ -260,6 +228,7 @@
                             <li><a href="welcome_logo.html">Logo</a></li>
                         </ul>
                     </div>
+
                     <div class="footer-col">
                         <h4>Dịch Vụ</h4>
                         <ul>
@@ -268,6 +237,7 @@
                             <li><a href="#">Digital Marketing</a></li>
                         </ul>
                     </div>
+
                     <div class="footer-col">
                         <h4>Chúng tôi</h4>
                         <ul>
@@ -277,150 +247,75 @@
                             <li><a href="support-full.html">Liên hệ</a></li>
                         </ul>
                     </div>
+
+                    <!-- Khối Cập Nhật -->
                     <div class="footer-col">
                         <h4>Updates</h4>
                         <p>Cập nhật lần cuối <br> 07/08/2026</p>
-                        <div class="update-wrapper" style="width: 100%; position: relative;">
+                        <div class="update-wrapper">
                             <form class="newsletter-form" id="updateSystemForm" action="">
-                                <button type="submit" id="updateSystemBtn"
-                                    style="position: static; width: 100%; border-radius: 50px; padding: 0.9rem 1.5rem; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                                <button type="submit" id="updateSystemBtn" class="btn-update">
                                     <span id="updateBtnText">Kiểm tra cập nhật</span>
-                                    <svg id="updateIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                        stroke-linecap="round" stroke-linejoin="round"
-                                        style="transition: transform 0.3s ease;">
+                                    <svg id="updateIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
                                     </svg>
                                 </button>
                             </form>
 
-                            <div id="updateDetailsBox"
-                                style="max-height: 0; overflow: hidden; opacity: 0; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); margin-top: 12px; text-align: left; background: var(--card-bg, #374151); border-radius: 8px; border: 1px solid var(--border-color, #4B5563); font-size: 0.85rem;">
-                                <div style="padding: 12px 15px;">
-                                    <div
-                                        style="color: #2ecc71; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                            <div id="updateDetailsBox" class="update-details-box">
+                                <div class="update-details-content">
+                                    <div class="update-status">
                                         <span>✨ Hệ thống đã được làm mới!</span>
                                     </div>
-                                    <p style="margin: 0 0 6px 0; color: var(--text-dark); font-weight: 500;">Chi tiết
-                                        biên bản cập nhật (v1.1.5):</p>
-                                    <ul
-                                        style="margin: 0; padding-left: 18px; color: var(--text-gray, #9CA3AF); list-style-type: disc;">
-                                        <li style="margin-bottom: 4px;">Cải tiến & thêm tính năng....</li>
-                                        <li style="margin-bottom: 4px;">Tối ưu hóa tốc độ phản hồi danh mục Tools &
-                                            Resources.</li>
+                                    <p class="update-title">Chi tiết biên bản cập nhật (v1.1.5):</p>
+                                    <ul class="update-list">
+                                        <li>Cải tiến & thêm tính năng mới cho Terminal.</li>
+                                        <li>Tối ưu hóa tốc độ phản hồi danh mục Tools & Resources.</li>
                                     </ul>
                                 </div>
                             </div>
-
-                            <style>
-                                @keyframes spinAround {
-                                    from {
-                                        transform: rotate(0deg);
-                                    }
-
-                                    to {
-                                        transform: rotate(360deg);
-                                    }
-                                }
-
-                                .spinning-animation {
-                                    animation: spinAround 0.8s linear infinite !important;
-                                }
-                            </style>
-
-                            <script>
-                                document.getElementById('updateSystemForm').addEventListener('submit', function (e) {
-                                    // 1. Ngăn trang load lại ngay lập tức để người dùng kịp nhìn thấy hiệu ứng
-                                    e.preventDefault();
-
-                                    const btn = document.getElementById('updateSystemBtn');
-                                    const icon = document.getElementById('updateIcon');
-                                    const text = document.getElementById('updateBtnText');
-                                    const detailsBox = document.getElementById('updateDetailsBox');
-
-                                    // Khóa nút tránh việc người dùng bấm liên tục (Spam)
-                                    btn.style.pointerEvents = 'none';
-                                    btn.style.opacity = '0.8';
-                                    text.innerText = 'Đang đồng bộ dữ liệu...';
-
-                                    // Kích hoạt hiệu ứng xoay vòng cho Icon SVG
-                                    icon.classList.add('spinning-animation');
-
-                                    // 2. Giả lập quá trình check/tải dữ liệu mất 1.5 giây
-                                    setTimeout(() => {
-                                        // Dừng hiệu ứng xoay
-                                        icon.classList.remove('spinning-animation');
-                                        text.innerText = 'Đã cập nhật mới nhất!';
-                                        btn.style.background = '#2ecc71'; // Đổi sang màu xanh lá báo thành công
-                                        btn.style.borderColor = '#2ecc71';
-                                        btn.style.color = '#ffffff';
-
-                                        // Hiển thị hộp thông báo chi tiết bằng hiệu ứng trượt mượt mà (Slide Down)
-                                        detailsBox.style.maxHeight = '200px';
-                                        detailsBox.style.opacity = '1';
-                                        detailsBox.style.padding = '4px 0';
-
-                                        // 3. Chờ thêm 3.5 giây nữa để khách kịp đọc thông báo chi tiết, sau đó tự động reload trang thật sự
-                                        setTimeout(() => {
-                                            window.location.reload();
-                                        }, 3500);
-
-                                    }, 1500);
-                                });
-                            </script>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="footer-owner-info"
-                style="border-top: 1px solid var(--border-color); padding: 2.5rem 0; display: flex; flex-wrap: wrap; gap: 5rem; justify-content: center; align-items: flex-start;">
-
-                <!-- Cột 1: Thông tin công ty / Cá nhân -->
-                <div class="owner-details" style="flex: 0 1 auto; min-width: 300px; max-width: 450px;">
-                    <h3
-                        style="color: var(--text-dark); font-size: 1.15rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                        INDEPENDENT DEVELOPER
-                    </h3>
-                    <p style="margin-bottom: 0.75rem; color: var(--primary-color);"><strong>NGUYENTHUANIT PORTFOLIO
-                            PROJECT (NT TECHNOLOGY)</strong></p>
-                    <p style="margin-bottom: 0.6rem; display: flex; align-items: flex-start; gap: 10px;">
-                        <i class="fas fa-map-marker-alt" style="margin-top: 4px; color: var(--text-gray);"></i>
-                        <span><strong>Địa chỉ 1:</strong> Xã Hòa Bình, Phường Bạc Liêu, Tỉnh Cà Mau, Việt Nam.</span>
+            <!-- PHẦN THÔNG TIN CHI TIẾT NGƯỜI SỞ HỮU & LIÊN HỆ ĐÃ CHUẨN HÓA -->
+            <div class="footer-owner-info">
+                <div class="owner-details">
+                    <h3 class="owner-title">INDEPENDENT DEVELOPER</h3>
+                    <p class="project-name"><strong>NGUYENTHUANIT PORTFOLIO PROJECT (NT TECHNOLOGY)</strong></p>
+                    <p class="info-item">
+                        <i class="fas fa-map-marker-alt icon"></i>
+                        <span><strong>Địa chỉ 1:</strong> Xã Vĩnh Trạch, Thành phố Bạc Liêu, Tỉnh Bạc Liêu, Việt Nam.</span>
                     </p>
-                    <p style="margin-bottom: 0.6rem; display: flex; align-items: flex-start; gap: 10px;">
-                        <i class="fas fa-map-marker-alt" style="margin-top: 4px; color: var(--text-gray);"></i>
-                        <span><strong>Địa chỉ 2:</strong> Cimahi, Cimahi Tengah, Kota Cimahi, Jawa Barat,
-                            Indonesia.</span>
+                    <p class="info-item">
+                        <i class="fas fa-map-marker-alt icon"></i>
+                        <span><strong>Địa chỉ 2:</strong> Cimahi Tengah, Kota Cimahi, Jawa Barat, Indonesia.</span>
                     </p>
-                    <p style="margin-bottom: 0.6rem; display: flex; align-items: flex-start; gap: 10px;">
-                        <i class="fas fa-user-tie" style="margin-top: 4px; color: var(--text-gray);"></i>
-                        <span><strong>Tác giả:</strong> Nguyễn Minh Thuận (Independent Developer)</span>
+                    <p class="info-item">
+                        <i class="fas fa-user-tie icon"></i>
+                        <span><strong>Nhà phát triển:</strong> Nguyễn Minh Thuận (Independent Developer)</span>
                     </p>
                 </div>
 
-                <!-- Cột 2: Thông tin liên hệ và Chứng nhận -->
-                <div class="owner-contact" style="flex: 0 1 auto; min-width: 300px; max-width: 400px;">
-                    <h3
-                        style="color: var(--text-dark); font-size: 1.15rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                        Liên hệ & Xác nhận
-                    </h3>
-                    <p style="margin-bottom: 0.6rem; display: flex; align-items: center; gap: 10px;">
-                        <i class="fas fa-phone-alt" style="color: var(--text-gray);"></i>
-                        <span><strong>Hotline:</strong> 0942.833.888</span>
+                <div class="owner-contact">
+                    <h3 class="owner-title">Liên hệ & Xác nhận</h3>
+                    <p class="info-item">
+                        <i class="fas fa-phone-alt icon"></i>
+                        <span><strong>Hotline / Zalo:</strong> 0942.833.888</span>
                     </p>
-                    <p style="margin-bottom: 0.6rem; display: flex; align-items: center; gap: 10px;">
-                        <i class="fas fa-envelope" style="color: var(--text-gray);"></i>
+                    <p class="info-item">
+                        <i class="fas fa-envelope icon"></i>
                         <span><strong>Email:</strong> Nguyenminhthuan1095@gmail.com</span>
                     </p>
-                    <p style="margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;">
-                        <i class="fas fa-globe" style="color: var(--text-gray);"></i>
+                    <p class="info-item">
+                        <i class="fas fa-globe icon"></i>
                         <span><strong>Website:</strong> www.nguyenthuanit.id.vn</span>
                     </p>
                 </div>
             </div>
-            <!-- END: THÔNG TIN NGƯỜI SỞ HỮU WEBSITE CHUYÊN NGHIỆP -->
 
+            <!-- Chân trang cuối cùng -->
             <div class="footer-bottom">
                 <div class="footer-bottom-links">
                     <a href="welcome_logo.html">Welcome NT</a>
@@ -433,14 +328,15 @@
             </div>
         </div>
     </footer>
-    <a href="#" id="scrollTopBtn" class="scroll-top-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- Scroll Top Button -->
+    <a href="#" id="scrollTopBtn" class="scroll-top-btn" aria-label="Scroll to top">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 19V5M5 12l7-7 7 7" />
         </svg>
     </a>
 
+    <!-- JavaScript -->
     <script src="js/script.js"></script>
 </body>
-
 </html>

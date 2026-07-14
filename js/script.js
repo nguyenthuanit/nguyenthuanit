@@ -127,4 +127,92 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 1500);
         });
     }
+    // --- 6. Chức năng Run Code Giả lập Terminal (Hero Section) ---
+    const runBtn = document.getElementById('runCodeBtn');
+    const outputArea = document.getElementById('codeOutputArea');
+    const outputContent = document.getElementById('outputContent');
+    const execTime = document.getElementById('executionTime');
+    const runIcon = document.getElementById('runIcon');
+    const runText = document.getElementById('runText');
+
+    if (runBtn && outputArea && outputContent) {
+        runBtn.addEventListener('click', () => {
+            // Đổi trạng thái nút thành "Đang biên dịch..."
+            runBtn.classList.remove('success');
+            runBtn.classList.add('running');
+            runIcon.className = 'fas fa-spinner fa-spin';
+            runText.innerText = 'Compiling...';
+            
+            // Xóa output cũ và mở rộng khung Terminal
+            outputContent.innerHTML = '';
+            outputContent.classList.remove('cursor-blink');
+            outputArea.classList.add('show');
+            execTime.innerText = 'Status: Running...';
+
+            // Giả lập thời gian server xử lý (800ms)
+            setTimeout(() => {
+                runIcon.className = 'fas fa-check';
+                runText.innerText = 'Executed!';
+                runBtn.classList.remove('running');
+                runBtn.classList.add('success');
+                
+                // Thời gian thực thi ngẫu nhiên để tạo cảm giác thật
+                const randomTime = (Math.random() * (0.08 - 0.02) + 0.02).toFixed(3);
+                execTime.innerText = `Completed in ${randomTime}s`;
+
+                // Chuỗi thông tin trả về giống output thực tế của Node.js / System
+                const logLines = [
+                    "[INFO] Authenticating developer credentials...",
+                    "[SUCCESS] User 'Nguyễn Minh Thuận' identified.",
+                    "--------------------------------------------------",
+                    "🚀 SYSTEM STATUS   : ONLINE & READY TO DEPLOY",
+                    "🎯 MINDSET         : First-Principles Thinking",
+                    "🛠️  CORE STACK      : Full-Stack Web | System Storage | CLI",
+                    "📬 AVAILABILITY    : Available for IT / Tech opportunities!",
+                    "--------------------------------------------------",
+                    ">> System initialized successfully. Waiting for commands..."
+                ];
+
+                // Hiệu ứng gõ chữ từng dòng (Typing Effect)
+                let lineIndex = 0;
+                outputContent.classList.add('cursor-blink');
+
+                function typeLine() {
+                    if (lineIndex < logLines.length) {
+                        const div = document.createElement('div');
+                        // Tạo màu sắc khác nhau cho dòng trạng thái
+                        if (logLines[lineIndex].includes("[SUCCESS]") || logLines[lineIndex].includes("🚀")) {
+                            div.style.color = "#4ade80"; // Xanh lá
+                            div.style.fontWeight = "bold";
+                        } else if (logLines[lineIndex].includes("[INFO]")) {
+                            div.style.color = "#60a5fa"; // Xanh dương
+                        } else if (logLines[lineIndex].includes("----------------")) {
+                            div.style.color = "#4b5563"; // Xám
+                        } else {
+                            div.style.color = "#e2e8f0"; // Trắng sáng
+                        }
+                        
+                        div.innerText = logLines[lineIndex];
+                        outputContent.appendChild(div);
+                        
+                        // Tự động cuộn xuống dòng mới nhất
+                        outputContent.scrollTop = outputContent.scrollHeight;
+                        
+                        lineIndex++;
+                        setTimeout(typeLine, 120); // Tốc độ gõ 120ms/dòng
+                    }
+                }
+
+                typeLine(); // Bắt đầu gõ
+
+                // Trả lại trạng thái nút sau 4 giây
+                setTimeout(() => {
+                    runIcon.className = 'fas fa-play';
+                    runText.innerText = 'Run Again';
+                    runBtn.classList.remove('success');
+                }, 4000);
+
+            }, 800);
+        });
+    }
 });

@@ -16,10 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     dropdowns.forEach(dropdown => {
         const toggle = dropdown.querySelector('.dropdown-toggle');
-        
+
         if (toggle) {
             toggle.addEventListener('click', (e) => {
-                e.preventDefault(); 
+                e.preventDefault();
                 const isActive = dropdown.classList.contains('active');
                 closeAllDropdowns();
                 if (!isActive) {
@@ -44,12 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 3. Chức năng chuyển đổi Giao diện Sáng/Tối (Theme Toggle) ---
     const themeToggleButton = document.getElementById('theme-toggle');
     const body = document.body;
-    
+
     function applyTheme(theme) {
         body.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
     }
-    
+
     function toggleTheme() {
         const currentTheme = body.getAttribute('data-theme');
         const newTheme = currentTheme === 'light' ? 'dark' : 'light';
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 5. Chức năng Cập nhật Hệ thống (Đã được chuyển từ Inline Script) ---
     const updateForm = document.getElementById('updateSystemForm');
-    
+
     if (updateForm) {
         updateForm.addEventListener('submit', function (e) {
             e.preventDefault(); // Ngăn chặn tải lại trang mặc định
@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 icon.classList.remove('spinning-animation');
                 text.innerText = 'Đã cập nhật mới nhất!';
-                
+
                 // Cập nhật giao diện nút sang trạng thái thành công (Xanh lá)
                 btn.style.backgroundColor = '#2ecc71';
                 btn.style.borderColor = '#2ecc71';
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Mở rộng hộp thông báo chi tiết
                 detailsBox.style.maxHeight = '200px';
                 detailsBox.style.opacity = '1';
-                
+
                 /* LƯU Ý UX: Không tự động reload trang (window.location.reload()) sau đó.
                    Đã loại bỏ việc tự load lại để người dùng có thể tiếp tục 
                    đọc thông tin trên footer một cách tự nhiên, thoải mái nhất. */
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
             runBtn.classList.add('running');
             runIcon.className = 'fas fa-spinner fa-spin';
             runText.innerText = 'Compiling...';
-            
+
             // Xóa output cũ và mở rộng khung Terminal
             outputContent.innerHTML = '';
             outputContent.classList.remove('cursor-blink');
@@ -155,22 +155,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 runText.innerText = 'Executed!';
                 runBtn.classList.remove('running');
                 runBtn.classList.add('success');
-                
+
                 // Thời gian thực thi ngẫu nhiên để tạo cảm giác thật
                 const randomTime = (Math.random() * (0.08 - 0.02) + 0.02).toFixed(3);
                 execTime.innerText = `Completed in ${randomTime}s`;
 
                 // Chuỗi thông tin trả về giống output thực tế của Node.js / System
                 const logLines = [
-                    "[INFO] Authenticating developer credentials...",
-                    "[SUCCESS] User 'Nguyễn Minh Thuận' identified.",
+                    "[INFO] Đang xác thực thông tin Nhà Phát Triển...",
+                    "[SUCCESS] Develope: NGUYỄN MINH THUẬN",
                     "--------------------------------------------------",
-                    "🚀 SYSTEM STATUS   : ONLINE & READY TO DEPLOY",
-                    "🎯 MINDSET         : First-Principles Thinking",
-                    "🛠️  CORE STACK      : Full-Stack Web | System Storage | CLI",
-                    "📬 AVAILABILITY    : Available for IT / Tech opportunities!",
+                    "📌 VỊ TRÍ        : Website Develope",
+                    "🚀 TRẠNG THÁI    : Sẵn sàng nhận cơ hội",
+                    "🛠️ KỸ NĂNG LÕI   : Full-Stack Web | System Tools",
+                    "🎯 TƯ DUY        : First-Principles Thinking",
+                    "📬 LIÊN HỆ       : @ThuanITSupportBot (Telegram)",
                     "--------------------------------------------------",
-                    ">> System initialized successfully. Waiting for commands..."
+                    ">> Hệ thống sẵn sàng. Vui lòng xem chi tiết các dự án bên dưới!"
                 ];
 
                 // Hiệu ứng gõ chữ từng dòng (Typing Effect)
@@ -191,13 +192,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         } else {
                             div.style.color = "#e2e8f0"; // Trắng sáng
                         }
-                        
+
                         div.innerText = logLines[lineIndex];
                         outputContent.appendChild(div);
-                        
+
                         // Tự động cuộn xuống dòng mới nhất
                         outputContent.scrollTop = outputContent.scrollHeight;
-                        
+
                         lineIndex++;
                         setTimeout(typeLine, 120); // Tốc độ gõ 120ms/dòng
                     }

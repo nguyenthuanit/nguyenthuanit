@@ -133,7 +133,7 @@
                                 class="code-content"><code><span class="keyword">const</span> <span class="variable">engineer</span>: <span class="type">SoftwareEngineer</span> = {
   <span class="key">"identity"</span>: {
     <span class="key">"name"</span>: <span class="string">"Nguyễn Minh Thuận"</span>,
-    <span class="key">"role"</span>: <span class="string">"Software & System Developer"</span>
+    <span class="key">"role"</span>: <span class="string">"Website Developer"</span>
   },
   <span class="key">"competencies"</span>: [
     <span class="string">"Full-Stack Web"</span>, 
@@ -255,8 +255,10 @@
     <footer class="footer">
         <div class="container">
             <div class="footer-main">
+                <!-- CỤM FOOTER GRID ĐÃ NÂNG CẤP -->
                 <div class="footer-grid">
-                    <div class="footer-col">
+                    <!-- Cột 1: Thông tin thương hiệu (Chiếm ưu thế) -->
+                    <div class="footer-col footer-col-brand">
                         <a href="#" class="footer-logo" aria-label="NT technology">
                             <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 50" role="img"
                                 aria-label="NT technology logo">
@@ -272,32 +274,41 @@
                                 </g>
                             </svg>
                         </a>
-                        <h3>NT Technology</h3>
-                        <p class="footer-description">Nhà phát triển website độc lập, vận hành bằng niềm đam mê các ngôn
-                            ngữ lập trình và tinh thần nghiên cứu công nghệ.</p>
+                        <h3 class="brand-name">NT Technology</h3>
+                        <p class="footer-description">
+                            Nhà phát triển website độc lập, vận hành bằng niềm đam mê các ngôn ngữ lập trình và tinh
+                            thần nghiên cứu công nghệ chuyên sâu.
+                        </p>
+                        <!-- Thêm huy hiệu status giúp trang web trông chuyên nghiệp hơn -->
+                        <div class="sys-status">
+                            <span class="status-dot"></span> Hệ thống đang vận hành ổn định
+                        </div>
                     </div>
 
+                    <!-- Cột 2: Điều hướng Home -->
                     <div class="footer-col">
                         <h4>Home</h4>
-                        <ul>
+                        <ul class="footer-links">
                             <li><a href="index.html">Trang Chủ</a></li>
                             <li><a href="#">Hệ thống khác</a></li>
-                            <li><a href="welcome_logo.html">Logo</a></li>
+                            <li><a href="welcome_logo.html">Welcome Logo</a></li>
                         </ul>
                     </div>
 
+                    <!-- Cột 3: Dịch vụ -->
                     <div class="footer-col">
                         <h4>Dịch Vụ</h4>
-                        <ul>
+                        <ul class="footer-links">
                             <li><a href="#">Hệ thống Cashier</a></li>
                             <li><a href="#">Graphics Design</a></li>
                             <li><a href="#">Digital Marketing</a></li>
                         </ul>
                     </div>
 
+                    <!-- Cột 4: Về chúng tôi -->
                     <div class="footer-col">
                         <h4>Chúng tôi</h4>
-                        <ul>
+                        <ul class="footer-links">
                             <li><a href="#">Về chúng tôi</a></li>
                             <li><a href="privacy-policy.html">Bảo mật</a></li>
                             <li><a href="#">Tin tức</a></li>
@@ -305,32 +316,38 @@
                         </ul>
                     </div>
 
-                    <!-- Khối Cập Nhật -->
-                    <div class="footer-col">
-                        <h4>Updates</h4>
-                        <p>Cập nhật lần cuối <br> 07/08/2026</p>
-                        <div class="update-wrapper">
-                            <form class="newsletter-form" id="updateSystemForm" action="">
-                                <button type="submit" id="updateSystemBtn" class="btn-update">
-                                    <span id="updateBtnText">Kiểm tra cập nhật</span>
-                                    <svg id="updateIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-                                    </svg>
-                                </button>
-                            </form>
+                    <!-- Cột 5: Khối Cập Nhật (Được thiết kế nổi bật như một widget) -->
+                    <div class="footer-col footer-col-update">
+                        <div class="update-card">
+                            <div class="update-card-header">
+                                <h4>System Updates</h4>
+                                <span class="version-tag">v1.1.5</span>
+                            </div>
+                            <p class="update-date">Cập nhật lần cuối: <strong>07/08/2026</strong></p>
 
-                            <div id="updateDetailsBox" class="update-details-box">
-                                <div class="update-details-content">
-                                    <div class="update-status">
-                                        <span>✨ Hệ thống đã được làm mới!</span>
+                            <div class="update-wrapper">
+                                <form class="newsletter-form" id="updateSystemForm" action="">
+                                    <button type="submit" id="updateSystemBtn" class="btn-update">
+                                        <span id="updateBtnText">Kiểm tra cập nhật</span>
+                                        <svg id="updateIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                                        </svg>
+                                    </button>
+                                </form>
+
+                                <div id="updateDetailsBox" class="update-details-box">
+                                    <div class="update-details-content">
+                                        <div class="update-status">
+                                            <span>✨ Hệ thống đã được làm mới!</span>
+                                        </div>
+                                        <p class="update-title">Chi tiết biên bản cập nhật:</p>
+                                        <ul class="update-list">
+                                            <li>Cải tiến & thêm tính năng cho Terminal.</li>
+                                            <li>Tối ưu hóa tốc độ phản hồi danh mục Tools.</li>
+                                        </ul>
                                     </div>
-                                    <p class="update-title">Chi tiết biên bản cập nhật (v1.1.5):</p>
-                                    <ul class="update-list">
-                                        <li>Cải tiến & thêm tính năng mới cho Terminal.</li>
-                                        <li>Tối ưu hóa tốc độ phản hồi danh mục Tools & Resources.</li>
-                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -345,12 +362,12 @@
                     <p class="project-name"><strong>NGUYENTHUANIT PORTFOLIO PROJECT (NT TECHNOLOGY)</strong></p>
                     <p class="info-item">
                         <i class="fas fa-map-marker-alt icon"></i>
-                        <span><strong>Địa chỉ 1:</strong> Xã Vĩnh Trạch, Thành phố Bạc Liêu, Tỉnh Bạc Liêu, Việt
+                        <span><strong>Địa chỉ Satu:</strong> Xã Hóa Bình, Tỉnh Cà Mau, Việt
                             Nam.</span>
                     </p>
                     <p class="info-item">
                         <i class="fas fa-map-marker-alt icon"></i>
-                        <span><strong>Địa chỉ 2:</strong> Cimahi Tengah, Kota Cimahi, Jawa Barat, Indonesia.</span>
+                        <span><strong>Địa chỉ Dua:</strong> Cimahi Tengah, Kota Cimahi, Jawa Barat, Indonesia.</span>
                     </p>
                     <p class="info-item">
                         <i class="fas fa-user-tie icon"></i>

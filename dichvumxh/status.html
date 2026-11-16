@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NT.Pro - Tra Cứu Tiến Độ Đơn Hàng Cá Nhân Bảo Mật 24/7</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-soft: rgba(37, 99, 235, 0.08);
+            --bg-body: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-subtle: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius: 14px;
+            --shadow-md: 0 10px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        [data-theme="dark"] {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --primary-soft: rgba(59, 130, 246, 0.15);
+            --bg-body: #090d16;
+            --bg-card: #111827;
+            --bg-subtle: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #1f2937;
+            --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-size: 14px;
+            line-height: 1.5;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .status-topbar {
+            height: 60px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .brand-wrap { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+        .brand-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        .brand-name { font-weight: 700; font-size: 15px; }
+        .top-actions { display: flex; align-items: center; gap: 8px; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 9px 15px;
+            border-radius: 9px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+
+        .btn-outline { background: var(--bg-subtle); border-color: var(--border-color); color: var(--text-main); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        .container { max-width: 720px; width: 100%; margin: 32px auto; padding: 0 16px 40px; flex: 1; }
+        .status-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); box-shadow: var(--shadow-md); overflow: hidden; }
+
+        .card-header {
+            padding: 24px 24px 18px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(180deg, var(--primary-soft), transparent);
+        }
+
+        .shield-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: var(--primary);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .card-header h1 { font-size: 19px; font-weight: 700; margin-bottom: 6px; }
+        .card-header p { color: var(--text-muted); font-size: 13px; }
+        .card-body { padding: 24px; }
+
+        .search-box { display: flex; gap: 10px; margin-bottom: 12px; }
+        .search-input-wrap { position: relative; flex: 1; }
+        .search-input-wrap i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+
+        .search-input {
+            width: 100%;
+            padding: 13px 14px 13px 40px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+            background: var(--bg-subtle);
+            outline: none;
+            text-transform: uppercase;
+            transition: all 0.15s ease;
+        }
+
+        .search-input::placeholder { text-transform: none; font-weight: 400; }
+        .search-input:focus { border-color: var(--primary); background: var(--bg-card); box-shadow: 0 0 0 3px var(--primary-soft); }
+
+        .session-bar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: var(--bg-subtle);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 12px;
+        }
+
+        .session-chip {
+            background: var(--primary-soft);
+            color: var(--primary);
+            border: 1px solid rgba(37, 99, 235, 0.25);
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .session-chip:hover { background: var(--primary); color: #fff; }
+        .hidden { display: none !important; }
+
+        .privacy-note {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            background: var(--bg-subtle);
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px dashed var(--border-color);
+        }
+
+        .result-area { margin-top: 22px; }
+        .empty-state, .error-state { text-align: center; padding: 28px 16px; border-radius: 12px; background: var(--bg-subtle); border: 1px solid var(--border-color); }
+        .error-state { border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); }
+
+        .order-detail-box { border: 1.5px solid var(--border-color); border-radius: 12px; overflow: hidden; }
+        .order-status-banner {
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-subtle);
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .badge-running { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .badge-pending { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
+        .badge-done { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+        .badge-cancel { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+        .timeline-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 16px 18px; border-bottom: 1px solid var(--border-color); background: var(--bg-card); }
+        .step-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 5px; font-size: 11.5px; color: var(--text-muted); }
+        .step-dot { width: 28px; height: 28px; border-radius: 50%; background: var(--bg-subtle); border: 1.5px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 12px; }
+        .step-item.done .step-dot { background: rgba(16, 185, 129, 0.15); border-color: var(--success); color: var(--success); }
+        .step-item.active .step-dot { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+        .step-item.done, .step-item.active { color: var(--text-main); font-weight: 600; }
+
+        .progress-section { padding: 16px 18px; border-bottom: 1px solid var(--border-color); }
+        .progress-labels { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; margin-bottom: 8px; }
+        .progress-track { width: 100%; height: 10px; background: var(--bg-subtle); border-radius: 999px; overflow: hidden; border: 1px solid var(--border-color); }
+        .progress-fill { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
+
+        .pending-alert-box {
+            margin: 14px 18px 0;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--text-main);
+            font-size: 12.8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-list { padding: 6px 18px; }
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px dashed var(--border-color); gap: 12px; font-size: 13.5px; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: var(--text-muted); }
+        .info-val { font-weight: 600; text-align: right; word-break: break-all; }
+
+        .status-footer-actions { padding: 14px 18px; background: var(--bg-subtle); border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+        .page-footer { text-align: center; padding: 18px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border-color); background: var(--bg-card); }
+
+        @media (max-width: 600px) {
+            .search-box { flex-direction: column; }
+            .search-box .btn { width: 100%; padding: 13px; }
+            .card-body { padding: 16px; }
+            .timeline-steps { grid-template-columns: repeat(2, 1fr); row-gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="status-topbar">
+        <a href="dichvumxh.html" class="brand-wrap">
+            <div class="brand-logo"><i class="fa-solid fa-layer-group"></i></div>
+            <span class="brand-name" id="brandTitle">NT Pro</span>
+        </a>
+        <div class="top-actions">
+            <a href="dichvumxh.html" class="btn btn-outline">
+                <i class="fa-solid fa-arrow-left"></i> <span>Quay lại Tạo Đơn</span>
+            </a>
+            <button class="btn btn-outline" id="themeBtn" aria-label="Đổi giao diện">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="status-card">
+            <div class="card-header">
+                <div class="shield-icon">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                </div>
+                <h1>Kiểm Tra Tiến Độ Đơn Hàng</h1>
+                <p>Nhập đúng Mã Đơn Hàng cá nhân để kiểm tra trạng thái trực tiếp từ Google Sheets</p>
+            </div>
+
+            <div class="card-body">
+                <form id="checkStatusForm" class="search-box">
+                    <div class="search-input-wrap">
+                        <i class="fa-solid fa-hashtag"></i>
+                        <input type="text" id="orderCodeInput" class="search-input" placeholder="Nhập mã đơn hàng của bạn (VD: OT90214)..." required autocomplete="off">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-bolt"></i> Kiểm Tra Ngay
+                    </button>
+                </form>
+
+                <div id="sessionBar" class="session-bar hidden">
+                    <span style="color: var(--text-muted); font-weight: 600;"><i class="fa-solid fa-clock-rotate-left"></i> Đơn vừa tạo:</span>
+                    <div id="sessionChipList" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+                </div>
+
+                <div class="privacy-note">
+                    <i class="fa-solid fa-user-shield" style="color: var(--primary);"></i>
+                    <span><strong>Chế độ bảo mật khách hàng:</strong> Hệ thống chỉ truy xuất duy nhất đơn hàng khớp với Mã Đơn cá nhân bạn cung cấp, không hiển thị đơn của khách hàng khác.</span>
+                </div>
+
+                <div class="result-area" id="resultArea">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-receipt" style="font-size: 28px; color: var(--text-muted); margin-bottom: 8px;"></i>
+                        <div style="font-weight: 600;">Chưa có mã đơn hàng được nhập</div>
+                        <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 4px;">Vui lòng dán mã đơn (bắt đầu bằng <b>OT...</b>) vào ô bên trên để xem tiến độ chạy.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="page-footer">
+        <strong>NTpro</strong> sản phẩm thuộc <strong>NGUYENTHUANIT PORTFOLIO PROJECT (NT TECHNOLOGY)</strong>
+    </footer>
+
+    <script>
+        const GOOGLE_SHEET_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyMUHFCpKtDl53HnPhZnExd7U-5Pv27uRQDunf5SeJGnAcPqZsyl-ovKpLDTx5DoDrnbQ/exec';
+
+        const DEFAULT_ORDERS = [
+            {
+                id: 'OT90214',
+                time: '27/10/2026 09:10',
+                createdAt: 1793067000000,
+                platformKey: 'facebook',
+                serviceKey: 'fb_like',
+                platformName: 'Facebook',
+                serviceName: 'Tăng Like / Cảm Xúc Bài Viết',
+                serverName: 'Server 1 - Like Việt Nhanh (Khuyên dùng)',
+                uid: '100089412398123',
+                quantity: 100,
+                cost: 1800,
+                retailPrice: 1800,
+                note: 'Khách Minh Zalo',
+                status: 'Hoàn thành'
+            },
+            {
+                id: 'OT90218',
+                time: '27/10/2026 10:05',
+                createdAt: Date.now() - 15 * 60 * 1000,
+                platformKey: 'tiktok',
+                serviceKey: 'tt_like',
+                platformName: 'TikTok',
+                serviceName: 'Tăng Tim (Like) Video TikTok',
+                serverName: 'Server 1 - Tim TikTok Việt Thật (Đẩy Xu Hướng)',
+                uid: '7391827391827391821',
+                quantity: 500,
+                cost: 9500,
+                retailPrice: 9500,
+                note: 'Video Xu Hướng TikTok',
+                status: 'Đang chạy'
+            }
+        ];
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getStoredState() {
+            try {
+                const raw = localStorage.getItem('dichvumxh_state_v3');
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return { theme: 'light', config: { brandName: 'NT Pro', supportPhone: '0942.833.888' }, orders: DEFAULT_ORDERS };
+        }
+
+        function saveThemeToState(newTheme) {
+            try {
+                const state = getStoredState();
+                state.theme = newTheme;
+                localStorage.setItem('dichvumxh_state_v3', JSON.stringify(state));
+            } catch (e) {}
+        }
+
+        function formatVND(num) {
+            return Math.round(num || 0).toLocaleString('vi-VN') + 'đ';
+        }
+
+        function calculateDynamicProgress(order) {
+            const st = String(order.status || '').toLowerCase();
+            if (st.includes('hoàn thành') || st.includes('xong')) return 100;
+            if (st.includes('hủy') || st.includes('lỗi') || st.includes('chờ')) return 0;
+            if (!order.createdAt) return 68;
+            const elapsedMins = Math.max(1, (Date.now() - order.createdAt) / 60000);
+            return Math.min(95, Math.max(18, Math.round(20 + elapsedMins * 3.5)));
+        }
+
+        async function findOrderFromGoogleSheetOrLocal(code) {
+            const state = getStoredState();
+            const sheetUrl = (state.config && state.config.googleSheetWebAppUrl) || GOOGLE_SHEET_WEB_APP_URL;
+
+            if (sheetUrl && sheetUrl.startsWith('https://script.google.com/macros/s/')) {
+                try {
+                    const res = await fetch(`${sheetUrl}?action=getOrder&id=${encodeURIComponent(code)}&_t=${Date.now()}`);
+                    const data = await res.json();
+                    if (data && data.success && data.order) {
+                        return data.order;
+                    }
+                } catch (e) {
+                    console.warn('Google Sheets lookup fallback to local:', e);
+                }
+            }
+
+            const orders = Array.isArray(state.orders) ? state.orders : DEFAULT_ORDERS;
+            return orders.find(o => String(o.id).toUpperCase() === code) || null;
+        }
+
+        async function renderOrderStatus(codeRaw) {
+            const code = (codeRaw || '').trim().replace(/^#/, '').toUpperCase();
+            const resultArea = document.getElementById('resultArea');
+            if (!code) return;
+
+            resultArea.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 28px; color: var(--primary); margin-bottom: 8px;"></i>
+                    <div style="font-weight: 600;">Đang tra cứu đơn hàng #${escapeHtml(code)} từ Google Sheets...</div>
+                </div>
+            `;
+
+            const state = getStoredState();
+            const supportPhone = (state.config && state.config.supportPhone) ? state.config.supportPhone.replace(/\D/g, '') : '0942833888';
+            const matched = await findOrderFromGoogleSheetOrLocal(code);
+
+            if (!matched) {
+                resultArea.innerHTML = `
+                    <div class="error-state">
+                        <i class="fa-solid fa-circle-exclamation" style="font-size: 28px; color: var(--danger); margin-bottom: 8px;"></i>
+                        <div style="font-weight: 700; color: var(--danger);">Không tìm thấy mã đơn hàng #${escapeHtml(code)}</div>
+                        <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 4px;">
+                            Vui lòng kiểm tra lại chính xác Mã Đơn Hàng (VD: <b>OT90214</b>). Vì lý do bảo mật, hệ thống không cho phép tìm kiếm hàng loạt.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const stLower = String(matched.status || '').toLowerCase();
+            const isDone = stLower.includes('hoàn thành') || stLower.includes('xong');
+            const isCanceled = stLower.includes('hủy') || stLower.includes('lỗi');
+            const isPending = stLower.includes('chờ');
+
+            const percent = calculateDynamicProgress(matched);
+            const currentCount = isDone ? matched.quantity : Math.floor(matched.quantity * (percent / 100));
+            const barColor = isDone ? 'var(--success)' : (isCanceled ? 'var(--danger)' : (isPending ? 'var(--warning)' : 'var(--primary)'));
+            const badgeClass = isDone ? 'badge-done' : (isCanceled ? 'badge-cancel' : (isPending ? 'badge-pending' : 'badge-running'));
+            const badgeIcon = isDone ? 'fa-circle-check' : (isCanceled ? 'fa-circle-xmark' : (isPending ? 'fa-hourglass-half' : 'fa-spinner fa-spin'));
+
+            const reorderUrl = `dichvumxh.html?platform=${encodeURIComponent(matched.platformKey || 'facebook')}&service=${encodeURIComponent(matched.serviceKey || 'fb_like')}&uid=${encodeURIComponent(matched.uid)}`;
+
+            const pendingAlertHtml = isPending ? `
+                <div class="pending-alert-box">
+                    <i class="fa-solid fa-circle-info" style="color: var(--warning); font-size: 18px;"></i>
+                    <div>
+                        <strong>Đơn hàng đang chờ xác nhận thanh toán:</strong> Hệ thống sẽ tự động kích hoạt máy chủ chạy ngay sau khi Admin xác nhận giao dịch chuyển khoản <b>${formatVND(matched.retailPrice || matched.cost)}</b> với nội dung <code>THANH TOAN ${escapeHtml(matched.id)}</code>.
+                    </div>
+                </div>
+            ` : '';
+
+            resultArea.innerHTML = `
+                <div class="order-detail-box">
+                    <div class="order-status-banner">
+                        <div>
+                            <div style="font-size: 12px; color: var(--text-muted);">Mã đơn hàng cá nhân</div>
+                            <div style="font-size: 17px; font-weight: 700; color: var(--primary);">#${escapeHtml(matched.id)}</div>
+                        </div>
+                        <span class="badge ${badgeClass}">
+                            <i class="fa-solid ${badgeIcon}"></i>
+                            ${escapeHtml(matched.status)}
+                        </span>
+                    </div>
+
+                    <div class="timeline-steps">
+                        <div class="step-item done">
+                            <div class="step-dot"><i class="fa-solid fa-check"></i></div>
+                            <span>1. Tiếp nhận đơn</span>
+                        </div>
+                        <div class="step-item ${isCanceled ? '' : (isPending ? 'active' : 'done')}">
+                            <div class="step-dot"><i class="fa-solid ${isCanceled ? 'fa-xmark' : (isPending ? 'fa-hourglass-half' : 'fa-check')}"></i></div>
+                            <span>2. ${isPending ? 'Chờ thanh toán' : 'Đã xác nhận TT'}</span>
+                        </div>
+                        <div class="step-item ${isDone ? 'done' : ((isCanceled || isPending) ? '' : 'active')}">
+                            <div class="step-dot"><i class="fa-solid ${isDone ? 'fa-check' : 'fa-bolt'}"></i></div>
+                            <span>3. Server đang chạy</span>
+                        </div>
+                        <div class="step-item ${isDone ? 'done' : ''}">
+                            <div class="step-dot"><i class="fa-solid fa-flag-checkered"></i></div>
+                            <span>4. Hoàn thành</span>
+                        </div>
+                    </div>
+
+                    ${pendingAlertHtml}
+
+                    <div class="progress-section">
+                        <div class="progress-labels">
+                            <span>Tiến độ thực hiện: <strong>${Number(currentCount).toLocaleString('vi-VN')} / ${Number(matched.quantity).toLocaleString('vi-VN')}</strong></span>
+                            <span style="color: ${barColor};">${percent}%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width: ${percent}%; background: ${barColor};"></div>
+                        </div>
+                    </div>
+
+                    <div class="info-list">
+                        <div class="info-row">
+                            <span class="info-label">Nền tảng & Dịch vụ:</span>
+                            <span class="info-val">[${escapeHtml(matched.platformName || 'MXH')}] ${escapeHtml(matched.serviceName)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Máy chủ xử lý:</span>
+                            <span class="info-val">${escapeHtml(matched.serverName)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Tài khoản / ID chạy:</span>
+                            <span class="info-val"><code>${escapeHtml(matched.uid)}</code></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Số lượng đặt:</span>
+                            <span class="info-val">${Number(matched.quantity).toLocaleString('vi-VN')} lượt</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Tổng thanh toán:</span>
+                            <span class="info-val" style="color: var(--success); font-size: 15px;">${formatVND(matched.retailPrice || matched.cost)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Ghi chú đơn:</span>
+                            <span class="info-val">${escapeHtml(matched.note || '-')}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Thời gian khởi tạo:</span>
+                            <span class="info-val">${escapeHtml(matched.time)}</span>
+                        </div>
+                    </div>
+
+                    <div class="status-footer-actions">
+                        <a href="https://zalo.me/${supportPhone}" target="_blank" class="btn btn-outline">
+                            <i class="fa-solid fa-shield-heart"></i> ${isPending ? 'Gửi Bill Xác Nhận Zalo' : 'Yêu Cầu Bảo Hành / Hỗ Trợ'}
+                        </a>
+                        <a href="${reorderUrl}" class="btn btn-primary">
+                            <i class="fa-solid fa-rotate-right"></i> Đặt Lại Đơn Này
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSessionQuickChips() {
+            try {
+                const list = JSON.parse(sessionStorage.getItem('ntpro_my_session_orders') || '[]');
+                const bar = document.getElementById('sessionBar');
+                const chipList = document.getElementById('sessionChipList');
+                if (!bar || !chipList || !Array.isArray(list) || list.length === 0) return;
+
+                bar.classList.remove('hidden');
+                chipList.innerHTML = list.map(id => `
+                    <button type="button" class="session-chip" data-id="${escapeHtml(id)}">#${escapeHtml(id)}</button>
+                `).join('');
+
+                chipList.querySelectorAll('.session-chip').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const code = btn.getAttribute('data-id');
+                        document.getElementById('orderCodeInput').value = code;
+                        renderOrderStatus(code);
+                    });
+                });
+            } catch (e) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const state = getStoredState();
+            if (state.config && state.config.brandName) {
+                document.getElementById('brandTitle').textContent = state.config.brandName;
+            }
+
+            let theme = state.theme || 'light';
+            const updateThemeUI = (t) => {
+                document.documentElement.setAttribute('data-theme', t);
+                const icon = document.querySelector('#themeBtn i');
+                if (icon) {
+                    icon.className = t === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+                }
+            };
+            updateThemeUI(theme);
+
+            document.getElementById('themeBtn').addEventListener('click', () => {
+                theme = theme === 'dark' ? 'light' : 'dark';
+                updateThemeUI(theme);
+                saveThemeToState(theme);
+            });
+
+            renderSessionQuickChips();
+
+            const input = document.getElementById('orderCodeInput');
+            document.getElementById('checkStatusForm').addEventListener('submit', e => {
+                e.preventDefault();
+                renderOrderStatus(input.value);
+            });
+
+            const params = new URLSearchParams(window.location.search);
+            const orderIdParam = params.get('id');
+            if (orderIdParam) {
+                input.value = orderIdParam;
+                renderOrderStatus(orderIdParam);
+            }
+        });
+    </script>
+</body>
+</html>

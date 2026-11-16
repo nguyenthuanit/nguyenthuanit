@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài khoản của tôi</title>
+    <link rel="stylesheet" href="css/my-account.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <aside id="sidebar">
+        <div class="sidebar-brand"><i class='bx bxs-user-circle'></i><span>Tài khoản</span></div>
+        <ul class="sidebar-menu">
+            <li class="menu-item active" id="dashboard-link"><a href="#"><i class='bx bxs-dashboard'></i><span>Tổng quan</span></a></li>
+            <li class="menu-item" id="profile-link"><a href="#"><i class='bx bxs-user-detail'></i><span>Hồ sơ của tôi</span></a></li>
+            <li class="menu-item" id="orders-link"><a href="#"><i class='bx bxs-cart'></i><span>Lịch sử đơn hàng</span></a></li>
+            <li class="menu-item" id="settings-link"><a href="#"><i class='bx bxs-cog'></i><span>Cài đặt</span></a></li>
+            <li id="logout-btn"><a href="#"><i class='bx bxs-log-out'></i><span>Đăng xuất</span></a></li>
+        </ul>
+    </aside>
+
+    <div class="sidebar-overlay"></div>
+
+    <main id="main-content">
+        <header class="main-header">
+            <div class="header-left"><button class="menu-toggle" id="menu-toggle"><i class='bx bx-menu'></i></button><h1 id="main-title">Tổng quan tài khoản</h1></div>
+            <div class="header-right">
+                <div class="user-profile" id="user-profile-link" title="Chỉnh sửa hồ sơ chi tiết">
+                    <img id="profile-avatar-img" src="https://i.pravatar.cc/150?u=a042581f4e29026704e" alt="User Avatar">
+                    <span id="profile-welcome-name">Xin chào, ...</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-body">
+            <section id="dashboard-section" class="content-section active">
+                <div class="cards-container">
+                    <div class="card"><div class="card-icon"><i class='bx bx-cart-alt'></i></div><div class="card-info"><h3 id="total-orders-count">0</h3><p>Đơn hàng đã đặt</p></div></div>
+                    <div class="card"><div class="card-icon"><i class='bx bx-loader-circle'></i></div><div class="card-info"><h3 id="pending-orders-count">0</h3><p>Đang chờ xử lý</p></div></div>
+                    <div class="card"><div class="card-icon"><i class='bx bx-check-shield'></i></div><div class="card-info"><h3 id="completed-orders-count">0</h3><p>Đã hoàn thành</p></div></div>
+                </div>
+            </section>
+            
+            <section id="profile-section" class="content-section">
+                <div class="section-container">
+                    <div class="section-header">
+                        <h2>Thông tin cá nhân</h2>
+                        <a href="user.html" class="action-button" id="edit-profile-btn">
+                            <i class='bx bx-pencil'></i> Chỉnh sửa chi tiết
+                        </a>
+                    </div>
+                    <div class="profile-display">
+                        <div class="info-item"><label>Họ và Tên</label><p id="display-fullName">Đang tải...</p></div>
+                        <div class="info-item"><label>Email</label><p id="display-email">Đang tải...</p></div>
+                        <div class="info-item"><label>Số điện thoại</label><p id="display-phone">Chưa cập nhật</p></div>
+                        <div class="info-item"><label>Địa chỉ</label><p id="display-address">Chưa cập nhật</p></div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="orders-section" class="content-section">
+                <div class="section-container">
+                    <div class="section-header">
+                        <h2>Đơn hàng của bạn</h2>
+                        <button class="action-button" id="add-order-btn"><i class='bx bx-plus'></i> Thêm đơn bằng mã</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Mã Đơn</th>
+                                    <th>Nền tảng / Dịch vụ</th>
+                                    <th>Số lượng</th>
+                                    <th>Tổng thanh toán</th>
+                                    <th>Trạng thái</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-table-body">
+                                <tr><td colspan="6" style="text-align: center;">Đang tải danh sách đơn hàng...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="settings-section" class="content-section">
+                 <div class="section-container">
+                    <h2>Cài đặt Giao diện</h2>
+                    <div class="setting-item">
+                        <span>Chế độ Tối (Dark Mode)</span>
+                        <label class="switch"><input type="checkbox" id="theme-toggle-checkbox"><span class="slider"></span></label>
+                    </div>
+                 </div>
+                 <div class="section-container password-zone">
+                    <h2>Bảo mật & Cài đặt nâng cao</h2>
+                    <div class="setting-item">
+                       <div><strong>Quản lý tài khoản</strong><p>Thay đổi mật khẩu, quản lý thông báo và các tùy chọn bảo mật khác.</p></div>
+                       <a href="user.html" class="action-button"><i class='bx bx-shield-quarter'></i> Quản lý ngay</a>
+                   </div>
+                 </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal Thêm đơn hàng bằng Mã Code -->
+    <div id="order-modal" class="modal">
+        <div class="modal-content" style="max-width: 580px;">
+            <header class="modal-header">
+                <h2 id="order-modal-title">Thêm đơn hàng bằng Mã Code</h2>
+                <button class="close-btn" id="close-order-modal-btn"><i class='bx bx-x'></i></button>
+            </header>
+            <form id="order-form">
+                <div class="form-group">
+                    <label for="order-code-input">Nhập Mã Đơn Hàng (VD: OT44078)</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="order-code-input" placeholder="Nhập mã đơn từ hệ thống dịch vụ..." required style="text-transform: uppercase;">
+                        <button type="button" id="lookup-order-btn" class="action-button" style="white-space: nowrap;">
+                            <i class='bx bx-search'></i> Tra cứu
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Khu vực hiển thị toàn bộ thông tin đơn hàng sau khi tra cứu -->
+                <div id="order-preview-box" style="display: none; margin-top: 1rem; padding: 1rem; border-radius: 8px; background: var(--color-background); border: 1px solid var(--color-light); max-height: 320px; overflow-y: auto;">
+                    <h4 style="margin-bottom: 0.8rem; color: var(--color-primary);">Thông tin chi tiết đơn hàng</h4>
+                    <div id="order-preview-details" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; font-size: 0.85rem;"></div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="save-order-btn" class="save-btn" disabled>Lưu vào tài khoản</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Xem toàn bộ chi tiết đơn hàng đã lưu -->
+    <div id="order-detail-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <header class="modal-header">
+                <h2 id="detail-modal-title">Chi tiết đơn hàng</h2>
+                <button class="close-btn" id="close-detail-modal-btn"><i class='bx bx-x'></i></button>
+            </header>
+            <div id="order-full-details" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; font-size: 0.88rem; max-height: 65vh; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- Modal Xác nhận (Đăng xuất / Gỡ đơn / Hủy đơn) -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <p id="confirm-message">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+            <div class="modal-actions">
+                <button id="modal-cancel-btn" class="modal-cancel-btn">Hủy</button>
+                <button id="modal-confirm-btn" class="modal-confirm-btn">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="log-console">
+        <div class="log-header">
+            <div class="log-title"><i class='bx bx-terminal'></i><span>System Log</span></div>
+            <div class="log-filters"><button class="filter-btn active" data-filter="all" title="Hiển thị tất cả">Tất cả</button><button class="filter-btn" data-filter="info" title="Chỉ hiển thị thông tin"><i class='bx bx-info-circle'></i></button><button class="filter-btn" data-filter="success" title="Chỉ hiển thị thành công"><i class='bx bx-check-circle'></i></button><button class="filter-btn" data-filter="error" title="Chỉ hiển thị lỗi"><i class='bx bx-x-circle'></i></button></div>
+            <div class="log-actions"><button id="toggle-log-btn" title="Thu gọn/Mở rộng"><i class='bx bx-chevron-down'></i></button><button id="clear-log-btn" title="Xóa log"><i class='bx bx-trash'></i></button></div>
+        </div><div id="log-content"></div>
+    </div>
+
+    <script src="js/my-account.js"></script>
+</body>
+</html>

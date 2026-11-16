@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello | Nguyenthuanit - Independent Developer & Tech Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body data-theme="light">
+
+    <!-- Header / Navbar -->
+    <header class="header">
+        <div class="container">
+            <nav class="navbar">
+                <a href="welcome_logo.html" class="nav-logo" aria-label="NT technology">
+                    <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 50" role="img"
+                        aria-label="NT technology logo">
+                        <g transform="translate(5, 5)">
+                            <text x="0" y="35" class="logo-text" font-weight="800" font-size="40" fill="#FFFFFF"
+                                transform="skewX(-10)">
+                                NT
+                            </text>
+                            <text x="68" y="35" class="logo-text" font-weight="500" font-size="26"
+                                fill="rgba(255,255,255,0.92)">
+                                technology
+                            </text>
+                        </g>
+                    </svg>
+                </a>
+
+                <ul class="nav-menu" id="navMenu">
+                    <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                    <li class="nav-item"><a href="coming-soon.html" class="nav-link">Terminal</a></li>
+                    <li class="nav-item"><a href="#hardware" class="nav-link">Service</a></li>
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle">Pages <i
+                                class="fas fa-chevron-down dropdown-chevron"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="login.html"><i class="fas fa-sign-in-alt"></i> Sign In</a></li>
+                            <li><a href="register.html"><i class="fas fa-user-plus"></i> Sign Up</a></li>
+                            <li><a href="forgot-password.html"><i class="fas fa-key"></i> Forgot PW</a></li>
+                            <li><a href="coming-soon.html"><i class="fas fa-clock"></i> Coming Soon</a></li>
+                            <li><a href="chamcongdientu/index.html"><i class="fas fa-fingerprint"></i> Chấm Công</a>
+                            </li>
+                            <li><a href="Crypto/index.html"><i class="fas fa-coins"></i> Crypto</a></li>
+                            <li><a href="#"><i class="fas fa-exclamation-triangle"></i> 404</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a href="support-full.html" class="nav-link">Support</a></li>
+                </ul>
+
+                <div class="header-right">
+                    <div class="header-controls">
+                        <button id="theme-toggle" class="theme-toggle-btn" aria-label="Đổi giao diện Sáng/Tối">
+                            <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="5"></circle>
+                                <line x1="12" y1="1" x2="12" y2="3"></line>
+                                <line x1="12" y1="21" x2="12" y2="23"></line>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                <line x1="1" y1="12" x2="3" y2="12"></line>
+                                <line x1="21" y1="12" x2="23" y2="12"></line>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                            </svg>
+                            <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </button>
+                        <a href="login.html" class="login-btn" aria-label="Đăng nhập">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <button class="hamburger" id="hamburgerBtn" aria-label="Mở menu" aria-expanded="false">
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                    </button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-glow" aria-hidden="true"></div>
+            <div class="container hero-container">
+                <div class="hero-text">
+                    <div class="hero-badge">
+                        <span class="badge-dot"></span>
+                        <span>Independent Programmer & Project Developer</span>
+                    </div>
+
+                    <h1 class="hero-title">
+                        Nghiên Cứu Phát Triển.<br>
+                        <span class="text-gradient">Kiến Tạo Giải Pháp Công Nghệ.</span>
+                    </h1>
+
+                    <p class="hero-quote">
+                        Xin chào, tôi là <strong>Mr. Thuận</strong> — Lập trình viên độc lập & Phát triển dự án.
+                        Đây là không gian tôi chia sẻ hành trình nghiên cứu và phát triển công nghệ, nơi tổng hợp những
+                        kiến thức kỹ thuật thực chiến, khám phá phần cứng, các thủ thuật lập trình hữu ích và những dự
+                        án mã nguồn mở hướng đến hiệu năng, tính ứng dụng và sự tối ưu.
+                    </p>
+
+                    <div class="hero-topics">
+                        <span class="topic-tag"><i class="fas fa-code"></i> Phát Triển Website</span>
+                        <span class="topic-tag"><i class="fas fa-microchip"></i> Kỹ Thuật Phần Cứng</span>
+                        <span class="topic-tag"><i class="fas fa-server"></i> Kiến Thức & Hệ Thống</span>
+                        <span class="topic-tag"><i class="fas fa-terminal"></i> Dòng Lệnh & Tự Động</span>
+                    </div>
+
+                    <div class="hero-buttons">
+                        <a href="dichvumxh/dichvumxh.html" class="btn btn-primary btn-lg">
+                            <i class="fas fa-compass"></i> Dịch Vụ MXH
+                        </a>
+                        <a href="qa_support_page/qa-support.html" target="_blank" rel="noopener noreferrer"
+                            class="btn btn-outline btn-lg">
+                            <i class="fab fa-telegram-plane"></i> Chia Sẽ Kiến Thức Công Nghệ
+                        </a>
+                    </div>
+
+                    <div class="hero-metrics">
+                        <div class="metric-item">
+                            <span class="metric-value">99.9%</span>
+                            <span class="metric-label">System Uptime</span>
+                        </div>
+                        <div class="metric-divider"></div>
+                        <div class="metric-item">
+                            <span class="metric-value">Clean Code</span>
+                            <span class="metric-label">Chuẩn Kiến Trúc</span>
+                        </div>
+                        <div class="metric-divider"></div>
+                        <div class="metric-item">
+                            <span class="metric-value">Hardware Lab</span>
+                            <span class="metric-label">Tối Ưu Phần Cứng</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="services" class="services">
+            <div class="container">
+                <div class="section-heading">
+                    <span class="section-subtitle">Hạ Tầng & Phân Hệ</span>
+                    <h2 class="section-title">Hệ Sinh Thái Kỹ Thuật</h2>
+                </div>
+
+                <div class="services-grid">
+                    <div class="service-card">
+                        <div class="service-icon-box">
+                            <i class="fas fa-folder-open"></i>
+                        </div>
+                        <h3>File Explorer</h3>
+                        <p> Truy cập và Dowload file tài nguyên được chia sẻ trực tiếp trên website.</p>
+                        <a href="coming-soon.html" class="read-more">Truy Cập <i class="fas fa-arrow-right"></i></a>
+                    </div>
+
+                    <div class="service-card">
+                        <div class="service-icon-box">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <h3>Central Server</h3>
+                        <p> Cơ Sở Dữ Liệu Hệ thống tập trung kiểm soát tính toán phân tích, giám sát kết nối và bảo trì
+                            định kỳ.</p>
+                        <a href="coming-soon.html" class="read-more">Truy Cập <i class="fas fa-arrow-right"></i></a>
+                    </div>
+
+                    <div class="service-card">
+                        <div class="service-icon-box">
+                            <i class="fas fa-terminal"></i>
+                        </div>
+                        <h3>Web Terminal</h3>
+                        <p>Giao diện dòng lệnh (CLI) trực tuyến tích hợp các tác vụ tự động hóa dành cho nghiên cứu và
+                            tham khảo.</p>
+                        <a href="coming-soon.html" class="read-more">Truy Cập <i class="fas fa-arrow-right"></i></a>
+                    </div>
+
+                    <div class="service-card">
+                        <div class="service-icon-box">
+                            <i class="fas fa-cloud"></i>
+                        </div>
+                        <h3>Cloud Storage</h3>
+                        <p>Dịch vụ lưu trữ đám mây trực tuyến tốc độ cao, đồng bộ hóa và bảo mật đa tầng (nội bộ).</p>
+                        <a href="coming-soon.html" class="read-more">Truy Cập <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+
+                <div class="tools-section">
+                    <div class="section-heading compact">
+                        <span class="section-subtitle">Tiện Ích Mở Rộng</span>
+                        <h2 class="section-title">Resources & Tools</h2>
+                    </div>
+
+                    <div class="tools-grid">
+                        <a href="Calculator.html" class="tool-link">
+                            <div class="tool-item">
+                                <div class="tool-icon"><i class="fas fa-calculator"></i></div>
+                                <span>Máy tính</span>
+                            </div>
+                        </a>
+                        <a href="cashbank.html" class="tool-link">
+                            <div class="tool-item">
+                                <div class="tool-icon"><i class="fas fa-flask"></i></div>
+                                <span>Thử nghiệm</span>
+                            </div>
+                        </a>
+                        <a href="coming-soon.html" class="tool-link">
+                            <div class="tool-item">
+                                <div class="tool-icon"><i class="fas fa-sliders-h"></i></div>
+                                <span>Settings</span>
+                            </div>
+                        </a>
+                        <a href="coming-soon.html" class="tool-link">
+                            <div class="tool-item">
+                                <div class="tool-icon"><i class="fas fa-headset"></i></div>
+                                <span>Contact Us</span>
+                            </div>
+                        </a>
+                        <a href="cashbank.html" class="tool-link">
+                            <div class="tool-item">
+                                <div class="tool-icon"><i class="fas fa-shopping-bag"></i></div>
+                                <span>Buy Services</span>
+                            </div>
+                        </a>
+                        <a href="coming-soon.html" class="tool-link">
+                            <div class="tool-item">
+                                <div class="tool-icon"><i class="fas fa-hdd"></i></div>
+                                <span>File Storage</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="hardware" class="hardware-section">
+                    <div class="section-heading">
+                        <span class="section-subtitle">Hardware Engineering & System Lab</span>
+                        <h2 class="section-title">Kỹ Thuật Phần Cứng & Chia sẻ Kiến Thức</h2>
+                        <p class="section-desc">
+                            Triển khai các giải pháp công nghệ văn phòng, Chia sẻ kiến thức, kinh nghiệm kỹ thuật và
+                            nhận thi công lắp đặt hệ thống máy tính, mạng nội bộ, thiết bị văn phòng và hạ tầng công
+                            nghệ.
+                        </p>
+                    </div>
+
+                    <div class="hardware-grid">
+                        <div class="hardware-card">
+                            <div class="hw-card-top">
+                                <div class="hw-icon"><i class="fas fa-server"></i></div>
+                                <span class="hw-tag">Workstation & Server</span>
+                            </div>
+                            <h3>Kiến Trúc PC Server & Ảo Hóa</h3>
+                            <p>
+                                Lắp ráp, tinh chỉnh BIOS/UEFI, tối ưu luồng khí tản nhiệt (Airflow) và triển khai cụm
+                                máy
+                                chủ ảo hóa Proxmox/Linux hoạt động liên tục 24/7.
+                            </p>
+                            <ul class="hw-specs">
+                                <li><i class="fas fa-check-circle"></i> Bộ nhớ ECC RAM & Lưu trữ NVMe RAID</li>
+                                <li><i class="fas fa-check-circle"></i> Tối ưu điện năng & Kiểm soát nhiệt độ</li>
+                            </ul>
+                        </div>
+
+                        <div class="hardware-card">
+                            <div class="hw-card-top">
+                                <div class="hw-icon"><i class="fas fa-microchip"></i></div>
+                                <span class="hw-tag">Embedded & IoT</span>
+                            </div>
+                            <h3>Vi Điều Khiển & Mạch Nhúng</h3>
+                            <p>
+                                Nghiên cứu sơ đồ nguyên lý, tích hợp vi điều khiển (ESP32, STM32, Raspberry Pi) cùng hệ
+                                thống cảm biến đo lường và điều khiển thiết bị tự động.
+                            </p>
+                            <ul class="hw-specs">
+                                <li><i class="fas fa-check-circle"></i> Giao thức UART, I2C, SPI, MQTT</li>
+                                <li><i class="fas fa-check-circle"></i> Đo kiểm dòng điện & Chống nhiễu mạch</li>
+                            </ul>
+                        </div>
+
+                        <div class="hardware-card">
+                            <div class="hw-card-top">
+                                <div class="hw-icon"><i class="fas fa-network-wired"></i></div>
+                                <span class="hw-tag">Network & Storage</span>
+                            </div>
+                            <h3>Hạ Tầng Mạng & Lưu Trữ NAS</h3>
+                            <p>
+                                Thiết lập hệ thống Router/Firewall phần cứng chuyên dụng, phân tách VLAN bảo mật và xây
+                                dựng cụm lưu trữ NAS tốc độ cao cho toàn bộ hệ sinh thái.
+                            </p>
+                            <ul class="hw-specs">
+                                <li><i class="fas fa-check-circle"></i> Băng thông LAN nội bộ 2.5GbE / 10GbE</li>
+                                <li><i class="fas fa-check-circle"></i> Cơ chế sao lưu dự phòng chống lỗi ổ cứng</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER CHUYÊN NGHIỆP -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-main">
+                <div class="footer-grid">
+                    <!-- Cột 1: Thông tin thương hiệu -->
+                    <div class="footer-col footer-col-brand">
+                        <a href="#" class="footer-logo" aria-label="NT technology">
+                            <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 50" role="img"
+                                aria-label="NT technology logo">
+                                <g transform="translate(5, 5)">
+                                    <text x="0" y="35" class="logo-text" font-weight="800" font-size="40" fill="#4F46E5"
+                                        transform="skewX(-10)">
+                                        NT
+                                    </text>
+                                    <text x="68" y="35" class="logo-text" font-weight="500" font-size="26"
+                                        fill="#4F46E5">
+                                        technology
+                                    </text>
+                                </g>
+                            </svg>
+                        </a>
+                        <h3 class="brand-name">NT Technology</h3>
+                        <p class="footer-description">
+                            Nhà phát triển website độc lập, vận hành bằng niềm đam mê các ngôn ngữ lập trình và tinh
+                            thần nghiên cứu công nghệ chuyên sâu.
+                        </p>
+                        <div class="sys-status">
+                            <span class="status-dot"></span> Hệ thống đang vận hành ổn định
+                        </div>
+                    </div>
+
+                    <!-- Cột 2: Điều hướng Home -->
+                    <div class="footer-col">
+                        <h4>Home</h4>
+                        <ul class="footer-links">
+                            <li><a href="index.html">Trang Chủ</a></li>
+                            <li><a href="#hardware">Kỹ thuật Phần cứng</a></li>
+                            <li><a href="welcome_logo.html">Welcome Logo</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Cột 3: Dịch vụ -->
+                    <div class="footer-col">
+                        <h4>Dịch Vụ</h4>
+                        <ul class="footer-links">
+                            <li><a href="#">Hệ thống Cashier</a></li>
+                            <li><a href="#">Graphics Design</a></li>
+                            <li><a href="#">Digital Marketing</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-col">
+                        <h4>Chúng tôi</h4>
+                        <ul class="footer-links">
+                            <li><a href="#">Về chúng tôi</a></li>
+                            <li><a href="privacy-policy.html">Bảo mật</a></li>
+                            <li><a href="#">Tin tức</a></li>
+                            <li><a href="support-full.html">Liên hệ</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-col footer-col-update">
+                        <div class="update-card">
+                            <div class="update-card-header">
+                                <h4>System Updates</h4>
+                                <span class="version-tag">v1.1.5</span>
+                            </div>
+                            <p class="update-date">Cập nhật lần cuối: <strong>07/08/2026</strong></p>
+
+                            <div class="update-wrapper">
+                                <form class="newsletter-form" id="updateSystemForm" action="">
+                                    <button type="submit" id="updateSystemBtn" class="btn-update">
+                                        <span id="updateBtnText">Kiểm tra cập nhật</span>
+                                        <svg id="updateIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-owner-info">
+                <div class="owner-details">
+                    <h3 class="owner-title">INDEPENDENT DEVELOPER</h3>
+                    <p class="project-name"><strong>NGUYENTHUANIT PORTFOLIO PROJECT (NT TECHNOLOGY)</strong></p>
+                    <p class="info-item">
+                        <i class="fas fa-map-marker-alt icon"></i>
+                        <span><strong>Địa chỉ Satu:</strong> Xã Hóa Bình, Tỉnh Cà Mau, Việt Nam.</span>
+                    </p>
+                    <p class="info-item">
+                        <i class="fas fa-map-marker-alt icon"></i>
+                        <span><strong>Địa chỉ Dua:</strong> Cimahi Tengah, Kota Cimahi, Jawa Barat, Indonesia.</span>
+                    </p>
+                    <p class="info-item">
+                        <i class="fas fa-user-tie icon"></i>
+                        <span><strong>Nhà phát triển:</strong> Nguyễn Minh Thuận (Independent Developer)</span>
+                    </p>
+                </div>
+
+                <div class="owner-contact">
+                    <h3 class="owner-title">Liên hệ & Xác nhận</h3>
+                    <p class="info-item">
+                        <i class="fas fa-phone-alt icon"></i>
+                        <span><strong>Hotline / Zalo:</strong> 0942.833.888</span>
+                    </p>
+                    <p class="info-item">
+                        <i class="fas fa-envelope icon"></i>
+                        <span><strong>Email:</strong> Nguyenminhthuan1095@gmail.com</span>
+                    </p>
+                    <p class="info-item">
+                        <i class="fas fa-globe icon"></i>
+                        <span><strong>Website:</strong> www.nguyenthuanit.id.vn</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Chân trang cuối cùng -->
+            <div class="footer-bottom">
+                <div class="footer-bottom-links">
+                    <a href="welcome_logo.html">Welcome NT</a>
+                    <a href="privacy-policy.html">Privacy Policy</a>
+                    <a href="support-full.html">Support</a>
+                </div>
+                <div class="footer-copyright">
+                    <p>© 2026 Nguyenthuanit. Independently Developed.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <a href="#" id="scrollTopBtn" class="scroll-top-btn" aria-label="Cuộn lên đầu trang">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 19V5M5 12l7-7 7 7" />
+        </svg>
+    </a>
+
+    <!-- JavaScript -->
+    <script src="js/script.js"></script>
+</body>
+
+</html>

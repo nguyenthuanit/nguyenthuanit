@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài liệu & Hướng dẫn | Nguyenthuanit - Independent Developer & Tech Hub</title>
+    
+    <!-- CSS gốc của hệ thống (lùi 1 cấp thư mục) & CSS riêng cho trang Q&A Support -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="qa-style.css">
+    
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body data-theme="light">
+
+    <header class="header">
+        <div class="container">
+            <nav class="navbar">
+                <a href="../welcome_logo.html" class="nav-logo" aria-label="NT technology">
+                    <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 50" role="img"
+                        aria-label="NT technology logo">
+                        <g transform="translate(5, 5)">
+                            <text x="0" y="35" class="logo-text" font-weight="800" font-size="40" fill="#FFFFFF"
+                                transform="skewX(-10)">
+                                NT
+                            </text>
+                            <text x="68" y="35" class="logo-text" font-weight="500" font-size="26"
+                                fill="rgba(255,255,255,0.92)">
+                                technology
+                            </text>
+                        </g>
+                    </svg>
+                </a>
+
+                <ul class="nav-menu" id="navMenu">
+                    <li class="nav-item"><a href="../index.html" class="nav-link">Home</a></li>
+                    <li class="nav-item"><a href="../coming-soon.html" class="nav-link">Terminal</a></li>
+                    <li class="nav-item"><a href="../index.html#hardware" class="nav-link">Service</a></li>
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle">Pages <i
+                                class="fas fa-chevron-down dropdown-chevron"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="../login.html"><i class="fas fa-sign-in-alt"></i> Sign In</a></li>
+                            <li><a href="../register.html"><i class="fas fa-user-plus"></i> Sign Up</a></li>
+                            <li><a href="../forgot-password.html"><i class="fas fa-key"></i> Forgot PW</a></li>
+                            <li><a href="../coming-soon.html"><i class="fas fa-clock"></i> Coming Soon</a></li>
+                            <li><a href="../chamcongdientu/index.html"><i class="fas fa-fingerprint"></i> Chấm Công</a></li>
+                            <li><a href="../Crypto/index.html"><i class="fas fa-coins"></i> Crypto</a></li>
+                            <li><a href="#"><i class="fas fa-exclamation-triangle"></i> 404</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a href="qa-support.html" class="nav-link active">Support</a></li>
+                </ul>
+
+                <div class="header-right">
+                    <div class="header-controls">
+                        <button id="theme-toggle" class="theme-toggle-btn" aria-label="Đổi giao diện Sáng/Tối">
+                            <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="5"></circle>
+                                <line x1="12" y1="1" x2="12" y2="3"></line>
+                                <line x1="12" y1="21" x2="12" y2="23"></line>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                <line x1="1" y1="12" x2="3" y2="12"></line>
+                                <line x1="21" y1="12" x2="23" y2="12"></line>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                            </svg>
+                            <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </button>
+                        <a href="../login.html" class="login-btn" aria-label="Đăng nhập">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <button class="hamburger" id="hamburgerBtn" aria-label="Mở menu" aria-expanded="false">
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                    </button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- NỘI DUNG CHÍNH -->
+    <main class="guide-main">
+        <!-- Banner Hướng Dẫn -->
+        <section class="guide-banner">
+            <div class="hero-glow" aria-hidden="true"></div>
+            <div class="container guide-banner-inner">
+                <div class="hero-badge">
+                    <span class="badge-dot"></span>
+                    <span>Thư Viện Kiến Thức & Tài Liệu Kỹ Thuật</span>
+                </div>
+                <h1 class="guide-banner-title">
+                    Trợ Giúp & <span class="text-gradient">Hướng Dẫn Sử Dụng</span>
+                </h1>
+                <p class="guide-banner-desc">
+                    Khám phá kho tài liệu công nghệ thực chiến, quy trình lắp ráp phần cứng, cài đặt phần mềm và quản trị hệ thống.
+                </p>
+                
+                <div class="guide-search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="guideSearchInput" placeholder="Tìm kiếm bài viết (vd: Máy tính, Cài đặt Win, Lắp ráp PC, DNS...)" autocomplete="off">
+                    <button type="button" class="btn btn-primary" id="guideSearchBtn">Tìm kiếm</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Khối Nội Dung & Sidebar -->
+        <section class="guide-content-section">
+            <div class="container guide-layout">
+                
+                <!-- Sidebar Điều Hướng -->
+                <aside class="guide-sidebar">
+                    <div class="sidebar-header">
+                        <span class="sidebar-label">Danh Mục Tài Liệu</span>
+                    </div>
+                    <nav class="guide-nav" id="guideNav">
+                        <button class="guide-nav-item" data-category="bat-tat-may">
+                            <i class="fas fa-power-off"></i> Hướng dẫn bật/tắt máy
+                        </button>
+                        <button class="guide-nav-item" data-category="cai-win">
+                            <i class="fab fa-windows"></i> Cài đặt Windows
+                        </button>
+                        <button class="guide-nav-item" data-category="diet-virus">
+                            <i class="fas fa-shield-virus"></i> Diệt Virus an toàn
+                        </button>
+                        <button class="guide-nav-item" data-category="lap-rap-pc">
+                            <i class="fas fa-microchip"></i> Hướng dẫn lắp ráp PC
+                        </button>
+                        <button class="guide-nav-item" data-category="ket-noi-mang">
+                            <i class="fas fa-wifi"></i> Cấu hình kết nối Mạng
+                        </button>
+                    </nav>
+                </aside>
+
+                <!-- KHUNG CHỨA NỘI DUNG SẼ ĐƯỢC HIỂN THỊ TẠI ĐÂY -->
+                <div class="guide-content-area" id="guideContentArea">
+                    <div class="guide-placeholder">
+                        <div class="placeholder-icon-box">
+                            <i class="fas fa-book-reader"></i>
+                        </div>
+                        <h2>Chào mừng bạn đến với Thư viện hỗ trợ</h2>
+                        <p>Vui lòng chọn một chủ đề ở thanh menu bên trái (hoặc nhập từ khóa vào ô tìm kiếm) để xem danh sách bài viết hướng dẫn chi tiết.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER CHUYÊN NGHIỆP (Đồng bộ 100% với index.html) -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-main">
+                <div class="footer-grid">
+                    <!-- Cột 1: Thông tin thương hiệu -->
+                    <div class="footer-col footer-col-brand">
+                        <a href="../index.html" class="footer-logo" aria-label="NT technology">
+                            <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 50" role="img"
+                                aria-label="NT technology logo">
+                                <g transform="translate(5, 5)">
+                                    <text x="0" y="35" class="logo-text" font-weight="800" font-size="40" fill="#4F46E5"
+                                        transform="skewX(-10)">
+                                        NT
+                                    </text>
+                                    <text x="68" y="35" class="logo-text" font-weight="500" font-size="26"
+                                        fill="#4F46E5">
+                                        technology
+                                    </text>
+                                </g>
+                            </svg>
+                        </a>
+                        <h3 class="brand-name">NT Technology</h3>
+                        <p class="footer-description">
+                            Nhà phát triển website độc lập, vận hành bằng niềm đam mê các ngôn ngữ lập trình và tinh
+                            thần nghiên cứu công nghệ chuyên sâu.
+                        </p>
+                        <div class="sys-status">
+                            <span class="status-dot"></span> Hệ thống đang vận hành ổn định
+                        </div>
+                    </div>
+
+                    <!-- Cột 2: Điều hướng Home -->
+                    <div class="footer-col">
+                        <h4>Home</h4>
+                        <ul class="footer-links">
+                            <li><a href="../index.html">Trang Chủ</a></li>
+                            <li><a href="../index.html#hardware">Kỹ thuật Phần cứng</a></li>
+                            <li><a href="../welcome_logo.html">Welcome Logo</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Cột 3: Dịch vụ -->
+                    <div class="footer-col">
+                        <h4>Dịch Vụ</h4>
+                        <ul class="footer-links">
+                            <li><a href="#">Hệ thống Cashier</a></li>
+                            <li><a href="#">Graphics Design</a></li>
+                            <li><a href="#">Digital Marketing</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-col">
+                        <h4>Chúng tôi</h4>
+                        <ul class="footer-links">
+                            <li><a href="#">Về chúng tôi</a></li>
+                            <li><a href="../privacy-policy.html">Bảo mật</a></li>
+                            <li><a href="#">Tin tức</a></li>
+                            <li><a href="qa-support.html">Liên hệ</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-col footer-col-update">
+                        <div class="update-card">
+                            <div class="update-card-header">
+                                <h4>System Updates</h4>
+                                <span class="version-tag">v1.1.5</span>
+                            </div>
+                            <p class="update-date">Cập nhật lần cuối: <strong>07/08/2026</strong></p>
+
+                            <div class="update-wrapper">
+                                <form class="newsletter-form" id="updateSystemForm" action="">
+                                    <button type="submit" id="updateSystemBtn" class="btn-update">
+                                        <span id="updateBtnText">Kiểm tra cập nhật</span>
+                                        <svg id="updateIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-owner-info">
+                <div class="owner-details">
+                    <h3 class="owner-title">INDEPENDENT DEVELOPER</h3>
+                    <p class="project-name"><strong>NGUYENTHUANIT PORTFOLIO PROJECT (NT TECHNOLOGY)</strong></p>
+                    <p class="info-item">
+                        <i class="fas fa-map-marker-alt icon"></i>
+                        <span><strong>Địa chỉ Satu:</strong> Xã Hóa Bình, Tỉnh Cà Mau, Việt Nam.</span>
+                    </p>
+                    <p class="info-item">
+                        <i class="fas fa-map-marker-alt icon"></i>
+                        <span><strong>Địa chỉ Dua:</strong> Cimahi Tengah, Kota Cimahi, Jawa Barat, Indonesia.</span>
+                    </p>
+                    <p class="info-item">
+                        <i class="fas fa-user-tie icon"></i>
+                        <span><strong>Nhà phát triển:</strong> Nguyễn Minh Thuận (Independent Developer)</span>
+                    </p>
+                </div>
+
+                <div class="owner-contact">
+                    <h3 class="owner-title">Liên hệ & Xác nhận</h3>
+                    <p class="info-item">
+                        <i class="fas fa-phone-alt icon"></i>
+                        <span><strong>Hotline / Zalo:</strong> 0942.833.888</span>
+                    </p>
+                    <p class="info-item">
+                        <i class="fas fa-envelope icon"></i>
+                        <span><strong>Email:</strong> Nguyenminhthuan1095@gmail.com</span>
+                    </p>
+                    <p class="info-item">
+                        <i class="fas fa-globe icon"></i>
+                        <span><strong>Website:</strong> www.nguyenthuanit.id.vn</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Chân trang cuối cùng -->
+            <div class="footer-bottom">
+                <div class="footer-bottom-links">
+                    <a href="../welcome_logo.html">Welcome NT</a>
+                    <a href="../privacy-policy.html">Privacy Policy</a>
+                    <a href="qa-support.html">Support</a>
+                </div>
+                <div class="footer-copyright">
+                    <p>© 2026 Nguyenthuanit. Independently Developed.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll Top Button -->
+    <a href="#" id="scrollTopBtn" class="scroll-top-btn" aria-label="Cuộn lên đầu trang">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 19V5M5 12l7-7 7 7" />
+        </svg>
+    </a>
+
+    <!-- JavaScript -->
+    <script src="../js/script.js"></script>
+    <script src="qa-data.js"></script>
+    <script src="qa-script.js"></script>
+</body>
+
+</html>

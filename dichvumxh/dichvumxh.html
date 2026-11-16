@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NT.Pro - Hệ Thống Dịch Vụ Mạng Xã Hội Đa Nền Tảng</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="dichvumxh.css">
+</head>
+<body>
+    <div class="app-layout">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title" id="brandNameDisplay">NT Pro</span>
+                    <span class="brand-sub" id="sidebarAdminName">Hệ Thống Dịch Vụ MXH 24/7</span>
+                </div>
+                <button class="mobile-close-btn" id="closeSidebarBtn" aria-label="Đóng menu">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">ĐIỀU HƯỚNG HỆ THỐNG</div>
+                <a href="#" class="nav-item active" data-view="order-view">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Khởi Tạo Dịch Vụ</span>
+                </a>
+                <a href="#" class="nav-item" data-view="history-view">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Tra Cứu Lịch Sử Đơn</span>
+                </a>
+                <a href="status.html" class="nav-item">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    <span>Kiểm Tra Tiến Độ (Status)</span>
+                </a>
+                <a href="#" class="nav-item" data-view="pricelist-view">
+                    <i class="fa-solid fa-table-list"></i>
+                    <span>Bảng Giá Tổng Hợp</span>
+                </a>
+                <a href="#" class="nav-item nav-item-special" id="quickAccTiktokLiveBtn">
+                    <i class="fa-brands fa-tiktok text-tiktok"></i>
+                    <span>Acc TikTok Live Giá Rẻ</span>
+                    <span class="badge-hot">HOT</span>
+                </a>
+
+                <div class="nav-section-title">DANH MỤC ĐA NỀN TẢNG</div>
+                <div class="platform-accordion" id="sidebarPlatformMenu"></div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="https://zalo.me/0942833888" target="_blank" id="supportLinkBtn" class="support-btn">
+                    <i class="fa-solid fa-headset"></i>
+                    <span>Hỗ trợ Zalo: <b id="supportPhoneDisplay">0942.833.888</b></span>
+                </a>
+                <div class="creator-info">
+                    <span class="creator-line"><strong>NTpro</strong> sản phẩm thuộc <strong>NGUYENTHUANIT PORTFOLIO PROJECT (NT TECHNOLOGY)</strong></span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN WORKSPACE -->
+        <div class="main-wrapper">
+            <!-- TOPBAR TRA CỨU MÃ ĐƠN HÀNG ĐANG CHẠY -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="icon-btn menu-toggle-btn" id="openSidebarBtn" aria-label="Mở menu">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="quick-uid-finder">
+                        <i class="fa-solid fa-magnifying-glass-chart"></i>
+                        <input type="text" id="quickOrderCheckInput" placeholder="Dán Mã Đơn Hàng (VD: OT90214) để kiểm tra đơn chạy xong chưa...">
+                        <button type="button" id="quickOrderCheckBtn">Kiểm Tra Đơn</button>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <a href="status.html" class="btn btn-outline btn-sm" id="openStatusPageBtn" title="Mở trang kiểm tra đơn độc lập">
+                        <i class="fa-solid fa-shield-halved"></i> <span>Trang Status</span>
+                    </a>
+                    <button class="btn btn-outline btn-sm" id="quickPriceListBtn">
+                        <i class="fa-solid fa-tags"></i> <span>Bảng Giá</span>
+                    </button>
+                    <button class="icon-btn" id="themeToggleBtn" title="Đổi giao diện Sáng/Tối">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- CONTENT AREA -->
+            <main class="content-area">
+                <!-- VIEW 1: KHỞI TẠO ĐƠN DỊCH VỤ ĐA NỀN TẢNG -->
+                <section class="view-section active" id="order-view">
+                    <div class="platform-bar" id="platformBar"></div>
+                    <div class="service-quick-tabs" id="serviceQuickTabs"></div>
+
+                    <div class="order-grid">
+                        <!-- Cột Trái: Form Lên Đơn + Mã QR Thanh Toán -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="header-title-wrap">
+                                    <div class="service-header-icon" id="currentPlatformBadge">
+                                        <i class="fa-brands fa-facebook"></i>
+                                    </div>
+                                    <div>
+                                        <h2 class="card-title" id="currentServiceTitle">Tăng Like Bài Viết Facebook</h2>
+                                        <p class="card-subtitle" id="currentServiceSubtitle">Hệ thống xử lý tự động đa máy chủ 24/7</p>
+                                    </div>
+                                </div>
+                                <span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Hoạt động</span>
+                            </div>
+
+                            <form id="orderForm" class="card-body">
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Nền tảng mạng xã hội</label>
+                                        <select id="platformSelect" class="form-control"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Dịch vụ chi tiết</label>
+                                        <select id="serviceSelect" class="form-control"></select>
+                                    </div>
+                                </div>
+
+                                <!-- Link / UID (Hỗ trợ Đơn Lẻ & Đa Link Hàng Loạt) -->
+                                <div class="form-group">
+                                    <div class="label-row">
+                                        <label class="form-label" id="targetInputLabel">Nhập Link hoặc ID cần chạy <span class="required">*</span></label>
+                                        <div class="target-mode-bar">
+                                            <span class="uid-status" id="uidConvertStatus">Tự động nhận diện link</span>
+                                            <button type="button" class="btn-mode-toggle" id="toggleMassOrderBtn" title="Bật/tắt chế độ lên nhiều link cùng lúc">
+                                                <i class="fa-solid fa-layer-group"></i> Chế độ Đa Link
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="input-with-action" id="singleTargetWrap">
+                                        <input type="text" id="targetUidInput" class="form-control" placeholder="Dán đường dẫn bài viết, video hoặc trang cá nhân vào đây...">
+                                        <button type="button" id="extractUidBtn" class="btn btn-outline">
+                                            <i class="fa-solid fa-filter"></i> Chuẩn Hóa
+                                        </button>
+                                    </div>
+
+                                    <div class="hidden" id="massTargetWrap">
+                                        <textarea id="massTargetTextarea" class="form-control" rows="4" placeholder="Nhập mỗi Link hoặc UID trên 1 dòng để chạy đồng loạt...&#10;https://www.facebook.com/posts/10001&#10;https://www.facebook.com/posts/10002"></textarea>
+                                        <div class="mass-info-bar">
+                                            <span>Số lượng link hợp lệ: <strong class="text-primary" id="massLinkCount">0</strong> link</span>
+                                            <button type="button" id="cleanMassUidBtn" class="btn btn-outline btn-sm">
+                                                <i class="fa-solid fa-wand-magic-sparkles"></i> Chuẩn Hóa Tất Cả Link
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Danh sách Máy Chủ (Server) -->
+                                <div class="form-group">
+                                    <label class="form-label">Chọn Máy Chủ (Server) <span class="required">*</span></label>
+                                    <div class="server-list" id="serverListContainer"></div>
+                                </div>
+
+                                <!-- Chọn Đa Cảm Xúc -->
+                                <div class="form-group" id="reactionGroup">
+                                    <div class="label-row">
+                                        <label class="form-label">Loại cảm xúc tương tác (Có thể chọn nhiều cảm xúc)</label>
+                                        <span class="minmax-hint" id="selectedReactionsHint">Đang chọn: LIKE</span>
+                                    </div>
+                                    <div class="reaction-selector" id="reactionContainer">
+                                        <label class="reaction-item active">
+                                            <input type="checkbox" name="reaction" value="LIKE" checked>
+                                            <span class="reaction-emoji">👍</span>
+                                            <span class="reaction-name">Like</span>
+                                        </label>
+                                        <label class="reaction-item">
+                                            <input type="checkbox" name="reaction" value="LOVE">
+                                            <span class="reaction-emoji">❤️</span>
+                                            <span class="reaction-name">Tim</span>
+                                        </label>
+                                        <label class="reaction-item">
+                                            <input type="checkbox" name="reaction" value="CARE">
+                                            <span class="reaction-emoji">🤗</span>
+                                            <span class="reaction-name">Thương</span>
+                                        </label>
+                                        <label class="reaction-item">
+                                            <input type="checkbox" name="reaction" value="HAHA">
+                                            <span class="reaction-emoji">😆</span>
+                                            <span class="reaction-name">Haha</span>
+                                        </label>
+                                        <label class="reaction-item">
+                                            <input type="checkbox" name="reaction" value="WOW">
+                                            <span class="reaction-emoji">😮</span>
+                                            <span class="reaction-name">Wow</span>
+                                        </label>
+                                        <label class="reaction-item">
+                                            <input type="checkbox" name="reaction" value="SAD">
+                                            <span class="reaction-emoji">😢</span>
+                                            <span class="reaction-name">Buồn</span>
+                                        </label>
+                                        <label class="reaction-item">
+                                            <input type="checkbox" name="reaction" value="ANGRY">
+                                            <span class="reaction-emoji">😡</span>
+                                            <span class="reaction-name">Phẫn nộ</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Số lượng -->
+                                <div class="form-group" id="quantityGroup">
+                                    <div class="label-row">
+                                        <label class="form-label">Số lượng cần tăng (mỗi link) <span class="required">*</span></label>
+                                        <span class="minmax-hint" id="minMaxHint">Min: 50 - Max: 50,000</span>
+                                    </div>
+                                    <input type="number" id="quantityInput" class="form-control" value="100" min="1" step="1" required>
+                                    <div class="preset-chips">
+                                        <button type="button" class="chip-btn" data-qty="100">100</button>
+                                        <button type="button" class="chip-btn" data-qty="500">500</button>
+                                        <button type="button" class="chip-btn" data-qty="1000">1,000</button>
+                                        <button type="button" class="chip-btn" data-qty="2000">2,000</button>
+                                        <button type="button" class="chip-btn" data-qty="5000">5,000 <small class="chip-sale">-5%</small></button>
+                                        <button type="button" class="chip-btn" data-qty="10000">10,000 <small class="chip-sale">-10%</small></button>
+                                    </div>
+                                </div>
+
+                                <!-- Bình luận + Gợi ý mẫu câu Seeding 1 chạm -->
+                                <div class="form-group hidden" id="commentGroup">
+                                    <div class="label-row">
+                                        <label class="form-label">Danh sách nội dung bình luận (Mỗi dòng 1 bình luận) <span class="required">*</span></label>
+                                        <span class="badge badge-info">Số lượng: <b id="commentLineCount">0</b> bình luận</span>
+                                    </div>
+                                    <div class="seeding-template-bar">
+                                        <span class="template-label"><i class="fa-solid fa-wand-magic-sparkles text-primary"></i> Mẫu nhanh:</span>
+                                        <button type="button" class="template-chip" data-template="shop">Khen sản phẩm</button>
+                                        <button type="button" class="template-chip" data-template="price">Hỏi giá & Ship</button>
+                                        <button type="button" class="template-chip" data-template="personal">Khen tương tác</button>
+                                        <button type="button" class="template-chip text-red" data-template="clear">Xóa trắng</button>
+                                    </div>
+                                    <textarea id="commentTextarea" class="form-control" rows="4" placeholder="Nhập mỗi bình luận trên 1 dòng...&#10;Sản phẩm chất lượng lắm shop&#10;Tư vấn giúp mình mẫu này nhé"></textarea>
+                                </div>
+
+                                <!-- Thời gian mắt live -->
+                                <div class="form-group hidden" id="liveMinutesGroup">
+                                    <label class="form-label">Thời lượng duy trì mắt Livestream</label>
+                                    <select id="liveMinutesSelect" class="form-control">
+                                        <option value="30">30 Phút</option>
+                                        <option value="60" selected>60 Phút (1 Giờ)</option>
+                                        <option value="90">90 Phút (1.5 Giờ)</option>
+                                        <option value="120">120 Phút (2 Giờ)</option>
+                                        <option value="180">180 Phút (3 Giờ)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Mã Giảm Giá & Ghi chú -->
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Mã ưu đãi / Voucher giảm giá</label>
+                                        <div class="input-with-action">
+                                            <input type="text" id="promoCodeInput" class="form-control" placeholder="Thử nhập: NTPRO10 hoặc VIP20">
+                                            <button type="button" id="applyPromoBtn" class="btn btn-outline">Áp Dụng</button>
+                                        </div>
+                                        <small class="promo-feedback" id="promoFeedbackText">Tổng đơn từ 5,000 lượt tự động giảm thêm 5% - 10%</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Ghi chú đơn hàng / Tên khách hàng</label>
+                                        <input type="text" id="orderNoteInput" class="form-control" placeholder="VD: Khách Minh Zalo - Đã thanh toán...">
+                                    </div>
+                                </div>
+
+                                <!-- Bảng Tính Giá Chi Tiết -->
+                                <div class="price-summary-box">
+                                    <div class="summary-row">
+                                        <span>Đơn giá máy chủ:</span>
+                                        <strong id="summaryUnitPrice">0đ / lượt</strong>
+                                    </div>
+                                    <div class="summary-row">
+                                        <span>Số lượng yêu cầu:</span>
+                                        <strong id="summaryQty">100</strong>
+                                    </div>
+                                    <div class="summary-row" id="summaryDiscountRow">
+                                        <span>Chiết khấu (Số lượng lớn / Voucher):</span>
+                                        <strong class="text-green" id="summaryDiscountAmount">-0đ</strong>
+                                    </div>
+                                    <div class="summary-row total-row">
+                                        <span>Tổng Hóa Đơn Thanh Toán:</span>
+                                        <span class="total-price" id="summaryRetailPrice">0đ</span>
+                                    </div>
+                                </div>
+
+                                <!-- Nút Hành Động -->
+                                <div class="action-btn-group">
+                                    <button type="submit" id="orderSubmitBtn" class="btn btn-primary btn-lg">
+                                        <i class="fa-solid fa-paper-plane"></i> Lưu & Khởi Tạo Đơn
+                                    </button>
+                                    <button type="button" id="copyQuoteBtn" class="btn btn-secondary btn-lg">
+                                        <i class="fa-regular fa-copy"></i> Copy Báo Giá
+                                    </button>
+                                </div>
+
+                                <!-- MÃ QR THANH TOÁN (QUÉT THỰC TẾ NGÂN HÀNG & VÍ MOMO) -->
+                                <div class="inline-qr-payment-box hidden" id="inlineQrPaymentBox">
+                                    <div class="inline-qr-success-banner">
+                                        <div>
+                                            <i class="fa-solid fa-circle-check"></i>
+                                            <span>Đơn hàng <strong id="inlineCreatedOrderId">#OT00000</strong> đã được khởi tạo! Vui lòng quét QR bên dưới để thanh toán:</span>
+                                        </div>
+                                        <div class="banner-right-actions">
+                                            <span class="qr-countdown-badge" id="qrCountdownBadge">
+                                                <i class="fa-regular fa-clock"></i> Giữ mã: <b id="qrTimerText">15:00</b>
+                                            </span>
+                                            <button type="button" class="btn btn-outline btn-sm" id="copyInlineOrderIdBtn">
+                                                <i class="fa-regular fa-copy"></i> Copy Mã Đơn
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="inline-qr-header">
+                                        <div class="inline-qr-title">
+                                            <i class="fa-solid fa-qrcode text-primary" id="inlineQrHeaderIcon"></i>
+                                            <span>Số Tiền Cần Thanh Toán: <strong class="text-red" id="inlineQrAmountBadge">1.800đ</strong></span>
+                                        </div>
+                                        <div class="qr-method-tabs" role="tablist">
+                                            <button type="button" class="qr-method-tab active" data-method="bank">
+                                                <i class="fa-solid fa-building-columns"></i> Ngân Hàng
+                                            </button>
+                                            <button type="button" class="qr-method-tab" data-method="momo">
+                                                <i class="fa-solid fa-wallet"></i> Ví MoMo
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Thanh công cụ cấu hình & chọn chế độ quét MoMo thực tế -->
+                                    <div class="momo-real-config-bar hidden" id="momoRealConfigBar">
+                                        <div class="momo-mode-group">
+                                            <span class="momo-config-label"><i class="fa-solid fa-sliders"></i> Chuẩn quét MoMo:</span>
+                                            <button type="button" class="momo-mode-chip active" data-momo-mode="emvco">
+                                                QR Đa Năng (Chuẩn MoMo Mới)
+                                            </button>
+                                            <button type="button" class="momo-mode-chip" data-momo-mode="native">
+                                                Ví MoMo (2|99)
+                                            </button>
+                                        </div>
+                                        <div class="momo-upload-actions">
+                                            <input type="file" id="realMomoQrFileInput" accept="image/*" class="hidden">
+                                            <button type="button" class="btn btn-outline btn-sm" id="uploadRealMomoQrBtn" title="Tải ảnh QR Nhận Tiền từ App MoMo của bạn lên để tự động gắn số tiền theo đơn">
+                                                <i class="fa-solid fa-camera-rotate"></i> Cài QR MoMo Thật
+                                            </button>
+                                            <button type="button" class="btn btn-outline btn-sm text-red hidden" id="clearRealMomoQrBtn" title="Xóa QR MoMo đã lưu">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="inline-qr-body">
+                                        <div class="inline-qr-img-wrap">
+                                            <img id="inlineQrImage" src="" alt="Mã QR Thanh Toán Hóa Đơn" class="inline-qr-img">
+                                            <span class="qr-method-pill" id="inlineQrMethodPill">VietQR Napas 24/7</span>
+                                            <span class="qr-verify-badge" id="inlineQrVerifyBadge">
+                                                <i class="fa-solid fa-circle-check"></i> Tự điền số tiền & mã đơn
+                                            </span>
+                                        </div>
+
+                                        <div class="inline-qr-details">
+                                            <div class="qr-detail-row">
+                                                <span class="qr-detail-label">Kênh nhận:</span>
+                                                <strong id="inlineQrProviderName">BIDV</strong>
+                                            </div>
+                                            <div class="qr-detail-row">
+                                                <span class="qr-detail-label">Số TK / SĐT MoMo:</span>
+                                                <div>
+                                                    <strong id="inlineQrAccNo">8869839473</strong>
+                                                    <button type="button" class="btn-icon-copy" data-copy-target="inlineQrAccNo" title="Sao chép"><i class="fa-regular fa-copy"></i></button>
+                                                </div>
+                                            </div>
+                                            <div class="qr-detail-row">
+                                                <span class="qr-detail-label">Chủ tài khoản:</span>
+                                                <strong id="inlineQrAccName">NGUYEN MINH THUAN</strong>
+                                            </div>
+                                            <div class="qr-detail-row">
+                                                <span class="qr-detail-label">Số tiền hóa đơn:</span>
+                                                <strong class="text-red" id="inlineQrExactAmount">1.800đ</strong>
+                                            </div>
+                                            <div class="qr-detail-row">
+                                                <span class="qr-detail-label">Nội dung CK:</span>
+                                                <div>
+                                                    <strong class="text-primary" id="inlineQrMemo">THANH TOAN DICH VU</strong>
+                                                    <button type="button" class="btn-icon-copy" data-copy-target="inlineQrMemo" title="Sao chép"><i class="fa-regular fa-copy"></i></button>
+                                                </div>
+                                            </div>
+                                            <div class="inline-qr-note" id="inlineQrGuideNote">
+                                                <i class="fa-solid fa-circle-info"></i>
+                                                <span>Mở <b>App MoMo</b> (mục <b>Quét Mã</b>) hoặc App Ngân hàng quét mã bên trái sẽ tự động điền đúng <b id="inlineQrNoteAmount">1.800đ</b> và nội dung đơn.</span>
+                                            </div>
+
+                                            <div class="qr-extra-actions">
+                                                <button type="button" class="btn btn-momo btn-sm hidden" id="openMomoAppBtn">
+                                                    <i class="fa-solid fa-mobile-screen-button"></i> Mở App MoMo
+                                                </button>
+                                                <button type="button" class="btn btn-outline btn-sm" id="downloadQrOnlyBtn">
+                                                    <i class="fa-solid fa-download"></i> Lưu Ảnh QR
+                                                </button>
+                                                <button type="button" class="btn btn-outline btn-sm" id="downloadInvoiceBtn">
+                                                    <i class="fa-solid fa-file-invoice"></i> Tải Ảnh Bill
+                                                </button>
+                                                <button type="button" class="btn btn-outline btn-sm" id="openOrderStatusNowBtn">
+                                                    <i class="fa-solid fa-magnifying-glass-chart"></i> Xem Tiến Độ
+                                                </button>
+                                                <button type="button" class="btn btn-primary btn-sm" id="confirmPaidZaloBtn">
+                                                    <i class="fa-solid fa-check-double"></i> Xác Nhận Đã CK (Zalo)
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Cột Phải: Thông Tin Server & Tra Cứu Đơn Cá Nhân -->
+                        <div class="side-column">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title"><i class="fa-solid fa-server text-primary"></i> Thông Số Máy Chủ</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="selected-server-box" id="selectedServerDetailBox"></div>
+                                    <div class="rules-box">
+                                        <h4><i class="fa-solid fa-shield-halved"></i> Lưu ý vận hành chuẩn:</h4>
+                                        <ul>
+                                            <li>Tài khoản, bài viết hoặc video cần để chế độ <strong>Công khai (Public)</strong> trong suốt quá trình chạy.</li>
+                                            <li>Sau khi bấm <strong>Lưu & Khởi Tạo Đơn</strong>, mã QR thanh toán và <strong>Mã Đơn Hàng</strong> sẽ xuất hiện ngay bên dưới nút bấm.</li>
+                                            <li>Tổng số lượng từ <strong>5,000 lượt</strong> giảm ngay 5%, từ <strong>10,000 lượt</strong> giảm ngay 10% tự động.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title"><i class="fa-solid fa-user-lock text-amber"></i> Kiểm Tra Nhanh Đơn Của Bạn</h3>
+                                    <a href="status.html" class="link-sm">Mở Status.html</a>
+                                </div>
+                                <div class="card-body">
+                                    <div class="input-with-action" style="margin-bottom: 10px;">
+                                        <input type="text" id="miniCheckOrderInput" class="form-control" placeholder="Nhập mã đơn (VD: OT90214)...">
+                                        <button type="button" id="miniCheckOrderBtn" class="btn btn-primary">Tra Cứu</button>
+                                    </div>
+
+                                    <div id="sessionOrdersBox" class="session-orders-box hidden">
+                                        <span class="session-label"><i class="fa-solid fa-clock-rotate-left"></i> Đơn bạn vừa tạo:</span>
+                                        <div class="session-chips" id="sessionOrderChips"></div>
+                                    </div>
+
+                                    <div id="miniOrderLookupResult">
+                                        <div class="private-lookup-placeholder">
+                                            <i class="fa-solid fa-shield-cat"></i>
+                                            <span>Vì lý do bảo mật, danh sách đơn hàng của khách khác đã được ẩn. Vui lòng nhập mã đơn của bạn để kiểm tra.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 2: LỊCH SỬ ĐƠN HÀNG -->
+                <section class="view-section" id="history-view">
+                    <div class="card">
+                        <div class="card-header flex-wrap">
+                            <div>
+                                <h2 class="card-title"><i class="fa-solid fa-clock-rotate-left text-primary"></i> Tra Cứu Lịch Sử Đơn Hàng Cá Nhân</h2>
+                                <p class="card-subtitle">Bảo mật tuyệt đối: Chỉ hiển thị thông tin đơn hàng khi bạn nhập đúng Mã Đơn Hàng cá nhân của mình</p>
+                            </div>
+                            <div class="filter-bar">
+                                <input type="text" id="historySearchInput" class="form-control" placeholder="Nhập chính xác Mã Đơn Hàng (VD: OT90214)...">
+                                <button type="button" id="historySearchBtn" class="btn btn-primary">
+                                    <i class="fa-solid fa-magnifying-glass"></i> Tìm Đơn
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="historyPrivateNotice" class="history-private-state">
+                                <div class="private-icon-circle">
+                                    <i class="fa-solid fa-lock"></i>
+                                </div>
+                                <h3>Lịch Sử Đơn Hàng Được Bảo Mật</h3>
+                                <p>Để đảm bảo quyền riêng tư giữa các khách hàng, hệ thống không hiển thị công khai danh sách đơn hàng.<br>Vui lòng nhập <strong>Mã Đơn Hàng cá nhân</strong> (ví dụ: <code>OT90214</code>) vào ô tìm kiếm phía trên để xem chi tiết đơn của bạn.</p>
+                            </div>
+
+                            <div class="table-responsive hidden" id="historyTableContainer">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Mã Đơn</th>
+                                            <th>Thời Gian</th>
+                                            <th>Nền Tảng / Dịch Vụ</th>
+                                            <th>Link / ID</th>
+                                            <th>Số Lượng</th>
+                                            <th>Tổng Hóa Đơn</th>
+                                            <th>Ghi Chú</th>
+                                            <th>Trạng Thái</th>
+                                            <th>Thao Tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="historyTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 3: BẢNG GIÁ ĐA NỀN TẢNG -->
+                <section class="view-section" id="pricelist-view">
+                    <div class="card">
+                        <div class="card-header flex-wrap">
+                            <div>
+                                <h2 class="card-title"><i class="fa-solid fa-table-list text-primary"></i> Bảng Giá Dịch Vụ Đa Nền Tảng</h2>
+                                <p class="card-subtitle">Tổng hợp chi phí các gói máy chủ xử lý tự động 24/7 — Bấm "Chọn Mua" để lên đơn nhanh</p>
+                            </div>
+                            <div class="filter-bar">
+                                <input type="text" id="priceListSearchInput" class="form-control" placeholder="Tìm dịch vụ (VD: TikTok, Mắt live, Sub)...">
+                                <select id="priceListPlatformFilter" class="form-control">
+                                    <option value="ALL">Tất cả nền tảng</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nền Tảng</th>
+                                            <th>Dịch Vụ</th>
+                                            <th>Máy Chủ</th>
+                                            <th>Tốc Độ & Bảo Hành</th>
+                                            <th>Đơn Giá (1 lượt)</th>
+                                            <th>Thành Tiền (100 lượt)</th>
+                                            <th>Thành Tiền (1,000 lượt)</th>
+                                            <th>Hành Động</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="priceListTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- BOTTOM NAVIGATION BAR CHO ĐIỆN THOẠI -->
+        <nav class="mobile-bottom-nav" id="mobileBottomNav">
+            <a href="#" class="bottom-nav-item active" data-view="order-view">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Tạo Đơn</span>
+            </a>
+            <a href="#" class="bottom-nav-item" data-view="history-view">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Tra Đơn</span>
+            </a>
+            <a href="status.html" class="bottom-nav-item" id="mobileStatusNavBtn">
+                <i class="fa-solid fa-magnifying-glass-chart"></i>
+                <span>Status</span>
+            </a>
+            <a href="#" class="bottom-nav-item" data-view="pricelist-view">
+                <i class="fa-solid fa-table-list"></i>
+                <span>Bảng Giá</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Thư viện đọc mã QR từ ảnh để bóc tách EMVCo MoMo chính chủ -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="dichvumxh.js"></script>
+</body>
+</html>

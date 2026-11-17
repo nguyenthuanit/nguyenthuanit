@@ -568,5 +568,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupEventListeners();
     setTheme(localStorage.getItem('theme') || 'light');
+    if (window.innerWidth <= 768 && logConsole) {
+        logConsole.classList.add('collapsed');
+    }
     loadInitialData();
 });
